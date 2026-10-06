@@ -11,8 +11,7 @@ import { DateTimePickerComponent } from '../../../../../shared/ui/date-time-pick
 import { RadioComponent, RadioOption } from '../../../../../shared/ui/radio/radio.component';
 import { SnackbarComponent, SnackbarVariant } from '../../../../../shared/ui/snackbar/snackbar.component';
 import { TextFieldComponent } from '../../../../../shared/ui/text-field/text-field.component';
-import { buildProcessBreadcrumbs } from '../../../../../shared/utils/breadcrumbs.util';
-import { PROCESS_ID, PROCESS_ROUTE, REQUEST_ROUTE } from '../../config/clasificador-programatico.rutas';
+import { PROCESS_ROUTE } from '../../config/clasificador-programatico.rutas';
 import { CATALOGO_ESTRUCTURAS, EstructuraClasificador, RegistroClasificador, TIPOS_CLASIFICADOR, nombreTipoClasificador } from '../../models/clasificador-programatico.model';
 
 /** Lo que se llena en «Registrar estructura» (vacío al empezar). */
@@ -28,7 +27,7 @@ const FORMULARIO_VACIO: FormularioRegistro = { codigo: '', denominacion: '', tip
 type TipoIngreso = 'buscar' | 'registrar';
 
 /**
- * Solicitud de clasificador programático sin plazos (nodo de Figma 406:10759, panel «Registro de clasificador»
+ * Solicitud de clasificador programático (tipo de acción «Creación»; nodo de Figma 406:10759, panel «Registro de clasificador»
  * 726:19845): pantalla de ejemplo del taller. Los registros que agrega el usuario viven en memoria de este
  * componente — no hay solicitud real, backend simulado ni persistencia: «Grabar» solo confirma con un aviso y
  * «Verificar y enviar» queda deshabilitado, porque no hay un flujo de aprobación detrás.
@@ -57,15 +56,18 @@ export class ClasificadorProgramaticoRequestComponent {
   private readonly router = inject(Router);
   private readonly currentUser = inject(CurrentUserService);
 
-  readonly heading = 'Solicitud de clasificador programático sin plazos';
-  readonly breadcrumbs: BreadcrumbItem[] = buildProcessBreadcrumbs(PROCESS_ID, REQUEST_ROUTE, this.heading);
+  readonly heading = 'Solicitud de clasificador programático';
+  readonly breadcrumbs: BreadcrumbItem[] = [
+    { label: 'Inicio', href: '/panel' },
+    { label: 'Crear Documento', href: PROCESS_ROUTE },
+    { label: 'Clasificador programático' },
+  ];
   readonly tiposClasificador = TIPOS_CLASIFICADOR;
 
   readonly camposEntidad = computed<SolicitudeInfoField[]>(() => {
     const usuario = this.currentUser.user();
     return [
       { label: 'Fecha', value: '' },
-      { label: 'Entidad/Pliego', value: (usuario.entidadSiglas ?? usuario.office).toUpperCase() },
       { label: 'Unidad ejecutora', value: (usuario.unidad ?? usuario.office).toUpperCase() },
     ];
   });

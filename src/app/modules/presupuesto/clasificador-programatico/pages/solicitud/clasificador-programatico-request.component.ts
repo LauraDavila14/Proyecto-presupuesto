@@ -3,13 +3,15 @@ import { Router } from '@angular/router';
 
 import { CurrentUserService } from '../../../../../core/auth/current-user.service';
 import { BreadcrumbItem } from '../../../../../shared/components/breadcrumb/breadcrumb.component';
-import { SelectionColumn, SelectionSideNavComponent } from '../../../../../shared/components/selection-side-nav/selection-side-nav.component';
+import { FormTableSearchComponent } from '../../../../../shared/components/form-table-search/form-table-search.component';
+import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
 import { SolicitudeInfoCardComponent, SolicitudeInfoField } from '../../../../../shared/components/solicitude-info-card/solicitude-info-card.component';
 import { SolicitudePageLayoutComponent } from '../../../../../shared/components/solicitude-page-layout/solicitude-page-layout.component';
 import { ButtonComponent } from '../../../../../shared/ui/button/button.component';
 import { CheckboxComponent } from '../../../../../shared/ui/checkbox/checkbox.component';
 import { DateTimePickerComponent } from '../../../../../shared/ui/date-time-picker/date-time-picker.component';
 import { RadioComponent, RadioOption } from '../../../../../shared/ui/radio/radio.component';
+import { SidePanelComponent } from '../../../../../shared/ui/side-panel/side-panel.component';
 import { SnackbarComponent, SnackbarVariant } from '../../../../../shared/ui/snackbar/snackbar.component';
 import { TextFieldComponent } from '../../../../../shared/ui/text-field/text-field.component';
 import { PROCESS_ROUTE } from '../../config/clasificador-programatico.rutas';
@@ -42,8 +44,10 @@ import {
     ButtonComponent,
     CheckboxComponent,
     DateTimePickerComponent,
+    FormTableSearchComponent,
+    PaginationComponent,
     RadioComponent,
-    SelectionSideNavComponent,
+    SidePanelComponent,
     SnackbarComponent,
     SolicitudeInfoCardComponent,
     SolicitudePageLayoutComponent,
@@ -95,13 +99,11 @@ export class ClasificadorProgramaticoRequestComponent {
   readonly seleccion = signal<Record<CampoEstructura, ItemEstructura | null>>(this.seleccionVacia());
   readonly campoAbierto = signal<CampoEstructura | null>(null);
   readonly busqueda = signal('');
-  private readonly tempSeleccionId = signal<string | null>(null);
-  readonly tempSeleccionIds = computed<string[]>(() => (this.tempSeleccionId() ? [this.tempSeleccionId()!] : []));
+  readonly tempSeleccionId = signal<string | null>(null);
+  readonly hayFilaElegida = computed(() => !!this.tempSeleccionId());
 
   readonly configCampoAbierto = computed(() => CAMPOS_ESTRUCTURA.find((c) => c.campo === this.campoAbierto()) ?? null);
-  readonly columnasBusqueda = computed<SelectionColumn<ItemEstructura>[]>(
-    () => this.configCampoAbierto()?.columnas.map((c) => ({ key: c.key, label: c.label, widthClass: c.widthClass })) ?? [],
-  );
+  readonly columnasBusqueda = computed(() => this.configCampoAbierto()?.columnas ?? []);
 
   // Paginación de la ventana de selección (en memoria).
   readonly pagina = signal(1);
@@ -183,14 +185,14 @@ export class ClasificadorProgramaticoRequestComponent {
     this.campoAbierto.set(null);
   }
 
-  onCambioSeleccionBusqueda(ids: string[]): void {
-    this.tempSeleccionId.set(ids[0] ?? null);
+  seleccionarFila(id: string): void {
+    this.tempSeleccionId.set(id);
   }
 
-  onAceptarBusqueda(ids: string[]): void {
+  onAceptarBusqueda(): void {
     const campo = this.campoAbierto();
     if (campo) {
-      const item = this.configCampoAbierto()?.catalogo.find((i) => i.id === ids[0]) ?? null;
+      const item = this.configCampoAbierto()?.catalogo.find((i) => i.id === this.tempSeleccionId()) ?? null;
       this.seleccion.update((actual) => ({ ...actual, [campo]: item }));
     }
     this.campoAbierto.set(null);

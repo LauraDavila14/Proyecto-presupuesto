@@ -127,32 +127,92 @@
     </section>
   </siaf-solicitude-page-layout>
 
-  <siaf-selection-side-nav
-    presentation="modal"
+  <siaf-side-panel
     [open]="campoAbierto() !== null"
     [title]="configCampoAbierto()?.tituloSeleccion ?? ''"
-    mode="single"
-    [rows]="filasBusqueda()"
-    [columns]="columnasBusqueda()"
-    [showFilter]="configCampoAbierto()?.mostrarFiltro ?? true"
-    [showMore]="configCampoAbierto()?.mostrarMasOpciones ?? true"
-    [searchValue]="busqueda()"
-    [selectedIds]="tempSeleccionIds()"
-    [paginated]="true"
-    [showTopPagination]="configCampoAbierto()?.paginacionSuperior ?? false"
-    [page]="pagina()"
-    [pageSize]="filasPorPagina()"
-    [rowsPerPage]="filasPorPagina()"
-    [totalItems]="totalFilas()"
-    [totalPages]="totalPaginas()"
-    (searchChange)="buscar($event)"
-    (selectionChange)="onCambioSeleccionBusqueda($event)"
-    (previousPage)="cambiarPagina(-1)"
-    (nextPage)="cambiarPagina(1)"
-    (rowsPerPageChange)="cambiarFilasPorPagina($event)"
+    [confirmDisabled]="!hayFilaElegida()"
     (closed)="cerrarBusqueda()"
-    (accepted)="onAceptarBusqueda($event)"
-  />
+    (canceled)="cerrarBusqueda()"
+    (confirmed)="onAceptarBusqueda()"
+  >
+    <siaf-form-table-search
+      [value]="busqueda()"
+      [showFilter]="configCampoAbierto()?.mostrarFiltro ?? true"
+      [showMore]="configCampoAbierto()?.mostrarMasOpciones ?? true"
+      (valueChange)="buscar($event)"
+    />
+
+    @if (configCampoAbierto()?.paginacionSuperior) {
+      <div class="mt-siaf-md">
+        <siaf-pagination
+          navigation="Activate"
+          position="Top"
+          [page]="pagina()"
+          [pageSize]="filasPorPagina()"
+          [totalItems]="totalFilas()"
+          [totalPages]="totalPaginas()"
+          (previous)="cambiarPagina(-1)"
+          (next)="cambiarPagina(1)"
+        />
+      </div>
+    }
+
+    <div class="mt-siaf-md overflow-x-auto">
+      <table class="w-full border-collapse text-left text-sm">
+        <thead>
+          <tr class="h-10 bg-[var(--sys-color-bg-surfaces-surface-high)] text-xs font-bold uppercase text-text">
+            <th class="w-12 rounded-l-siaf-sm px-siaf-sm"></th>
+            @for (col of columnasBusqueda(); track col.key; let ultima = $last) {
+              <th class="px-siaf-md py-siaf-sm" [class.rounded-r-siaf-sm]="ultima" [class]="col.widthClass ?? ''">{{ col.label }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (fila of filasBusqueda(); track fila.id) {
+            <tr
+              class="h-12 cursor-pointer border-b border-[var(--sys-color-divider-default)] text-[var(--sys-color-text-neutral-medium)] hover:bg-surface-muted"
+              [class.bg-[var(--sys-color-bg-states-light-selected)]]="tempSeleccionId() === fila.id"
+              (click)="seleccionarFila(fila.id)"
+            >
+              <td class="px-siaf-sm" (click)="$event.stopPropagation()">
+                <input
+                  class="size-4 accent-brand-primary"
+                  type="radio"
+                  name="clasificador-estructura-radio"
+                  aria-label="Seleccionar fila"
+                  [checked]="tempSeleccionId() === fila.id"
+                  (change)="seleccionarFila(fila.id)"
+                />
+              </td>
+              @for (col of columnasBusqueda(); track col.key) {
+                <td class="px-siaf-md py-siaf-sm">{{ fila[col.key] }}</td>
+              }
+            </tr>
+          } @empty {
+            <tr>
+              <td [attr.colspan]="columnasBusqueda().length + 1" class="px-siaf-md py-siaf-lg text-center text-text-muted">No se encontraron resultados.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-siaf-md">
+      <siaf-pagination
+        navigation="Activate"
+        position="Bottom"
+        [rowPage]="true"
+        [page]="pagina()"
+        [pageSize]="filasPorPagina()"
+        [totalItems]="totalFilas()"
+        [totalPages]="totalPaginas()"
+        [rowsPerPage]="filasPorPagina()"
+        (previous)="cambiarPagina(-1)"
+        (next)="cambiarPagina(1)"
+        (rowsPerPageChange)="cambiarFilasPorPagina($event)"
+      />
+    </div>
+  </siaf-side-panel>
 
   <siaf-snackbar [variant]="aviso()" [open]="avisoAbierto()" (closed)="avisoAbierto.set(false)" />
 </div>

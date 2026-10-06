@@ -63,9 +63,13 @@
                     <siaf-button variant="filled" icon="search" [iconOnly]="true" [ariaLabel]="'Buscar ' + campo.titulo.toLowerCase()" [disabled]="!!seleccion()[campo.campo]" (click)="abrirBusqueda(campo.campo)" />
                   </div>
                   @if (seleccion()[campo.campo]; as item) {
-                    <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
-                      <strong class="text-sm text-text">{{ resumen(campo.campo, item) }}</strong>
-                    </div>
+                    <siaf-summary-card
+                      [fields]="camposCard(campo.campo, item)"
+                      [bordered]="true"
+                      [showClose]="true"
+                      [closeLabel]="'Quitar ' + campo.titulo.toLowerCase()"
+                      (closed)="quitarSeleccion(campo.campo, campo.titulo)"
+                    />
                   } @else {
                     <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
                       <p class="m-0 text-sm text-[var(--sys-color-text-neutral-medium)]">No se ha seleccionado ningún tipo. Haga clic en el botón para realizar una selección.</p>

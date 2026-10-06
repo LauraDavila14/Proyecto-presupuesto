@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { CurrentUserService } from '../../../../../core/auth/current-user.service';
@@ -13,6 +13,7 @@ import { DateTimePickerComponent } from '../../../../../shared/ui/date-time-pick
 import { RadioComponent, RadioOption } from '../../../../../shared/ui/radio/radio.component';
 import { SidePanelComponent } from '../../../../../shared/ui/side-panel/side-panel.component';
 import { SnackbarComponent, SnackbarVariant } from '../../../../../shared/ui/snackbar/snackbar.component';
+import { SummaryCardComponent, SummaryCardField } from '../../../../../shared/ui/summary-card/summary-card.component';
 import { TextFieldComponent } from '../../../../../shared/ui/text-field/text-field.component';
 import { PROCESS_ROUTE } from '../../config/clasificador-programatico.rutas';
 import {
@@ -49,6 +50,7 @@ import {
     RadioComponent,
     SidePanelComponent,
     SnackbarComponent,
+    SummaryCardComponent,
     SolicitudeInfoCardComponent,
     SolicitudePageLayoutComponent,
     TextFieldComponent,
@@ -58,6 +60,7 @@ import {
 })
 export class ClasificadorProgramaticoRequestComponent {
   private readonly router = inject(Router);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly currentUser = inject(CurrentUserService);
 
   readonly heading = 'Solicitud de clasificador programático';
@@ -175,6 +178,18 @@ export class ClasificadorProgramaticoRequestComponent {
   cambiarFilasPorPagina(filas: number): void {
     this.filasPorPagina.set(filas);
     this.pagina.set(1);
+  }
+
+  /** Campos de la `siaf-summary-card` de un campo elegido: una etiqueta/valor por cada columna de su búsqueda. */
+  camposCard(campo: CampoEstructura, item: ItemEstructura): SummaryCardField[] {
+    const columnas = CAMPOS_ESTRUCTURA.find((c) => c.campo === campo)!.columnas;
+    return columnas.map((c) => ({ label: c.label, value: item[c.key] }));
+  }
+
+  /** Quita la selección de un campo (✕ de la card): reactiva su lupa y le devuelve el foco. */
+  quitarSeleccion(campo: CampoEstructura, titulo: string): void {
+    this.seleccion.update((actual) => ({ ...actual, [campo]: null }));
+    setTimeout(() => this.host.nativeElement.querySelector<HTMLElement>(`button[aria-label="Buscar ${titulo.toLowerCase()}"]`)?.focus());
   }
 
   resumen(campo: CampoEstructura, item: ItemEstructura): string {

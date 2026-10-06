@@ -78,15 +78,10 @@ export const DEFAULT_PROCESS_TREE: ProcessMenuNode[] = [
                     selected: true,
                     moduleRoute: '/procesos/clasificador-programatico',
                     createRoute: '/procesos/clasificador-programatico/solicitud',
-                    documentOptions: ['Solicitud de clasificador programático UE', 'Solicitud de clasificador programático UE - Con plazos'],
+                    documentOptions: ['Solicitud de clasificador programático'],
                     documentCreateOptions: [
                       {
-                        label: 'Solicitud de clasificador programático UE',
-                        route: '/procesos/clasificador-programatico/solicitud',
-                        actionTypes: ['Creación', 'Modificación', 'Anulación'],
-                      },
-                      {
-                        label: 'Solicitud de clasificador programático UE - Con plazos',
+                        label: 'Solicitud de clasificador programático',
                         route: '/procesos/clasificador-programatico/solicitud',
                         actionTypes: ['Creación', 'Modificación', 'Anulación'],
                       },

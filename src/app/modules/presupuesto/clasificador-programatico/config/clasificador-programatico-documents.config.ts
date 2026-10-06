@@ -10,8 +10,6 @@ import { buildProcessBreadcrumbs } from '../../../../shared/utils/breadcrumbs.ut
 import { PROCESS_ID, PROCESS_ROUTE, REQUEST_ROUTE } from './clasificador-programatico.rutas';
 
 const NOMBRE_DOCUMENTO = 'Solicitud de clasificador programático';
-const NOMBRE_DOCUMENTO_UE = 'Solicitud de clasificador programático UE';
-const NOMBRE_DOCUMENTO_UE_CON_PLAZOS = 'Solicitud de clasificador programático UE - Con plazos';
 const TIPOS_ACCION = ['Creación', 'Modificación', 'Anulación'];
 
 /**
@@ -21,9 +19,9 @@ const TIPOS_ACCION = ['Creación', 'Modificación', 'Anulación'];
  *
  * `modoConsulta` deja el botón «Crear documento» (con `createDocumentOptions`) y saca «Verificar»/«Aprobar» y el
  * filtrado de filas por rol — así se ve igual para Creador y Aprobador, como en el diseño. El popover «Crear
- * documento» ofrece dos documentos (UE y UE - Con plazos) con los mismos tres tipos de acción cada uno; como
- * todavía no hay una pantalla distinta para «Con plazos», ambos llevan a la misma pantalla de solicitud (nodo de
- * Figma 406:10759), que tampoco graba en un backend real: sus registros viven en memoria del componente.
+ * documento» ofrece un solo documento («Solicitud de clasificador programático») con los tipos de acción
+ * Creación, Modificación y Anulación; lleva a la pantalla de solicitud (nodo de Figma 406:10759), que tampoco
+ * graba en un backend real: sus registros viven en memoria del componente.
  */
 
 const documentColumns: DocumentsRecordsColumn[] = [
@@ -75,11 +73,8 @@ const createDocumentOptions: DocumentsRecordsCreateProcessOption[] = [
     id: 'clasificador-programatico',
     label: 'Clasificador programático',
     route: REQUEST_ROUTE,
-    documents: [NOMBRE_DOCUMENTO_UE, NOMBRE_DOCUMENTO_UE_CON_PLAZOS],
-    documentOptions: [
-      { label: NOMBRE_DOCUMENTO_UE, route: REQUEST_ROUTE, actionTypes: TIPOS_ACCION },
-      { label: NOMBRE_DOCUMENTO_UE_CON_PLAZOS, route: REQUEST_ROUTE, actionTypes: TIPOS_ACCION },
-    ],
+    documents: [NOMBRE_DOCUMENTO],
+    documentOptions: [{ label: NOMBRE_DOCUMENTO, route: REQUEST_ROUTE, actionTypes: TIPOS_ACCION }],
     actionTypes: TIPOS_ACCION,
   },
 ];

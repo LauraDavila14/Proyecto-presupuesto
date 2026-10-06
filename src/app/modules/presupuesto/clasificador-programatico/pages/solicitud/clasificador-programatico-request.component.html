@@ -60,7 +60,7 @@
                     <h4 class="m-0 text-sm font-bold text-text">
                       {{ campo.titulo }} <span class="text-[var(--sys-color-text-feedback-danger)]">*</span>
                     </h4>
-                    <siaf-button variant="filled" icon="search" [iconOnly]="true" [ariaLabel]="'Buscar ' + campo.titulo.toLowerCase()" (click)="abrirBusqueda(campo.campo)" />
+                    <siaf-button variant="filled" icon="search" [iconOnly]="true" [ariaLabel]="'Buscar ' + campo.titulo.toLowerCase()" [disabled]="!!seleccion()[campo.campo]" (click)="abrirBusqueda(campo.campo)" />
                   </div>
                   @if (seleccion()[campo.campo]; as item) {
                     <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">

@@ -8,6 +8,11 @@ export interface SummaryCardField {
   value: string | number;
   icon?: string;
   iconLabel?: string;
+  /**
+   * Ancho fijo del campo desde `lg` (p. ej. `lg:basis-[180px]`), para alinear las columnas entre varias cards. Sin él,
+   * el campo comparte el ancho sobrante con los demás.
+   */
+  widthClass?: string;
 }
 
 /**
@@ -69,7 +74,7 @@ export interface SummaryCardField {
 
       <div class="flex min-w-0 flex-1 flex-wrap items-center gap-siaf-md px-siaf-md">
         @for (field of fields; track field.label) {
-          <div class="flex min-w-[160px] flex-1 basis-full flex-col gap-siaf-xxs sm:basis-[calc(50%-var(--sys-gap-base-md))] lg:basis-0">
+          <div [class]="field.widthClass ? 'flex basis-full flex-col gap-siaf-xxs sm:basis-[calc(50%-var(--sys-gap-base-md))] lg:shrink-0 lg:grow-0 ' + field.widthClass : 'flex min-w-[160px] flex-1 basis-full flex-col gap-siaf-xxs sm:basis-[calc(50%-var(--sys-gap-base-md))] lg:basis-0'">
             <span class="min-h-4 text-[11px] font-medium uppercase tracking-[0.66px] text-[var(--sys-color-text-neutral-low)] sm:truncate" siafTooltip>
               {{ field.label }}
             </span>

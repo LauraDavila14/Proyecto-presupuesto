@@ -34,7 +34,8 @@ export interface CampoEstructuraConfig {
   titulo: string;
   /** Título de la ventana de selección (nodos de Figma 1231:136953, 1231:137206, 1231:137538 y 1231:138743). */
   tituloSeleccion: string;
-  columnas: { key: string; label: string; widthClass?: string }[];
+  /** `widthClass`: ancho en la grilla de la búsqueda. `anchoCard`: ancho fijo del campo en la card del elegido (alinea las columnas entre cards). */
+  columnas: { key: string; label: string; widthClass?: string; anchoCard?: string }[];
   catalogo: ItemEstructura[];
   /** Botones junto al buscador de la ventana: solo visuales. */
   mostrarFiltro: boolean;
@@ -53,7 +54,7 @@ export const CAMPOS_ESTRUCTURA: CampoEstructuraConfig[] = [
     titulo: 'Programa',
     tituloSeleccion: 'Seleccionar programa',
     columnas: [
-      { key: 'codigo', label: 'Código', widthClass: 'w-[180px]' },
+      { key: 'codigo', label: 'Código', widthClass: 'w-[180px]', anchoCard: 'lg:basis-[180px]' },
       { key: 'nombre', label: 'Nombre' },
     ],
     mostrarFiltro: true,
@@ -75,8 +76,8 @@ export const CAMPOS_ESTRUCTURA: CampoEstructuraConfig[] = [
     titulo: 'Producto/Proyecto',
     tituloSeleccion: 'Seleccionar producto/proyecto',
     columnas: [
-      { key: 'tipo', label: 'Tipo', widthClass: 'w-[160px]' },
-      { key: 'codigo', label: 'Código', widthClass: 'w-[160px]' },
+      { key: 'tipo', label: 'Tipo', widthClass: 'w-[160px]', anchoCard: 'lg:basis-[180px]' },
+      { key: 'codigo', label: 'Código', widthClass: 'w-[160px]', anchoCard: 'lg:basis-[180px]' },
       { key: 'nombre', label: 'Nombre' },
     ],
     mostrarFiltro: true,
@@ -98,8 +99,8 @@ export const CAMPOS_ESTRUCTURA: CampoEstructuraConfig[] = [
     titulo: 'Actividad/Acción Inversión/Obra',
     tituloSeleccion: 'Seleccionar actividad/acción inversión/obra',
     columnas: [
-      { key: 'tipo', label: 'Tipo', widthClass: 'w-[160px]' },
-      { key: 'codigo', label: 'Código', widthClass: 'w-[160px]' },
+      { key: 'tipo', label: 'Tipo', widthClass: 'w-[160px]', anchoCard: 'lg:basis-[180px]' },
+      { key: 'codigo', label: 'Código', widthClass: 'w-[160px]', anchoCard: 'lg:basis-[180px]' },
       { key: 'nombre', label: 'Nombre' },
     ],
     mostrarFiltro: true,

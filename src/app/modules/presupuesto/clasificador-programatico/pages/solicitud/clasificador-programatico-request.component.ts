@@ -183,7 +183,7 @@ export class ClasificadorProgramaticoRequestComponent {
   /** Campos de la `siaf-summary-card` de un campo elegido: una etiqueta/valor por cada columna de su búsqueda. */
   camposCard(campo: CampoEstructura, item: ItemEstructura): SummaryCardField[] {
     const columnas = CAMPOS_ESTRUCTURA.find((c) => c.campo === campo)!.columnas;
-    return columnas.map((c) => ({ label: c.label, value: item[c.key] }));
+    return columnas.map((c) => ({ label: c.label, value: item[c.key], widthClass: c.anchoCard }));
   }
 
   /** Quita la selección de un campo (✕ de la card): reactiva su lupa y le devuelve el foco. */

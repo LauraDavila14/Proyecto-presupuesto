@@ -5691,6 +5691,20 @@ export const MANIFIESTO_UI_KIT: readonly FichaComponente[] = [
         "descripcion": null
       },
       {
+        "nombre": "showFilter",
+        "tipo": "boolean",
+        "porDefecto": "true",
+        "requerida": false,
+        "descripcion": "Muestra el botón «Filtrar». Se apaga en las búsquedas que no filtran."
+      },
+      {
+        "nombre": "showMore",
+        "tipo": "boolean",
+        "porDefecto": "true",
+        "requerida": false,
+        "descripcion": "Muestra el segundo botón («Más opciones» o «Columnas»)."
+      },
+      {
         "nombre": "value",
         "tipo": "string",
         "porDefecto": "''",
@@ -10437,7 +10451,7 @@ export const MANIFIESTO_UI_KIT: readonly FichaComponente[] = [
     "capa": "components",
     "importacion": "@siaf/shared/components/selection-side-nav/selection-side-nav.component",
     "archivo": "src/app/shared/components/selection-side-nav/selection-side-nav.component.ts",
-    "descripcion": "Side-nav genérico para seleccionar uno o varios elementos de un\ncatálogo. Reemplaza los 15 paneles inline repetidos en los\nformularios de solicitud.\n\nVariantes:\n- **single** — radio buttons, emite `accepted` con un único id.\n- **multiple** — checkboxes, emite `accepted` con los ids seleccionados.\n\nComportamiento:\n- Click en la fila marca/desmarca la selección (igual que click en\n  el control).\n- Backdrop (click afuera) cierra sin emitir.\n- X del header cierra sin emitir.\n- Cancelar cierra sin emitir.\n- Aceptar emite y cierra (el padre cierra explícitamente via\n  `(accepted)`).\n\nEjemplo single:\n\n  <siaf-selection-side-nav\n    [open]=\"clasePanelOpen()\"\n    title=\"Buscar clase de ajuste\"\n    mode=\"single\"\n    [rows]=\"filteredClases()\"\n    [columns]=\"claseColumns\"\n    [searchValue]=\"claseSearch()\"\n    [selectedIds]=\"tempClaseId() ? [tempClaseId()] : []\"\n    (searchChange)=\"claseSearch.set($event)\"\n    (selectionChange)=\"onClaseTempChange($event)\"\n    (closed)=\"clasePanelOpen.set(false)\"\n    (accepted)=\"confirmClaseExistente()\"\n  />",
+    "descripcion": "Side-nav genérico para seleccionar uno o varios elementos de un\ncatálogo. Reemplaza los 15 paneles inline repetidos en los\nformularios de solicitud.\n\nPresentación: `side` (panel lateral) o `modal` (ventana centrada, como las búsquedas del clasificador\nprogramático); la grilla, el buscador, la paginación y el pie son los mismos.\n\nVariantes:\n- **single** — radio buttons, emite `accepted` con un único id.\n- **multiple** — checkboxes, emite `accepted` con los ids seleccionados.\n\nComportamiento:\n- Click en la fila marca/desmarca la selección (igual que click en\n  el control).\n- Backdrop (click afuera) cierra sin emitir.\n- X del header cierra sin emitir.\n- Cancelar cierra sin emitir.\n- Aceptar emite y cierra (el padre cierra explícitamente via\n  `(accepted)`).\n\nEjemplo single:\n\n  <siaf-selection-side-nav\n    [open]=\"clasePanelOpen()\"\n    title=\"Buscar clase de ajuste\"\n    mode=\"single\"\n    [rows]=\"filteredClases()\"\n    [columns]=\"claseColumns\"\n    [searchValue]=\"claseSearch()\"\n    [selectedIds]=\"tempClaseId() ? [tempClaseId()] : []\"\n    (searchChange)=\"claseSearch.set($event)\"\n    (selectionChange)=\"onClaseTempChange($event)\"\n    (closed)=\"clasePanelOpen.set(false)\"\n    (accepted)=\"confirmClaseExistente()\"\n  />",
     "usaSesion": false,
     "proyectaContenido": true,
     "entradas": [
@@ -10526,6 +10540,13 @@ export const MANIFIESTO_UI_KIT: readonly FichaComponente[] = [
         "descripcion": "Activa la paginación. Cuando es true, las `rows` que recibe ya están paginadas por el padre; el componente solo renderiza los controles `siaf-pagination` y emite los eventos de navegación."
       },
       {
+        "nombre": "presentation",
+        "tipo": "'side' | 'modal'",
+        "porDefecto": "'side'",
+        "requerida": false,
+        "descripcion": "`side` (por defecto): panel lateral a pantalla completa. `modal`: ventana centrada, de hasta 1000px de ancho."
+      },
+      {
         "nombre": "requireSelection",
         "tipo": "boolean",
         "porDefecto": "true",
@@ -10594,6 +10615,20 @@ export const MANIFIESTO_UI_KIT: readonly FichaComponente[] = [
         "porDefecto": "[]",
         "requerida": false,
         "descripcion": "Ids actualmente seleccionados (temporal — todavía no se aplicó)."
+      },
+      {
+        "nombre": "showFilter",
+        "tipo": "boolean",
+        "porDefecto": "true",
+        "requerida": false,
+        "descripcion": "Muestra el botón «Filtrar» junto al buscador (solo visual: el padre escucha `filter` del buscador si lo necesita)."
+      },
+      {
+        "nombre": "showMore",
+        "tipo": "boolean",
+        "porDefecto": "true",
+        "requerida": false,
+        "descripcion": "Muestra el botón «Más opciones» junto al buscador."
       },
       {
         "nombre": "showRowsPerPage",
@@ -10761,6 +10796,7 @@ export const MANIFIESTO_UI_KIT: readonly FichaComponente[] = [
         "token": "--sys-gap-base-md",
         "via": [
           "mt-siaf-md",
+          "p-siaf-md",
           "px-siaf-md",
           "py-siaf-md"
         ]

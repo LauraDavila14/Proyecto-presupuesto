@@ -72,6 +72,7 @@ import { TextFieldComponent } from '../../ui/text-field/text-field.component';
       />
 
       <div class="flex shrink-0 items-start gap-siaf-xs">
+        @if (showFilter) {
         <button
           class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-dark-pressed)] disabled:cursor-not-allowed disabled:text-[var(--sys-color-text-neutral-disabled)] disabled:hover:bg-transparent focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--sys-color-border-states-focus)]"
           type="button"
@@ -81,7 +82,9 @@ import { TextFieldComponent } from '../../ui/text-field/text-field.component';
         >
           <siaf-icon name="filter_list" [size]="24" />
         </button>
+        }
         <!-- Segundo botón según la variante: Más opciones o, en Consultas y reportes, Columnas. -->
+        @if (showMore) {
         <button
           class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-dark-pressed)] disabled:cursor-not-allowed disabled:text-[var(--sys-color-text-neutral-disabled)] disabled:hover:bg-transparent focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--sys-color-border-states-focus)]"
           type="button"
@@ -92,6 +95,7 @@ import { TextFieldComponent } from '../../ui/text-field/text-field.component';
         >
           <siaf-icon [name]="variant === 'reports' ? 'view_column' : 'more_vert'" [size]="24" />
         </button>
+        }
       </div>
     </div>
   `,
@@ -116,6 +120,10 @@ export class FormTableSearchComponent implements OnChanges {
   @Input() moreLabel = 'Mas opciones';
   /** Nombre accesible del botón Columnas de la variante `reports`. */
   @Input() columnsLabel = 'Ocultar o mostrar columnas';
+  /** Muestra el botón «Filtrar». Se apaga en las búsquedas que no filtran. */
+  @Input() showFilter = true;
+  /** Muestra el segundo botón («Más opciones» o «Columnas»). */
+  @Input() showMore = true;
   @Input() disabled = false;
 
   @Output() valueChange = new EventEmitter<string>();

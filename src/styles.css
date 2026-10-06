@@ -376,6 +376,11 @@ input[type="checkbox"]:disabled:checked {
 .siaf-sidepanel-overlay > aside {
   animation: siaf-sidepanel-in 300ms ease-in both;
 }
+/* Selección en ventana centrada: solo el fondo se desvanece, la ventana no se desliza. */
+.siaf-sidepanel-overlay.siaf-selection-modal > aside,
+.siaf-sidepanel-overlay.siaf-selection-modal.cerrando > aside {
+  animation: none;
+}
 .siaf-sidepanel-overlay.cerrando {
   animation: siaf-overlay-fade-out 300ms ease-in-out both;
 }

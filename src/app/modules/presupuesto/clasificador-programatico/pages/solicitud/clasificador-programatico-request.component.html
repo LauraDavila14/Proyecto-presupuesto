@@ -64,7 +64,7 @@
                   </div>
                   @if (seleccion()[campo.campo]; as item) {
                     <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
-                      <strong class="text-sm text-text">{{ item.codigo }} — {{ item.denominacion }}</strong>
+                      <strong class="text-sm text-text">{{ resumen(campo.campo, item) }}</strong>
                     </div>
                   } @else {
                     <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
@@ -113,7 +113,7 @@
                   <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ nombreProcesos(registro.procesos) }}</td>
                   <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ registro.categoriaPresupuestaria }}</td>
                   @for (campo of camposEstructura; track campo.campo) {
-                    <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ registro.estructura[campo.campo].codigo }} — {{ registro.estructura[campo.campo].denominacion }}</td>
+                    <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ resumen(campo.campo, registro.estructura[campo.campo]) }}</td>
                   }
                   <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-sm py-siaf-sm text-right">
                     <siaf-button variant="text" size="sm" icon="delete" [iconOnly]="true" ariaLabel="Quitar registro" (click)="quitarRegistro(registro.id)" />
@@ -128,15 +128,28 @@
   </siaf-solicitude-page-layout>
 
   <siaf-selection-side-nav
+    presentation="modal"
     [open]="campoAbierto() !== null"
-    [title]="configCampoAbierto()?.titulo ?? ''"
+    [title]="configCampoAbierto()?.tituloSeleccion ?? ''"
     mode="single"
     [rows]="filasBusqueda()"
-    [columns]="columnasBusqueda"
+    [columns]="columnasBusqueda()"
+    [showFilter]="configCampoAbierto()?.mostrarFiltro ?? true"
+    [showMore]="configCampoAbierto()?.mostrarMasOpciones ?? true"
     [searchValue]="busqueda()"
     [selectedIds]="tempSeleccionIds()"
-    (searchChange)="busqueda.set($event)"
+    [paginated]="true"
+    [showTopPagination]="configCampoAbierto()?.paginacionSuperior ?? false"
+    [page]="pagina()"
+    [pageSize]="filasPorPagina()"
+    [rowsPerPage]="filasPorPagina()"
+    [totalItems]="totalFilas()"
+    [totalPages]="totalPaginas()"
+    (searchChange)="buscar($event)"
     (selectionChange)="onCambioSeleccionBusqueda($event)"
+    (previousPage)="cambiarPagina(-1)"
+    (nextPage)="cambiarPagina(1)"
+    (rowsPerPageChange)="cambiarFilasPorPagina($event)"
     (closed)="cerrarBusqueda()"
     (accepted)="onAceptarBusqueda($event)"
   />

@@ -99,16 +99,25 @@ export class ClasificadorProgramaticoRequestComponent {
   readonly tempSeleccionIds = computed<string[]>(() => (this.tempSeleccionId() ? [this.tempSeleccionId()!] : []));
 
   readonly configCampoAbierto = computed(() => CAMPOS_ESTRUCTURA.find((c) => c.campo === this.campoAbierto()) ?? null);
-  readonly filasBusqueda = computed<ItemEstructura[]>(() => {
+  readonly columnasBusqueda = computed<SelectionColumn<ItemEstructura>[]>(
+    () => this.configCampoAbierto()?.columnas.map((c) => ({ key: c.key, label: c.label, widthClass: c.widthClass })) ?? [],
+  );
+
+  // Paginación de la ventana de selección (en memoria).
+  readonly pagina = signal(1);
+  readonly filasPorPagina = signal(10);
+  private readonly filasFiltradas = computed<ItemEstructura[]>(() => {
     const catalogo = this.configCampoAbierto()?.catalogo ?? [];
     const texto = this.busqueda().trim().toLowerCase();
     if (!texto) return catalogo;
-    return catalogo.filter((i) => i.codigo.toLowerCase().includes(texto) || i.denominacion.toLowerCase().includes(texto));
+    return catalogo.filter((i) => Object.values(i).some((valor) => valor.toLowerCase().includes(texto)));
   });
-  readonly columnasBusqueda: SelectionColumn<ItemEstructura>[] = [
-    { key: 'codigo', label: 'Código', widthClass: 'w-[120px]' },
-    { key: 'denominacion', label: 'Denominación' },
-  ];
+  readonly totalFilas = computed(() => this.filasFiltradas().length);
+  readonly totalPaginas = computed(() => Math.max(1, Math.ceil(this.totalFilas() / this.filasPorPagina())));
+  readonly filasBusqueda = computed<ItemEstructura[]>(() => {
+    const desde = (this.pagina() - 1) * this.filasPorPagina();
+    return this.filasFiltradas().slice(desde, desde + this.filasPorPagina());
+  });
 
   // «Vigencia»: solo lectura (Estado «Sí»; las fechas las asigna el sistema al aceptarse la solicitud).
   readonly opcionesEstado: RadioOption[] = [
@@ -147,8 +156,27 @@ export class ClasificadorProgramaticoRequestComponent {
 
   abrirBusqueda(campo: CampoEstructura): void {
     this.busqueda.set('');
+    this.pagina.set(1);
     this.tempSeleccionId.set(this.seleccion()[campo]?.id ?? null);
     this.campoAbierto.set(campo);
+  }
+
+  buscar(texto: string): void {
+    this.busqueda.set(texto);
+    this.pagina.set(1);
+  }
+
+  cambiarPagina(delta: number): void {
+    this.pagina.update((p) => Math.min(this.totalPaginas(), Math.max(1, p + delta)));
+  }
+
+  cambiarFilasPorPagina(filas: number): void {
+    this.filasPorPagina.set(filas);
+    this.pagina.set(1);
+  }
+
+  resumen(campo: CampoEstructura, item: ItemEstructura): string {
+    return CAMPOS_ESTRUCTURA.find((c) => c.campo === campo)!.resumen(item);
   }
 
   cerrarBusqueda(): void {

@@ -29,6 +29,9 @@ export type SelectionMode = 'single' | 'multiple';
  * catálogo. Reemplaza los 15 paneles inline repetidos en los
  * formularios de solicitud.
  *
+ * Presentación: `side` (panel lateral) o `modal` (ventana centrada, como las búsquedas del clasificador
+ * programático); la grilla, el buscador, la paginación y el pie son los mismos.
+ *
  * Variantes:
  * - **single** — radio buttons, emite `accepted` con un único id.
  * - **multiple** — checkboxes, emite `accepted` con los ids seleccionados.
@@ -106,7 +109,12 @@ export type SelectionMode = 'single' | 'multiple';
   template: `
     @if (anim.visible()) {
       <section
-        class="siaf-sidepanel-overlay fixed inset-y-0 left-0 right-0 z-50 bg-black/55 pl-0 lg:pl-[65px]"
+        class="siaf-sidepanel-overlay fixed z-50 bg-black/55"
+        [ngClass]="
+          presentation === 'modal'
+            ? 'siaf-selection-modal inset-0 flex items-center justify-center p-siaf-md'
+            : 'inset-y-0 left-0 right-0 pl-0 lg:pl-[65px]'
+        "
         [class.cerrando]="anim.cerrando()"
         aria-modal="true"
         role="dialog"
@@ -114,7 +122,12 @@ export type SelectionMode = 'single' | 'multiple';
         (click)="onCloseRequested()"
       >
         <aside
-          class="flex h-screen w-full flex-col overflow-hidden bg-surface shadow-siaf-lg lg:rounded-l-siaf-md"
+          class="flex w-full flex-col overflow-hidden bg-surface shadow-siaf-lg"
+          [ngClass]="
+            presentation === 'modal'
+              ? 'max-h-[calc(100vh-32px)] max-w-[1000px] rounded-siaf-md'
+              : 'h-screen lg:rounded-l-siaf-md'
+          "
           [siafFoco]="open"
           (siafFocoEscape)="onCloseRequested()"
           (click)="$event.stopPropagation()"
@@ -137,6 +150,8 @@ export type SelectionMode = 'single' | 'multiple';
             <siaf-form-table-search
               [value]="searchValue"
               [ariaLabel]="searchPlaceholder"
+              [showFilter]="showFilter"
+              [showMore]="showMore"
               (valueChange)="searchChange.emit($event)"
             />
 
@@ -290,6 +305,12 @@ export class SelectionSideNavComponent<T = Record<string, unknown>> implements O
 
   /** Si está abierto. Cuando se pasa a false el componente no renderiza nada. */
   @Input() open = false;
+  /** `side` (por defecto): panel lateral a pantalla completa. `modal`: ventana centrada, de hasta 1000px de ancho. */
+  @Input() presentation: 'side' | 'modal' = 'side';
+  /** Muestra el botón «Filtrar» junto al buscador (solo visual: el padre escucha `filter` del buscador si lo necesita). */
+  @Input() showFilter = true;
+  /** Muestra el botón «Más opciones» junto al buscador. */
+  @Input() showMore = true;
   /** Título mostrado en el header (también usado para aria-labels). */
   @Input() title = '';
   /** 'single' (radio) o 'multiple' (checkbox). */

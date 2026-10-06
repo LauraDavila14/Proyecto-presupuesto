@@ -7,40 +7,40 @@ import { SelectionColumn, SelectionSideNavComponent } from '../../../../../share
 import { SolicitudeInfoCardComponent, SolicitudeInfoField } from '../../../../../shared/components/solicitude-info-card/solicitude-info-card.component';
 import { SolicitudePageLayoutComponent } from '../../../../../shared/components/solicitude-page-layout/solicitude-page-layout.component';
 import { ButtonComponent } from '../../../../../shared/ui/button/button.component';
+import { CheckboxComponent } from '../../../../../shared/ui/checkbox/checkbox.component';
 import { DateTimePickerComponent } from '../../../../../shared/ui/date-time-picker/date-time-picker.component';
 import { RadioComponent, RadioOption } from '../../../../../shared/ui/radio/radio.component';
 import { SnackbarComponent, SnackbarVariant } from '../../../../../shared/ui/snackbar/snackbar.component';
 import { TextFieldComponent } from '../../../../../shared/ui/text-field/text-field.component';
 import { PROCESS_ROUTE } from '../../config/clasificador-programatico.rutas';
-import { CATALOGO_ESTRUCTURAS, EstructuraClasificador, RegistroClasificador, TIPOS_CLASIFICADOR, nombreTipoClasificador } from '../../models/clasificador-programatico.model';
-
-/** Lo que se llena en «Registrar estructura» (vacío al empezar). */
-interface FormularioRegistro {
-  codigo: string;
-  denominacion: string;
-  tipoClasificador: string;
-  fechaVigencia: string;
-}
-
-const FORMULARIO_VACIO: FormularioRegistro = { codigo: '', denominacion: '', tipoClasificador: '', fechaVigencia: '' };
-
-type TipoIngreso = 'buscar' | 'registrar';
+import {
+  CAMPOS_ESTRUCTURA,
+  CATEGORIAS_PRESUPUESTARIAS,
+  CampoEstructura,
+  ItemEstructura,
+  PROCESOS_CLASIFICADOR,
+  RegistroClasificador,
+  nombreProcesos,
+} from '../../models/clasificador-programatico.model';
 
 /**
- * Solicitud de clasificador programático (tipo de acción «Creación»; nodo de Figma 406:10759, panel «Registro de clasificador»
- * 726:19845): pantalla de ejemplo del taller. Los registros que agrega el usuario viven en memoria de este
- * componente — no hay solicitud real, backend simulado ni persistencia: «Grabar» solo confirma con un aviso y
- * «Verificar y enviar» queda deshabilitado, porque no hay un flujo de aprobación detrás.
+ * Solicitud de clasificador programático, tipo de acción «Creación» (nodo de Figma 1096:123152): pantalla de
+ * ejemplo del taller. Los registros que agrega el usuario viven en memoria de este componente — no hay solicitud
+ * real, backend simulado ni persistencia: «Grabar» solo confirma con un aviso y «Verificar y enviar» queda
+ * deshabilitado, porque no hay un flujo de aprobación detrás.
  *
- * El panel «Registro de clasificador» tiene dos formas de cargar una fila:
- * - **Buscar estructura** (por defecto): elige una estructura ya existente del catálogo con `siaf-selection-side-nav`.
- * - **Registrar estructura**: la llena a mano (código, denominación, tipo y fecha de vigencia).
+ * Al pulsar (+) en «Registro de clasificador» se abre el panel con «Proceso» (Programación y/o Gestión) y el
+ * desplegable «Categoría presupuestaria» (PP, AC, APNOP). Con un proceso y una categoría elegidos aparecen
+ * «Estructura programática» (cuatro campos que se eligen con la lupa) y «Vigencia» (Estado «Sí» y fechas que
+ * asigna el sistema al aceptarse la solicitud: solo lectura). «Aceptar» se habilita con los cuatro campos
+ * elegidos y agrega una fila a la tabla.
  */
 @Component({
   selector: 'siaf-clasificador-programatico-request',
   standalone: true,
   imports: [
     ButtonComponent,
+    CheckboxComponent,
     DateTimePickerComponent,
     RadioComponent,
     SelectionSideNavComponent,
@@ -62,7 +62,6 @@ export class ClasificadorProgramaticoRequestComponent {
     { label: 'Crear Documento', href: PROCESS_ROUTE },
     { label: 'Clasificador programático' },
   ];
-  readonly tiposClasificador = TIPOS_CLASIFICADOR;
 
   readonly camposEntidad = computed<SolicitudeInfoField[]>(() => {
     const usuario = this.currentUser.user();
@@ -82,62 +81,63 @@ export class ClasificadorProgramaticoRequestComponent {
 
   // ── Panel «Registro de clasificador» ──────────────────────────────
   readonly agregando = signal(false);
+  readonly procesos = PROCESOS_CLASIFICADOR;
+  readonly categorias = CATEGORIAS_PRESUPUESTARIAS;
 
-  readonly opcionesEstructura: RadioOption[] = [
-    { label: 'Buscar estructura', value: 'buscar' },
-    { label: 'Registrar estructura', value: 'registrar' },
-  ];
-  readonly tipoIngreso = signal<TipoIngreso>('buscar');
+  readonly procesosMarcados = signal<string[]>([]);
+  readonly categoria = signal('');
 
-  // «Buscar estructura»: catálogo + side-nav de selección.
-  readonly panelBusquedaAbierto = signal(false);
+  /** «Estructura programática» y «Vigencia» aparecen cuando ya hay proceso y categoría. */
+  readonly mostrarEstructura = computed(() => this.procesosMarcados().length > 0 && !!this.categoria());
+
+  // «Estructura programática»: un campo por catálogo, elegido en el side-nav de selección.
+  readonly camposEstructura = CAMPOS_ESTRUCTURA;
+  readonly seleccion = signal<Record<CampoEstructura, ItemEstructura | null>>(this.seleccionVacia());
+  readonly campoAbierto = signal<CampoEstructura | null>(null);
   readonly busqueda = signal('');
-  readonly estructuraSeleccionada = signal<EstructuraClasificador | null>(null);
-  /** Selección temporal dentro del side-nav, mientras no se confirma con su «Aceptar». */
   private readonly tempSeleccionId = signal<string | null>(null);
   readonly tempSeleccionIds = computed<string[]>(() => (this.tempSeleccionId() ? [this.tempSeleccionId()!] : []));
 
-  readonly estructurasFiltradas = computed<EstructuraClasificador[]>(() => {
+  readonly configCampoAbierto = computed(() => CAMPOS_ESTRUCTURA.find((c) => c.campo === this.campoAbierto()) ?? null);
+  readonly filasBusqueda = computed<ItemEstructura[]>(() => {
+    const catalogo = this.configCampoAbierto()?.catalogo ?? [];
     const texto = this.busqueda().trim().toLowerCase();
-    if (!texto) return CATALOGO_ESTRUCTURAS;
-    return CATALOGO_ESTRUCTURAS.filter(
-      (e) => e.codigo.toLowerCase().includes(texto) || e.denominacion.toLowerCase().includes(texto),
-    );
+    if (!texto) return catalogo;
+    return catalogo.filter((i) => i.codigo.toLowerCase().includes(texto) || i.denominacion.toLowerCase().includes(texto));
   });
-
-  readonly columnasEstructura: SelectionColumn<EstructuraClasificador>[] = [
-    { key: 'codigo', label: 'Código', widthClass: 'w-[100px]' },
+  readonly columnasBusqueda: SelectionColumn<ItemEstructura>[] = [
+    { key: 'codigo', label: 'Código', widthClass: 'w-[120px]' },
     { key: 'denominacion', label: 'Denominación' },
-    { key: 'tipoClasificador', label: 'Tipo', widthClass: 'w-[140px]', render: (row) => nombreTipoClasificador(row.tipoClasificador) },
-    { key: 'fechaVigencia', label: 'Vigencia', widthClass: 'w-[120px]', render: (row) => row.fechaVigencia.split('-').reverse().join('/') },
   ];
 
-  // «Registrar estructura»: formulario manual.
-  readonly formulario = signal<FormularioRegistro>({ ...FORMULARIO_VACIO });
+  // «Vigencia»: solo lectura (Estado «Sí»; las fechas las asigna el sistema al aceptarse la solicitud).
+  readonly opcionesEstado: RadioOption[] = [
+    { label: 'Sí', value: 'si' },
+    { label: 'No', value: 'no' },
+  ];
 
-  readonly puedeAceptar = computed(() => {
-    if (this.tipoIngreso() === 'buscar') return !!this.estructuraSeleccionada();
-    const f = this.formulario();
-    return !!f.codigo.trim() && !!f.denominacion.trim() && !!f.tipoClasificador && !!f.fechaVigencia;
-  });
+  readonly puedeAceptar = computed(
+    () => this.mostrarEstructura() && CAMPOS_ESTRUCTURA.every((c) => !!this.seleccion()[c.campo]),
+  );
 
   // ── Aviso ──────────────────────────────────────────────────────────
   readonly avisoAbierto = signal(false);
   readonly aviso = signal<SnackbarVariant>('record-done');
 
-  actualizar<K extends keyof FormularioRegistro>(campo: K, valor: FormularioRegistro[K]): void {
-    this.formulario.update((f) => ({ ...f, [campo]: valor }));
+  estaMarcado(codigo: string): boolean {
+    return this.procesosMarcados().includes(codigo);
   }
 
-  cambiarTipoIngreso(valor: TipoIngreso): void {
-    this.tipoIngreso.set(valor);
+  marcarProceso(codigo: string, marcado: boolean): void {
+    this.procesosMarcados.update((actuales) =>
+      marcado ? [...actuales.filter((c) => c !== codigo), codigo] : actuales.filter((c) => c !== codigo),
+    );
   }
 
   abrirPanel(): void {
-    this.tipoIngreso.set('buscar');
-    this.estructuraSeleccionada.set(null);
-    this.busqueda.set('');
-    this.formulario.set({ ...FORMULARIO_VACIO });
+    this.procesosMarcados.set([]);
+    this.categoria.set('');
+    this.seleccion.set(this.seleccionVacia());
     this.agregando.set(true);
   }
 
@@ -145,13 +145,14 @@ export class ClasificadorProgramaticoRequestComponent {
     this.agregando.set(false);
   }
 
-  abrirBusqueda(): void {
-    this.tempSeleccionId.set(this.estructuraSeleccionada()?.id ?? null);
-    this.panelBusquedaAbierto.set(true);
+  abrirBusqueda(campo: CampoEstructura): void {
+    this.busqueda.set('');
+    this.tempSeleccionId.set(this.seleccion()[campo]?.id ?? null);
+    this.campoAbierto.set(campo);
   }
 
   cerrarBusqueda(): void {
-    this.panelBusquedaAbierto.set(false);
+    this.campoAbierto.set(null);
   }
 
   onCambioSeleccionBusqueda(ids: string[]): void {
@@ -159,31 +160,33 @@ export class ClasificadorProgramaticoRequestComponent {
   }
 
   onAceptarBusqueda(ids: string[]): void {
-    const id = ids[0];
-    this.estructuraSeleccionada.set(CATALOGO_ESTRUCTURAS.find((e) => e.id === id) ?? null);
-    this.panelBusquedaAbierto.set(false);
+    const campo = this.campoAbierto();
+    if (campo) {
+      const item = this.configCampoAbierto()?.catalogo.find((i) => i.id === ids[0]) ?? null;
+      this.seleccion.update((actual) => ({ ...actual, [campo]: item }));
+    }
+    this.campoAbierto.set(null);
   }
 
   confirmarRegistro(): void {
     if (!this.puedeAceptar()) return;
 
+    const sel = this.seleccion();
     this.correlativo += 1;
-    const id = `reg-${this.correlativo}`;
-
-    if (this.tipoIngreso() === 'buscar') {
-      const e = this.estructuraSeleccionada();
-      if (!e) return;
-      this.registros.update((registros) => [
-        ...registros,
-        { id, codigo: e.codigo, denominacion: e.denominacion, tipoClasificador: e.tipoClasificador, fechaVigencia: e.fechaVigencia },
-      ]);
-    } else {
-      const f = this.formulario();
-      this.registros.update((registros) => [
-        ...registros,
-        { id, codigo: f.codigo.trim(), denominacion: f.denominacion.trim(), tipoClasificador: f.tipoClasificador, fechaVigencia: f.fechaVigencia },
-      ]);
-    }
+    this.registros.update((registros) => [
+      ...registros,
+      {
+        id: `reg-${this.correlativo}`,
+        procesos: this.procesosMarcados(),
+        categoriaPresupuestaria: this.categoria(),
+        estructura: {
+          programa: sel.programa!,
+          producto: sel.producto!,
+          actividad: sel.actividad!,
+          funcional: sel.funcional!,
+        },
+      },
+    ]);
 
     this.agregando.set(false);
     this.mostrarAviso('record-done');
@@ -202,8 +205,12 @@ export class ClasificadorProgramaticoRequestComponent {
     void this.router.navigate([PROCESS_ROUTE]);
   }
 
-  nombreTipo(codigo: string): string {
-    return nombreTipoClasificador(codigo);
+  nombreProcesos(codigos: readonly string[]): string {
+    return nombreProcesos(codigos);
+  }
+
+  private seleccionVacia(): Record<CampoEstructura, ItemEstructura | null> {
+    return { programa: null, producto: null, actividad: null, funcional: null };
   }
 
   private mostrarAviso(variante: SnackbarVariant): void {

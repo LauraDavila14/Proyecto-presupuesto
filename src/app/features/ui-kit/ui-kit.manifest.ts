@@ -2704,7 +2704,7 @@ export const MANIFIESTO_UI_KIT: readonly FichaComponente[] = [
       }
     ],
     "usa": [],
-    "sinUso": true
+    "sinUso": false
   },
   {
     "selector": "siaf-collapsible-card",

@@ -20,8 +20,8 @@
         <h2 class="m-0 text-sm font-bold uppercase leading-normal text-text">Registro de clasificador</h2>
         @if (agregando()) {
           <div class="flex items-center gap-siaf-xs">
-            <siaf-button variant="outline" size="md" icon="close" (click)="cerrarPanel()">Cancelar</siaf-button>
-            <siaf-button variant="filled" size="md" icon="check" [disabled]="!puedeAceptar()" (click)="confirmarRegistro()">Aceptar</siaf-button>
+            <siaf-button variant="outline" size="md" (click)="cerrarPanel()">Cancelar</siaf-button>
+            <siaf-button variant="filled" size="md" [disabled]="!puedeAceptar()" (click)="confirmarRegistro()">Aceptar</siaf-button>
           </div>
         } @else {
           <siaf-button variant="filled" icon="add" [iconOnly]="true" ariaLabel="Agregar registro de clasificador" (click)="abrirPanel()" />
@@ -29,67 +29,64 @@
       </header>
 
       @if (agregando()) {
-        <div class="mt-siaf-md flex flex-col gap-siaf-md">
-          <siaf-radio-group
-            label="Estructura"
-            name="tipo-ingreso-estructura"
-            [inline]="true"
-            [options]="opcionesEstructura"
-            [value]="tipoIngreso()"
-            (valueChange)="cambiarTipoIngreso($any($event))"
-          />
+        <div class="mt-siaf-md flex flex-col gap-siaf-lg">
+          <div class="flex flex-col gap-siaf-sm">
+            <h3 class="m-0 text-sm font-bold uppercase text-text">Proceso</h3>
+            <div class="flex flex-wrap items-center gap-siaf-lg">
+              @for (proceso of procesos; track proceso.value) {
+                <siaf-checkbox [label]="proceso.label" [checked]="estaMarcado(proceso.value)" (checkedChange)="marcarProceso(proceso.value, $event)" />
+              }
+            </div>
+          </div>
 
-          @if (tipoIngreso() === 'buscar') {
-            <div class="flex flex-col gap-siaf-xs">
-              <div class="flex items-center justify-between gap-siaf-md">
-                <h3 class="m-0 text-sm font-bold uppercase text-text">Buscar estructura</h3>
-                <siaf-button variant="filled" icon="search" [iconOnly]="true" ariaLabel="Buscar estructura" (click)="abrirBusqueda()" />
-              </div>
-
-              @if (estructuraSeleccionada(); as estructura) {
-                <div class="flex min-h-[49px] flex-col gap-1 rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
-                  <strong class="text-sm text-text">{{ estructura.codigo }} — {{ estructura.denominacion }}</strong>
-                  <span class="text-xs text-[var(--sys-color-text-neutral-medium)]">{{ nombreTipo(estructura.tipoClasificador) }} · Vigente desde {{ estructura.fechaVigencia.split('-').reverse().join('/') }}</span>
-                </div>
-              } @else {
-                <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
-                  <p class="m-0 text-sm text-[var(--sys-color-text-neutral-medium)]">No se ha seleccionado ningún tipo. Haga clic en el botón para realizar una selección.</p>
+          <div class="flex flex-col gap-siaf-sm">
+            <h3 class="m-0 text-sm font-bold uppercase text-text">Detalle</h3>
+            <div class="max-w-[600px]">
+              <siaf-input
+                type="select"
+                label="Categoría presupuestaria"
+                [options]="categorias"
+                [value]="categoria()"
+                (valueChange)="categoria.set($any($event))"
+              />
+            </div>
+          </div>
+          @if (mostrarEstructura()) {
+            <div class="flex flex-col gap-siaf-md">
+              <h3 class="m-0 text-sm font-bold uppercase text-text">Estructura programática</h3>
+              @for (campo of camposEstructura; track campo.campo) {
+                <div class="flex flex-col gap-siaf-xs">
+                  <div class="flex items-center justify-between gap-siaf-md">
+                    <h4 class="m-0 text-sm font-bold text-text">
+                      {{ campo.titulo }} <span class="text-[var(--sys-color-text-feedback-danger)]">*</span>
+                    </h4>
+                    <siaf-button variant="filled" icon="search" [iconOnly]="true" [ariaLabel]="'Buscar ' + campo.titulo.toLowerCase()" (click)="abrirBusqueda(campo.campo)" />
+                  </div>
+                  @if (seleccion()[campo.campo]; as item) {
+                    <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
+                      <strong class="text-sm text-text">{{ item.codigo }} — {{ item.denominacion }}</strong>
+                    </div>
+                  } @else {
+                    <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
+                      <p class="m-0 text-sm text-[var(--sys-color-text-neutral-medium)]">No se ha seleccionado ningún tipo. Haga clic en el botón para realizar una selección.</p>
+                    </div>
+                  }
                 </div>
               }
             </div>
-          } @else {
-            <div class="grid gap-x-siaf-xl gap-y-siaf-md md:grid-cols-2 xl:grid-cols-3">
-              <siaf-input
-                label="Código"
-                placeholder="Ej.: 9001"
-                [required]="true"
-                [value]="formulario().codigo"
-                (valueChange)="actualizar('codigo', $any($event))"
-              />
-              <siaf-input
-                label="Denominación"
-                placeholder="Nombre del clasificador"
-                [required]="true"
-                [value]="formulario().denominacion"
-                (valueChange)="actualizar('denominacion', $any($event))"
-              />
-              <siaf-input
-                label="Tipo de clasificador"
-                type="select"
-                placeholder="Seleccione el tipo"
-                [required]="true"
-                [options]="tiposClasificador"
-                [value]="formulario().tipoClasificador"
-                (valueChange)="actualizar('tipoClasificador', $any($event))"
-              />
-              <siaf-date-time-picker
-                label="Fecha de vigencia"
-                [required]="true"
-                [fullWidth]="true"
-                [defaultToToday]="false"
-                [value]="formulario().fechaVigencia"
-                (valueChange)="actualizar('fechaVigencia', $event)"
-              />
+
+            <div class="flex flex-col gap-siaf-sm">
+              <h3 class="m-0 text-sm font-bold uppercase text-text">Vigencia</h3>
+              <div class="flex flex-wrap items-start gap-siaf-lg">
+                <siaf-radio-group label="Estado" name="vigencia-estado" [inline]="true" [disabled]="true" [options]="opcionesEstado" value="si" />
+                <div class="flex min-w-[260px] flex-1 flex-col gap-1">
+                  <div class="flex flex-wrap gap-siaf-md">
+                    <div class="min-w-[220px] flex-1"><siaf-date-time-picker placeholder="Fecha desde" [fullWidth]="true" [defaultToToday]="false" [disabled]="true" /></div>
+                    <div class="min-w-[220px] flex-1"><siaf-date-time-picker placeholder="Fecha hasta" [fullWidth]="true" [defaultToToday]="false" [disabled]="true" /></div>
+                  </div>
+                  <span class="text-xs text-[var(--sys-color-text-neutral-low)]">Será asignada cuando se acepte el requerimiento de solicitud.</span>
+                </div>
+              </div>
             </div>
           }
         </div>
@@ -99,23 +96,25 @@
         </div>
       } @else {
         <div class="mt-siaf-md overflow-x-auto rounded-siaf-md border border-[var(--sys-color-divider-default)]">
-          <table class="w-full min-w-[640px] border-collapse text-sm">
+          <table class="w-full min-w-[960px] border-collapse text-sm">
             <thead>
               <tr class="bg-[var(--sys-color-bg-surfaces-surface-high)] text-left">
-                <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Código</th>
-                <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Denominación</th>
-                <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Tipo de clasificador</th>
-                <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Fecha de vigencia</th>
+                <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Proceso</th>
+                <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Categoría presupuestaria</th>
+                @for (campo of camposEstructura; track campo.campo) {
+                  <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">{{ campo.titulo }}</th>
+                }
                 <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm"></th>
               </tr>
             </thead>
             <tbody>
               @for (registro of registros(); track registro.id) {
                 <tr>
-                  <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ registro.codigo }}</td>
-                  <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ registro.denominacion }}</td>
-                  <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ nombreTipo(registro.tipoClasificador) }}</td>
-                  <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ registro.fechaVigencia.split('-').reverse().join('/') }}</td>
+                  <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ nombreProcesos(registro.procesos) }}</td>
+                  <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ registro.categoriaPresupuestaria }}</td>
+                  @for (campo of camposEstructura; track campo.campo) {
+                    <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ registro.estructura[campo.campo].codigo }} — {{ registro.estructura[campo.campo].denominacion }}</td>
+                  }
                   <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-sm py-siaf-sm text-right">
                     <siaf-button variant="text" size="sm" icon="delete" [iconOnly]="true" ariaLabel="Quitar registro" (click)="quitarRegistro(registro.id)" />
                   </td>
@@ -129,11 +128,11 @@
   </siaf-solicitude-page-layout>
 
   <siaf-selection-side-nav
-    [open]="panelBusquedaAbierto()"
-    title="Buscar estructura"
+    [open]="campoAbierto() !== null"
+    [title]="configCampoAbierto()?.titulo ?? ''"
     mode="single"
-    [rows]="estructurasFiltradas()"
-    [columns]="columnasEstructura"
+    [rows]="filasBusqueda()"
+    [columns]="columnasBusqueda"
     [searchValue]="busqueda()"
     [selectedIds]="tempSeleccionIds()"
     (searchChange)="busqueda.set($event)"

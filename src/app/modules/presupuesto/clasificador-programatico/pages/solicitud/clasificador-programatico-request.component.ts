@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 
 import { CurrentUserService } from '../../../../../core/auth/current-user.service';
 import { BreadcrumbItem } from '../../../../../shared/components/breadcrumb/breadcrumb.component';
+import { TableControlsComponent } from '../../../../../shared/components/table-controls/table-controls.component';
 import { FormTableSearchComponent } from '../../../../../shared/components/form-table-search/form-table-search.component';
 import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
 import { SolicitudeInfoCardComponent, SolicitudeInfoField } from '../../../../../shared/components/solicitude-info-card/solicitude-info-card.component';
@@ -20,10 +21,11 @@ import {
   CAMPOS_ESTRUCTURA,
   CATEGORIAS_PRESUPUESTARIAS,
   CampoEstructura,
+  FINALIDAD_FIJA,
   ItemEstructura,
   PROCESOS_CLASIFICADOR,
   RegistroClasificador,
-  nombreProcesos,
+  codigoFuncional,
 } from '../../models/clasificador-programatico.model';
 
 /**
@@ -51,6 +53,7 @@ import {
     SidePanelComponent,
     SnackbarComponent,
     SummaryCardComponent,
+    TableControlsComponent,
     SolicitudeInfoCardComponent,
     SolicitudePageLayoutComponent,
     TextFieldComponent,
@@ -85,6 +88,65 @@ export class ClasificadorProgramaticoRequestComponent {
   readonly saveDisabled = computed(() => this.registros().length === 0);
   // Sin flujo de aprobación real: «Verificar y enviar» siempre deshabilitado.
   readonly verifyDisabled = true;
+
+  // ── Tabla de registros (nodo de Figma 1096:122648) ────────────────
+  readonly busquedaRegistros = signal('');
+  readonly paginaRegistros = signal(1);
+  readonly filasRegistros = signal(10);
+  /** Casillas marcadas: solo visuales, no hay acciones sobre la selección. */
+  readonly filasMarcadas = signal<string[]>([]);
+
+  /** Filas de la tabla con los códigos que muestra el diseño. */
+  readonly filasTabla = computed(() =>
+    this.registros().map((r) => ({
+      id: r.id,
+      categoria: r.categoriaPresupuestaria,
+      programa: r.estructura.programa['codigo'],
+      producto: r.estructura.producto['codigo'],
+      actividad: r.estructura.actividad['codigo'],
+      finalidad: FINALIDAD_FIJA,
+      funcion: codigoFuncional(r.estructura.funcional['funcion']),
+      division: codigoFuncional(r.estructura.funcional['division']),
+      grupo: codigoFuncional(r.estructura.funcional['grupo']),
+      estado: 'SI',
+      fechaDesde: '-',
+    })),
+  );
+  private readonly filasTablaFiltradas = computed(() => {
+    const texto = this.busquedaRegistros().trim().toLowerCase();
+    if (!texto) return this.filasTabla();
+    return this.filasTabla().filter((f) => Object.values(f).some((v) => v.toLowerCase().includes(texto)));
+  });
+  readonly totalRegistros = computed(() => this.filasTablaFiltradas().length);
+  readonly totalPaginasRegistros = computed(() => Math.max(1, Math.ceil(this.totalRegistros() / this.filasRegistros())));
+  readonly filasTablaPagina = computed(() => {
+    const desde = (this.paginaRegistros() - 1) * this.filasRegistros();
+    return this.filasTablaFiltradas().slice(desde, desde + this.filasRegistros());
+  });
+  readonly todasMarcadas = computed(() => this.filasTablaPagina().length > 0 && this.filasTablaPagina().every((f) => this.filasMarcadas().includes(f.id)));
+  readonly algunaMarcada = computed(() => this.filasMarcadas().length > 0 && !this.todasMarcadas());
+
+  buscarRegistros(texto: string): void {
+    this.busquedaRegistros.set(texto);
+    this.paginaRegistros.set(1);
+  }
+
+  cambiarPaginaRegistros(delta: number): void {
+    this.paginaRegistros.update((p) => Math.min(this.totalPaginasRegistros(), Math.max(1, p + delta)));
+  }
+
+  cambiarFilasRegistros(filas: number): void {
+    this.filasRegistros.set(filas);
+    this.paginaRegistros.set(1);
+  }
+
+  marcarTodas(marcar: boolean): void {
+    this.filasMarcadas.set(marcar ? this.filasTablaPagina().map((f) => f.id) : []);
+  }
+
+  marcarFila(id: string, marcar: boolean): void {
+    this.filasMarcadas.update((m) => (marcar ? [...m.filter((x) => x !== id), id] : m.filter((x) => x !== id)));
+  }
 
   // ── Panel «Registro de clasificador» ──────────────────────────────
   readonly agregando = signal(false);
@@ -237,10 +299,6 @@ export class ClasificadorProgramaticoRequestComponent {
     this.mostrarAviso('record-done');
   }
 
-  quitarRegistro(id: string): void {
-    this.registros.update((registros) => registros.filter((r) => r.id !== id));
-  }
-
   grabar(): void {
     if (this.saveDisabled()) return;
     this.mostrarAviso('changes-saved');
@@ -248,10 +306,6 @@ export class ClasificadorProgramaticoRequestComponent {
 
   regresar(): void {
     void this.router.navigate([PROCESS_ROUTE]);
-  }
-
-  nombreProcesos(codigos: readonly string[]): string {
-    return nombreProcesos(codigos);
   }
 
   private seleccionVacia(): Record<CampoEstructura, ItemEstructura | null> {

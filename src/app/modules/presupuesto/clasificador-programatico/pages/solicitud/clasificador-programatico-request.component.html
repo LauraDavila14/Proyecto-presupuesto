@@ -99,33 +99,83 @@
           <p class="m-0 text-sm text-[var(--sys-color-text-neutral-medium)]">Por favor, haga clic en el botón (+) para añadir el registro.</p>
         </div>
       } @else {
-        <div class="mt-siaf-md overflow-x-auto rounded-siaf-md border border-[var(--sys-color-divider-default)]">
-          <table class="w-full min-w-[960px] border-collapse text-sm">
-            <thead>
-              <tr class="bg-[var(--sys-color-bg-surfaces-surface-high)] text-left">
-                <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Proceso</th>
-                <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Categoría presupuestaria</th>
-                @for (campo of camposEstructura; track campo.campo) {
-                  <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">{{ campo.titulo }}</th>
-                }
-                <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm"></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (registro of registros(); track registro.id) {
-                <tr>
-                  <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ nombreProcesos(registro.procesos) }}</td>
-                  <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ registro.categoriaPresupuestaria }}</td>
-                  @for (campo of camposEstructura; track campo.campo) {
-                    <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ resumen(campo.campo, registro.estructura[campo.campo]) }}</td>
-                  }
-                  <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-sm py-siaf-sm text-right">
-                    <siaf-button variant="text" size="sm" icon="delete" [iconOnly]="true" ariaLabel="Quitar registro" (click)="quitarRegistro(registro.id)" />
-                  </td>
+        <div class="mt-siaf-md flex flex-col gap-siaf-md">
+          <siaf-form-table-search [value]="busquedaRegistros()" (valueChange)="buscarRegistros($event)" />
+
+          <siaf-table-controls
+            [checked]="todasMarcadas()"
+            [indeterminate]="algunaMarcada()"
+            [selectedCount]="filasMarcadas().length"
+            [page]="paginaRegistros()"
+            [pageSize]="filasRegistros()"
+            [totalItems]="totalRegistros()"
+            [totalPages]="totalPaginasRegistros()"
+            (selectionChange)="marcarTodas($event)"
+            (previous)="cambiarPaginaRegistros(-1)"
+            (next)="cambiarPaginaRegistros(1)"
+          />
+
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[960px] border-collapse text-left text-sm">
+              <thead>
+                <tr class="bg-[var(--sys-color-bg-surfaces-surface-high)] text-center">
+                  <th rowspan="2" class="w-12 border-b border-[var(--sys-color-divider-strong)] px-siaf-sm"></th>
+                  <th colspan="5" class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Estructura programática</th>
+                  <th colspan="3" class="border-b border-l border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Clasificador funcional</th>
+                  <th colspan="2" class="border-b border-l border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Vigencia</th>
                 </tr>
-              }
-            </tbody>
-          </table>
+                <tr class="bg-[var(--sys-color-bg-surfaces-surface-high)] text-left">
+                  <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Categ. pptal</th>
+                  <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Programa</th>
+                  <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Producto/Proyecto</th>
+                  <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Actividad/Acción</th>
+                  <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Finalidad</th>
+                  <th class="border-b border-l border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Función</th>
+                  <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">División</th>
+                  <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Grupo</th>
+                  <th class="border-b border-l border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Estado</th>
+                  <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Fecha desde</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (fila of filasTablaPagina(); track fila.id) {
+                  <tr>
+                    <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-sm py-siaf-sm">
+                      <siaf-checkbox [checked]="filasMarcadas().includes(fila.id)" (checkedChange)="marcarFila(fila.id, $event)" />
+                    </td>
+                    <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ fila.categoria }}</td>
+                    <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ fila.programa }}</td>
+                    <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ fila.producto }}</td>
+                    <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ fila.actividad }}</td>
+                    <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ fila.finalidad }}</td>
+                    <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ fila.funcion }}</td>
+                    <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ fila.division }}</td>
+                    <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ fila.grupo }}</td>
+                    <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ fila.estado }}</td>
+                    <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ fila.fechaDesde }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="11" class="px-siaf-md py-siaf-lg text-center text-text-muted">No se encontraron resultados.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <siaf-pagination
+            navigation="Activate"
+            position="Bottom"
+            [rowPage]="true"
+            [page]="paginaRegistros()"
+            [pageSize]="filasRegistros()"
+            [totalItems]="totalRegistros()"
+            [totalPages]="totalPaginasRegistros()"
+            [rowsPerPage]="filasRegistros()"
+            (previous)="cambiarPaginaRegistros(-1)"
+            (next)="cambiarPaginaRegistros(1)"
+            (rowsPerPageChange)="cambiarFilasRegistros($event)"
+          />
         </div>
       }
     </section>

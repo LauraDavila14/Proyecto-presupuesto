@@ -155,3 +155,11 @@ export function nombreProcesos(codigos: readonly string[]): string {
     .map((p) => p.label)
     .join(', ');
 }
+
+/** Código (primer término) de un texto del clasificador funcional, p. ej. «019 Vivienda y desarrollo urbano» → «019». */
+export function codigoFuncional(texto: string): string {
+  return texto.split(' ')[0] ?? '';
+}
+
+/** Finalidad: no se elige en el formulario; el diseño la muestra fija (nodo de Figma 1096:122648). */
+export const FINALIDAD_FIJA = '0000000';

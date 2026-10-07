@@ -12,6 +12,10 @@ import { ButtonComponent } from '../../../../../shared/ui/button/button.componen
 import { CheckboxComponent } from '../../../../../shared/ui/checkbox/checkbox.component';
 import { DateTimePickerComponent } from '../../../../../shared/ui/date-time-picker/date-time-picker.component';
 import { RadioComponent, RadioOption } from '../../../../../shared/ui/radio/radio.component';
+import { RequestApprovalModalsComponent } from '../../../../../shared/components/request-approval-modals/request-approval-modals.component';
+import { SolicitudeHeaderState } from '../../../../../shared/components/solicitude-header/solicitude-header.component';
+import { DocumentSummaryCardComponent } from '../../../../../shared/ui/document-summary-card/document-summary-card.component';
+import { ReadonlyFieldComponent } from '../../../../../shared/ui/readonly-field/readonly-field.component';
 import { SidePanelComponent } from '../../../../../shared/ui/side-panel/side-panel.component';
 import { SnackbarComponent, SnackbarVariant } from '../../../../../shared/ui/snackbar/snackbar.component';
 import { SummaryCardComponent, SummaryCardField } from '../../../../../shared/ui/summary-card/summary-card.component';
@@ -46,6 +50,9 @@ import {
   imports: [
     ButtonComponent,
     CheckboxComponent,
+    DocumentSummaryCardComponent,
+    ReadonlyFieldComponent,
+    RequestApprovalModalsComponent,
     DateTimePickerComponent,
     FormTableSearchComponent,
     PaginationComponent,
@@ -86,8 +93,23 @@ export class ClasificadorProgramaticoRequestComponent {
   private correlativo = 0;
 
   readonly saveDisabled = computed(() => this.registros().length === 0);
-  // Sin flujo de aprobación real: «Verificar y enviar» siempre deshabilitado.
-  readonly verifyDisabled = true;
+
+  // ── Estado del documento (nodo de Figma 1232:139248) ───────────────
+  // Nuevo → «Grabar» (modal) → Elaborado (solo lectura: Eliminar, Editar, Verificar y enviar). «Editar» vuelve a
+  // la edición con los registros. No hay backend: el N°, «Elaborado por» y la fecha viven en memoria.
+  readonly elaborado = signal(false);
+  readonly enEdicion = signal(false);
+  readonly numeroDocumento = signal('');
+  readonly elaboradoPor = signal('');
+  readonly fechaElaboracion = signal('');
+  readonly headerState = computed<SolicitudeHeaderState>(() => (this.elaborado() ? 'elaborated' : this.enEdicion() ? 'edit' : 'new'));
+  /** «Verificar y enviar» solo se habilita con el documento elaborado. */
+  readonly verifyDisabled = computed(() => !this.elaborado());
+
+  readonly modalGrabar = signal(false);
+  readonly modalVerificar = signal(false);
+  readonly modalEliminar = signal(false);
+  private numeroSiguiente = 1;
 
   // ── Tabla de registros (nodo de Figma 1096:122648) ────────────────
   readonly busquedaRegistros = signal('');
@@ -301,11 +323,47 @@ export class ClasificadorProgramaticoRequestComponent {
 
   grabar(): void {
     if (this.saveDisabled()) return;
-    this.mostrarAviso('changes-saved');
+    this.modalGrabar.set(true);
+  }
+
+  onConfirmarGrabar(): void {
+    this.modalGrabar.set(false);
+    if (!this.elaborado()) {
+      this.numeroDocumento.set(String(this.numeroSiguiente++).padStart(4, '0'));
+      this.elaboradoPor.set(this.currentUser.name);
+    }
+    this.fechaElaboracion.set(this.fechaYHoraActual());
+    this.agregando.set(false);
+    this.enEdicion.set(false);
+    this.elaborado.set(true);
+    this.mostrarAviso('creation-elaborated');
+  }
+
+  editar(): void {
+    this.elaborado.set(false);
+    this.enEdicion.set(true);
+  }
+
+  onConfirmarVerificar(): void {
+    this.modalVerificar.set(false);
+    this.mostrarAviso('creation-verified');
+    this.regresar();
+  }
+
+  onConfirmarEliminar(): void {
+    this.modalEliminar.set(false);
+    this.mostrarAviso('creation-deleted');
+    this.regresar();
   }
 
   regresar(): void {
     void this.router.navigate([PROCESS_ROUTE]);
+  }
+
+  private fechaYHoraActual(): string {
+    const ahora = new Date();
+    const dos = (n: number): string => String(n).padStart(2, '0');
+    return `${dos(ahora.getDate())}/${dos(ahora.getMonth() + 1)}/${ahora.getFullYear()}   ${dos(ahora.getHours())}:${dos(ahora.getMinutes())}:${dos(ahora.getSeconds())}`;
   }
 
   private seleccionVacia(): Record<CampoEstructura, ItemEstructura | null> {

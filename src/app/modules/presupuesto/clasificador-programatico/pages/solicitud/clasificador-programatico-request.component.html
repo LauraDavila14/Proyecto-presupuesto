@@ -2,18 +2,26 @@
   <siaf-solicitude-page-layout
     [breadcrumbs]="breadcrumbs"
     role="creator"
-    state="new"
+    [state]="headerState()"
     [heading]="heading"
     secondaryText="Creación"
     [showReturn]="false"
     [saveDisabled]="saveDisabled()"
-    [verifyDisabled]="verifyDisabled"
+    [verifyDisabled]="verifyDisabled()"
     verifyLabel="Verificar y enviar"
     (returned)="regresar()"
     (canceled)="regresar()"
     (saved)="grabar()"
+    (edited)="editar()"
+    (verified)="modalVerificar.set(true)"
+    (deleted)="modalEliminar.set(true)"
   >
-    <siaf-solicitude-info-card [fields]="camposEntidad()" [captureOpenDate]="true" />
+    <section class="grid gap-siaf-md" [class.lg:grid-cols-[1fr_360px]]="elaborado()">
+      <siaf-solicitude-info-card [fields]="camposEntidad()" [captureOpenDate]="true" />
+      @if (elaborado()) {
+        <siaf-document-summary-card [documentNumber]="numeroDocumento()" status="Elaborado" />
+      }
+    </section>
 
     <section class="rounded-siaf-md bg-surface p-siaf-lg">
       <header class="flex items-center justify-between gap-siaf-md">
@@ -23,7 +31,7 @@
             <siaf-button variant="outline" size="md" (click)="cerrarPanel()">Cancelar</siaf-button>
             <siaf-button variant="filled" size="md" [disabled]="!puedeAceptar()" (click)="confirmarRegistro()">Aceptar</siaf-button>
           </div>
-        } @else {
+        } @else if (!elaborado()) {
           <siaf-button variant="filled" icon="add" [iconOnly]="true" ariaLabel="Agregar registro de clasificador" (click)="abrirPanel()" />
         }
       </header>
@@ -179,7 +187,28 @@
         </div>
       }
     </section>
+
+    @if (elaborado()) {
+      <section class="flex flex-col gap-siaf-xs rounded-siaf-md bg-surface p-siaf-lg">
+        <readonly-field caption="Elaborado por" [value]="elaboradoPor().toUpperCase()" />
+        <readonly-field caption="Fecha" [value]="fechaElaboracion()" />
+      </section>
+    }
   </siaf-solicitude-page-layout>
+
+  <siaf-request-approval-modals
+    [saveOpen]="modalGrabar()"
+    [verifyOpen]="modalVerificar()"
+    [deleteOpen]="modalEliminar()"
+    requestType="creación"
+    [requestNumber]="numeroDocumento()"
+    (saveConfirmed)="onConfirmarGrabar()"
+    (verifyConfirmed)="onConfirmarVerificar()"
+    (deleteConfirmed)="onConfirmarEliminar()"
+    (saveClosed)="modalGrabar.set(false)"
+    (verifyClosed)="modalVerificar.set(false)"
+    (deleteClosed)="modalEliminar.set(false)"
+  />
 
   <siaf-side-panel
     [open]="campoAbierto() !== null"

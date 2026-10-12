@@ -220,7 +220,12 @@ export class ClasificadorProgramaticoRequestComponent {
   readonly hayFilaElegida = computed(() => !!this.tempSeleccionId());
 
   readonly configCampoAbierto = computed(() => CAMPOS_ESTRUCTURA.find((c) => c.campo === this.campoAbierto()) ?? null);
-  readonly columnasBusqueda = computed(() => this.configCampoAbierto()?.columnas ?? []);
+  /** En la actividad de PP la grilla suma los datos del clasificador funcional asociado (Figma 1274:158317). */
+  private readonly columnasFuncionalesActividad = COLUMNAS_FUNCIONAL.map((c) => ({ ...c, widthClass: 'w-[200px]' }));
+  readonly columnasBusqueda = computed<{ key: string; label: string; widthClass?: string }[]>(() => {
+    const columnas = this.configCampoAbierto()?.columnas ?? [];
+    return this.actividadPP() ? [...columnas, ...this.columnasFuncionalesActividad] : columnas;
+  });
 
   // Filtros de la búsqueda (panel «Filtros» de `siaf-side-panel`). Se editan en un borrador y recién «Aplicar» los pasa
   // a la grilla. Producto/Proyecto (PP): Tipo, Código y Nombre. Actividad (PP, nodo de Figma 1311:108206): abre con el
@@ -256,7 +261,8 @@ export class ClasificadorProgramaticoRequestComponent {
   readonly puedeBorrarFiltros = computed(() => {
     const f = this.filtros();
     const extra = f.codigo || f.nombre || f.funcion || f.division || f.grupo;
-    return this.actividadPP() ? !!extra : !!(f.tipo || extra);
+    // En la actividad de PP el botón se muestra siempre (Figma 1274:158317); solo quita lo extra.
+    return this.actividadPP() ? true : !!(f.tipo || extra);
   });
   /** Opciones de los desplegables: las del catálogo, del tipo elegido en el borrador. */
   readonly opcionesCodigo = computed(() => this.valoresDeColumna((i) => i['codigo']));
@@ -283,13 +289,20 @@ export class ClasificadorProgramaticoRequestComponent {
     );
     if (!texto) return filtrado;
     const claves = this.columnasBusqueda().map((c) => c.key);
-    return filtrado.filter((i) => claves.some((clave) => i[clave].toLowerCase().includes(texto)));
+    return filtrado.filter((i) => claves.some((clave) => this.textoDeColumna(i, clave).toLowerCase().includes(texto)));
   });
   readonly totalFilas = computed(() => this.filasFiltradas().length);
   readonly totalPaginas = computed(() => Math.max(1, Math.ceil(this.totalFilas() / this.filasPorPagina())));
   readonly filasBusqueda = computed<ItemEstructura[]>(() => {
     const desde = (this.pagina() - 1) * this.filasPorPagina();
-    return this.filasFiltradas().slice(desde, desde + this.filasPorPagina());
+    const pagina = this.filasFiltradas().slice(desde, desde + this.filasPorPagina());
+    if (!this.actividadPP()) return pagina;
+    return pagina.map((i) => ({
+      ...i,
+      funcion: this.datoFuncional(i, 'funcion'),
+      division: this.datoFuncional(i, 'division'),
+      grupo: this.datoFuncional(i, 'grupo'),
+    }));
   });
 
   // «Vigencia»: solo lectura (Estado «Sí»; las fechas las asigna el sistema al aceptarse la solicitud).
@@ -352,7 +365,7 @@ export class ClasificadorProgramaticoRequestComponent {
     this.pagina.set(1);
     const esActividadPP = campo === 'actividad' && this.categoria() === 'PP';
     this.actividadPP.set(esActividadPP);
-    this.filasPorPagina.set(esActividadPP ? 25 : (CAMPOS_ESTRUCTURA.find((c) => c.campo === campo)?.filasPorPagina ?? 10));
+    this.filasPorPagina.set(esActividadPP ? 10 : (CAMPOS_ESTRUCTURA.find((c) => c.campo === campo)?.filasPorPagina ?? 10));
     // Actividad de PP abre con el filtro de Tipo ya aplicado y el panel visible.
     this.filtros.set(esActividadPP ? { ...FILTROS_ACTIVIDAD_PP } : { ...SIN_FILTROS });
     this.filtrosBorrador.set(esActividadPP ? { ...FILTROS_ACTIVIDAD_PP } : { ...FILTROS_PRODUCTO });
@@ -425,6 +438,11 @@ export class ClasificadorProgramaticoRequestComponent {
   borrarFiltros(): void {
     this.filtros.set(this.actividadPP() ? { ...FILTROS_ACTIVIDAD_PP } : { ...SIN_FILTROS });
     this.pagina.set(1);
+  }
+
+  /** Texto de una celda: la propiedad del catálogo o, para las columnas funcionales, el dato de su clasificador. */
+  private textoDeColumna(item: ItemEstructura, clave: string): string {
+    return clave === 'funcion' || clave === 'division' || clave === 'grupo' ? this.datoFuncional(item, clave) : (item[clave] ?? '');
   }
 
   /** Función, división o grupo del clasificador funcional asociado a una actividad. */

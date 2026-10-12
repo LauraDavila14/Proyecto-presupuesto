@@ -16,6 +16,7 @@ import { RequestApprovalModalsComponent } from '../../../../../shared/components
 import { SolicitudeHeaderState } from '../../../../../shared/components/solicitude-header/solicitude-header.component';
 import { DocumentSummaryCardComponent } from '../../../../../shared/ui/document-summary-card/document-summary-card.component';
 import { ReadonlyFieldComponent } from '../../../../../shared/ui/readonly-field/readonly-field.component';
+import { TagComponent } from '../../../../../shared/ui/tag/tag.component';
 import { SidePanelComponent } from '../../../../../shared/ui/side-panel/side-panel.component';
 import { SnackbarComponent, SnackbarVariant } from '../../../../../shared/ui/snackbar/snackbar.component';
 import { SummaryCardComponent, SummaryCardField } from '../../../../../shared/ui/summary-card/summary-card.component';
@@ -34,6 +35,13 @@ import {
   RegistroClasificador,
   codigoFuncional,
 } from '../../models/clasificador-programatico.model';
+
+/** Filtros de la búsqueda de Producto/Proyecto; vacío = sin filtrar. */
+interface FiltrosBusqueda {
+  tipo: string;
+  codigo: string;
+  nombre: string;
+}
 
 /**
  * Solicitud de clasificador programático, tipo de acción «Creación» (nodo de Figma 1096:123152): pantalla de
@@ -64,6 +72,7 @@ import {
     SnackbarComponent,
     SummaryCardComponent,
     TableControlsComponent,
+    TagComponent,
     SolicitudeInfoCardComponent,
     SolicitudePageLayoutComponent,
     TextFieldComponent,
@@ -205,15 +214,42 @@ export class ClasificadorProgramaticoRequestComponent {
   readonly configCampoAbierto = computed(() => CAMPOS_ESTRUCTURA.find((c) => c.campo === this.campoAbierto()) ?? null);
   readonly columnasBusqueda = computed(() => this.configCampoAbierto()?.columnas ?? []);
 
+  // Filtros de la búsqueda de Producto/Proyecto (panel «Filtros» de `siaf-side-panel`): Tipo, Código y Nombre.
+  // Se editan en un borrador y recién «Aplicar» los pasa a la grilla.
+  readonly opcionesTipo: RadioOption[] = [
+    { label: 'Producto predeterminado', value: 'Producto' },
+    { label: 'Proyecto', value: 'Proyecto' },
+  ];
+  readonly filtrosAbiertos = signal(false);
+  readonly filtros = signal<FiltrosBusqueda>({ tipo: '', codigo: '', nombre: '' });
+  readonly filtrosBorrador = signal<FiltrosBusqueda>({ tipo: 'Producto', codigo: '', nombre: '' });
+  readonly hayFiltrosAvanzados = computed(() => !!this.configCampoAbierto()?.filtrosAvanzados);
+  readonly navFiltrosVisible = computed(() => this.hayFiltrosAvanzados() && this.filtrosAbiertos());
+  readonly chipsFiltros = computed(() => {
+    const f = this.filtros();
+    return [
+      f.tipo && (this.opcionesTipo.find((o) => o.value === f.tipo)?.label ?? f.tipo),
+      f.codigo,
+      f.nombre,
+    ].filter(Boolean) as string[];
+  });
+  /** Opciones de los desplegables Código y Nombre: las del catálogo, del tipo elegido en el borrador. */
+  readonly opcionesCodigo = computed(() => this.valoresDeColumna('codigo'));
+  readonly opcionesNombre = computed(() => this.valoresDeColumna('nombre'));
+
   // Paginación de la ventana de selección (en memoria).
   readonly pagina = signal(1);
   readonly filasPorPagina = signal(10);
   private readonly filasFiltradas = computed<ItemEstructura[]>(() => {
     const catalogo = this.configCampoAbierto()?.catalogo ?? [];
+    const f = this.filtros();
     const texto = this.busqueda().trim().toLowerCase();
-    if (!texto) return catalogo;
+    const filtrado = catalogo.filter(
+      (i) => (!f.tipo || i['tipo'] === f.tipo) && (!f.codigo || i['codigo'] === f.codigo) && (!f.nombre || i['nombre'] === f.nombre),
+    );
+    if (!texto) return filtrado;
     const claves = this.columnasBusqueda().map((c) => c.key);
-    return catalogo.filter((i) => claves.some((clave) => i[clave].toLowerCase().includes(texto)));
+    return filtrado.filter((i) => claves.some((clave) => i[clave].toLowerCase().includes(texto)));
   });
   readonly totalFilas = computed(() => this.filasFiltradas().length);
   readonly totalPaginas = computed(() => Math.max(1, Math.ceil(this.totalFilas() / this.filasPorPagina())));
@@ -280,6 +316,9 @@ export class ClasificadorProgramaticoRequestComponent {
   abrirBusqueda(campo: CampoEstructura): void {
     this.busqueda.set('');
     this.pagina.set(1);
+    this.filasPorPagina.set(CAMPOS_ESTRUCTURA.find((c) => c.campo === campo)?.filasPorPagina ?? 10);
+    this.filtros.set({ tipo: '', codigo: '', nombre: '' });
+    this.filtrosAbiertos.set(false);
     this.tempSeleccionId.set(this.seleccion()[campo]?.id ?? null);
     this.campoAbierto.set(campo);
   }
@@ -321,8 +360,41 @@ export class ClasificadorProgramaticoRequestComponent {
     return CAMPOS_ESTRUCTURA.find((c) => c.campo === campo)!.resumen(item);
   }
 
+  abrirFiltros(): void {
+    const f = this.filtros();
+    this.filtrosBorrador.set(f.tipo || f.codigo || f.nombre ? { ...f } : { tipo: 'Producto', codigo: '', nombre: '' });
+    this.filtrosAbiertos.set(true);
+  }
+
+  cerrarFiltros(): void {
+    this.filtrosAbiertos.set(false);
+  }
+
+  cambiarFiltro<K extends keyof FiltrosBusqueda>(campo: K, valor: FiltrosBusqueda[K]): void {
+    this.filtrosBorrador.update((f) => ({ ...f, [campo]: valor, ...(campo === 'tipo' ? { codigo: '', nombre: '' } : {}) }));
+  }
+
+  aplicarFiltros(): void {
+    this.filtros.set({ ...this.filtrosBorrador() });
+    this.pagina.set(1);
+    this.filtrosAbiertos.set(false);
+  }
+
+  borrarFiltros(): void {
+    this.filtros.set({ tipo: '', codigo: '', nombre: '' });
+    this.pagina.set(1);
+  }
+
+  private valoresDeColumna(clave: 'codigo' | 'nombre'): { label: string; value: string }[] {
+    const tipo = this.filtrosBorrador().tipo;
+    const catalogo = this.configCampoAbierto()?.catalogo ?? [];
+    const valores = catalogo.filter((i) => !tipo || i['tipo'] === tipo).map((i) => i[clave]);
+    return [...new Set(valores)].map((v) => ({ label: v, value: v }));
+  }
+
   cerrarBusqueda(): void {
     this.campoAbierto.set(null);
+    this.filtrosAbiertos.set(false);
   }
 
   seleccionarFila(id: string): void {

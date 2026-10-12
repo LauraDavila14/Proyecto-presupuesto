@@ -223,6 +223,11 @@
     [open]="campoAbierto() !== null"
     [title]="configCampoAbierto()?.tituloSeleccion ?? ''"
     [confirmDisabled]="!hayFilaElegida()"
+    [showNav]="navFiltrosVisible()"
+    navTitle="Filtros"
+    navConfirmLabel="Aplicar"
+    (navConfirmed)="aplicarFiltros()"
+    (navCanceled)="cerrarFiltros()"
     (closed)="cerrarBusqueda()"
     (canceled)="cerrarBusqueda()"
     (confirmed)="onAceptarBusqueda()"
@@ -232,7 +237,20 @@
       [showFilter]="configCampoAbierto()?.mostrarFiltro ?? true"
       [showMore]="configCampoAbierto()?.mostrarMasOpciones ?? true"
       (valueChange)="buscar($event)"
+      (filter)="abrirFiltros()"
     />
+
+    @if (chipsFiltros().length > 0) {
+      <div class="mt-siaf-md flex items-center gap-siaf-sm">
+        <span class="shrink-0 text-xs font-bold uppercase tracking-wide text-text">Filtros por</span>
+        <div class="flex min-w-0 flex-1 flex-wrap items-center gap-siaf-sm">
+          @for (chip of chipsFiltros(); track chip) {
+            <siaf-tag variant="input">{{ chip }}</siaf-tag>
+          }
+        </div>
+        <siaf-button variant="outline" size="sm" icon="delete" (click)="borrarFiltros()">Borrar filtros</siaf-button>
+      </div>
+    }
 
     @if (configCampoAbierto()?.paginacionSuperior) {
       <div class="mt-siaf-md">
@@ -302,6 +320,30 @@
         (previous)="cambiarPagina(-1)"
         (next)="cambiarPagina(1)"
         (rowsPerPageChange)="cambiarFilasPorPagina($event)"
+      />
+    </div>
+
+    <div sidePanelNav class="flex flex-col gap-siaf-md p-siaf-md">
+      <siaf-radio-group
+        label="Tipo"
+        name="busqueda-filtro-tipo"
+        [options]="opcionesTipo"
+        [value]="filtrosBorrador().tipo"
+        (valueChange)="cambiarFiltro('tipo', $event)"
+      />
+      <siaf-input
+        type="select"
+        label="Código"
+        [options]="opcionesCodigo()"
+        [value]="filtrosBorrador().codigo"
+        (valueChange)="cambiarFiltro('codigo', $any($event))"
+      />
+      <siaf-input
+        type="select"
+        label="Nombre"
+        [options]="opcionesNombre()"
+        [value]="filtrosBorrador().nombre"
+        (valueChange)="cambiarFiltro('nombre', $any($event))"
       />
     </div>
   </siaf-side-panel>

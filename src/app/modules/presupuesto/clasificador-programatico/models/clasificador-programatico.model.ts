@@ -42,6 +42,10 @@ export interface CampoEstructuraConfig {
   mostrarMasOpciones: boolean;
   /** Paginación también arriba de la grilla (solo el clasificador funcional). */
   paginacionSuperior: boolean;
+  /** Con panel «Filtros» (Tipo, Código, Nombre) detrás del ícono de filtro de la búsqueda; nodos de Figma 1274:156515 y 1274:157301. */
+  filtrosAvanzados?: boolean;
+  /** Filas por página con que abre la búsqueda (por defecto 10). */
+  filasPorPagina?: number;
   /** Texto con el que se muestra la fila elegida en el formulario y en la tabla de registros. */
   resumen: (item: ItemEstructura) => string;
 }
@@ -83,6 +87,8 @@ export const CAMPOS_ESTRUCTURA: CampoEstructuraConfig[] = [
     mostrarFiltro: true,
     mostrarMasOpciones: false,
     paginacionSuperior: false,
+    filtrosAvanzados: true,
+    filasPorPagina: 25,
     resumen: resumenCodigoNombre,
     catalogo: [
       { id: 'pro-1', tipo: 'Producto', codigo: '3000001', nombre: 'Acciones comunes' },
@@ -92,6 +98,9 @@ export const CAMPOS_ESTRUCTURA: CampoEstructuraConfig[] = [
       { id: 'pro-5', tipo: 'Producto', codigo: '3000002', nombre: 'Población informada sobre salud sexual, salud reproductiva y métodos de planificación familiar' },
       { id: 'pro-6', tipo: 'Producto', codigo: '3000005', nombre: 'Adolescentes acceden a servicios de salud para prevención del embarazo' },
       { id: 'pro-7', tipo: 'Producto', codigo: '3033172', nombre: 'Atención prenatal reenfocada' },
+      { id: 'pro-8', tipo: 'Proyecto', codigo: '2102', nombre: 'Mejoramiento de la infraestructura vial' },
+      { id: 'pro-9', tipo: 'Proyecto', codigo: '2330', nombre: 'Construcción de vivienda de interés social' },
+      { id: 'pro-10', tipo: 'Proyecto', codigo: '2451', nombre: 'Ampliación del servicio de agua potable y saneamiento' },
     ],
   },
   {

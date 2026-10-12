@@ -217,9 +217,14 @@ export class ClasificadorProgramaticoRequestComponent {
   );
   readonly columnasFuncional = COLUMNAS_FUNCIONAL;
   readonly seleccion = signal<Record<CampoEstructura, ItemEstructura | null>>(this.seleccionVacia());
+  /**
+   * Clasificador funcional asignado: el del Proyecto elegido en Producto/Proyecto (apenas se elige, Figma 1274:162180) o,
+   * con un Producto, el de la actividad elegida.
+   */
   readonly funcionalAsignado = computed<ItemEstructura | null>(() => {
-    const funcionalId = this.seleccion().actividad?.['funcionalId'];
-    return FUNCIONALES.find((f) => f.id === funcionalId) ?? null;
+    const sel = this.seleccion();
+    const origen = sel.producto?.['tipo'] === 'Proyecto' ? sel.producto : sel.actividad;
+    return FUNCIONALES.find((f) => f.id === origen?.['funcionalId']) ?? null;
   });
   readonly campoAbierto = signal<CampoEstructura | null>(null);
   readonly busqueda = signal('');

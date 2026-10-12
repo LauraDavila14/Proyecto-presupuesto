@@ -52,6 +52,8 @@ const CODIGO_PRODUCTO_VACIO = '0000000';
 
 const SIN_FILTROS: FiltrosBusqueda = { tipo: '', codigo: '', nombre: '', funcion: '', division: '', grupo: '' };
 const FILTROS_PRODUCTO: FiltrosBusqueda = { ...SIN_FILTROS, tipo: 'Producto' };
+/** Tipo de actividad de APNOP sin datos funcionales: ni columnas ni filtros de Función, División y Grupo (Figma 1309:104419). */
+const TIPO_MAESTRO = 'Actividad (Maestro)';
 const FILTROS_ACTIVIDAD_PP: FiltrosBusqueda = { ...SIN_FILTROS, tipo: 'Actividad' };
 const FILTROS_INVERSION: FiltrosBusqueda = { ...SIN_FILTROS, tipo: 'Acción inversión' };
 
@@ -242,10 +244,10 @@ export class ClasificadorProgramaticoRequestComponent {
    * (Figma 1274:161392). Los desplegables correspondientes del panel siguen el Tipo marcado en el borrador.
    */
   readonly mostrarFuncionales = computed(
-    () => this.actividadPP() || (this.actividadApnop() && this.chipsFiltros().length > 0) || this.campoAbierto() === 'proyecto' || (this.campoAbierto() === 'producto' && this.filtros().tipo === 'Proyecto'),
+    () => this.actividadPP() || (this.actividadApnop() && this.chipsFiltros().length > 0 && this.filtros().tipo !== TIPO_MAESTRO) || this.campoAbierto() === 'proyecto' || (this.campoAbierto() === 'producto' && this.filtros().tipo === 'Proyecto'),
   );
   readonly filtrosFuncionalesVisibles = computed(
-    () => this.actividadPP() || this.actividadApnop() || (this.campoAbierto() === 'producto' && this.filtrosBorrador().tipo === 'Proyecto'),
+    () => this.actividadPP() || (this.actividadApnop() && this.filtrosBorrador().tipo !== TIPO_MAESTRO) || (this.campoAbierto() === 'producto' && this.filtrosBorrador().tipo === 'Proyecto'),
   );
   readonly columnasBusqueda = computed<{ key: string; label: string; widthClass?: string }[]>(() => {
     const columnas = this.configCampoAbierto()?.columnas ?? [];
@@ -263,7 +265,7 @@ export class ClasificadorProgramaticoRequestComponent {
   private readonly opcionesTipoActividad: RadioOption[] = [{ label: 'Actividad predeterminada', value: 'Actividad' }];
   private readonly opcionesTipoApnop: RadioOption[] = [
     { label: 'Actividad predeterminada', value: 'Actividad' },
-    { label: 'Actividad (Maestro)', value: 'Actividad (Maestro)' },
+    { label: 'Actividad (Maestro)', value: TIPO_MAESTRO },
   ];
   private readonly opcionesTipoInversion: RadioOption[] = [
     { label: 'Acción Inversión', value: 'Acción inversión' },

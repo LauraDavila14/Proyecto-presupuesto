@@ -218,12 +218,12 @@ export class ClasificadorProgramaticoRequestComponent {
   readonly columnasFuncional = COLUMNAS_FUNCIONAL;
   readonly seleccion = signal<Record<CampoEstructura, ItemEstructura | null>>(this.seleccionVacia());
   /**
-   * Clasificador funcional asignado: el del Proyecto elegido en Producto/Proyecto (apenas se elige, Figma 1274:162180) o,
-   * con un Producto, el de la actividad elegida.
+   * Clasificador funcional asignado: el del Proyecto elegido (apenas se elige, Figma 1274:162180; en AC y APNOP,
+   * Figma 1315:114230) o, con un Producto, el de la actividad elegida.
    */
   readonly funcionalAsignado = computed<ItemEstructura | null>(() => {
     const sel = this.seleccion();
-    const origen = sel.producto?.['tipo'] === 'Proyecto' ? sel.producto : sel.actividad;
+    const origen = sel.proyecto ?? (sel.producto?.['tipo'] === 'Proyecto' ? sel.producto : sel.actividad);
     return FUNCIONALES.find((f) => f.id === origen?.['funcionalId']) ?? null;
   });
   readonly campoAbierto = signal<CampoEstructura | null>(null);
@@ -239,7 +239,7 @@ export class ClasificadorProgramaticoRequestComponent {
    * (Figma 1274:161392). Los desplegables correspondientes del panel siguen el Tipo marcado en el borrador.
    */
   readonly mostrarFuncionales = computed(
-    () => this.actividadPP() || (this.campoAbierto() === 'producto' && this.filtros().tipo === 'Proyecto'),
+    () => this.actividadPP() || this.campoAbierto() === 'proyecto' || (this.campoAbierto() === 'producto' && this.filtros().tipo === 'Proyecto'),
   );
   readonly filtrosFuncionalesVisibles = computed(
     () => this.actividadPP() || (this.campoAbierto() === 'producto' && this.filtrosBorrador().tipo === 'Proyecto'),
@@ -268,11 +268,12 @@ export class ClasificadorProgramaticoRequestComponent {
   readonly opcionesTipo = computed(() =>
     this.actividadPP() ? this.opcionesTipoActividad : this.actividadInversion() ? this.opcionesTipoInversion : this.opcionesTipoProducto,
   );
-  readonly etiquetaTipo = computed(() => (this.actividadInversion() ? 'Seleccionar tipo' : 'Tipo'));
+  /** En PP el panel dice «Seleccionar tipo» (Figma 1274:163749); en AC y APNOP, «Tipo» (Figma 1315:115224). */
+  readonly etiquetaTipo = computed(() => (this.actividadInversion() && this.categoria() === 'PP' ? 'Seleccionar tipo' : 'Tipo'));
   readonly paginacionSuperior = computed(() => this.actividadInversion() || !!this.configCampoAbierto()?.paginacionSuperior);
   readonly tituloBusqueda = computed(() => {
     if (this.actividadPP()) return 'Seleccionar actividad predeterminada';
-    if (this.actividadInversion()) return 'Seleccionar actividad/acción inversión/ obra';
+    if (this.actividadInversion()) return this.categoria() === 'PP' ? 'Seleccionar actividad/acción inversión/ obra' : 'Seleccionar acción inversión/obra';
     return this.configCampoAbierto()?.tituloSeleccion ?? '';
   });
   /** Catálogo de la búsqueda abierta; en actividad, solo los tipos que corresponden al modo (AC y APNOP: «Actividad»). */
@@ -408,7 +409,9 @@ export class ClasificadorProgramaticoRequestComponent {
     this.pagina.set(1);
     // En PP, la actividad se busca distinto según el ítem elegido en Producto/Proyecto.
     const eligioProyecto = this.seleccion().producto?.['tipo'] === 'Proyecto';
-    const modo: ModoActividad = campo === 'actividad' && this.categoria() === 'PP' ? (eligioProyecto ? 'inversion' : 'predeterminada') : 'ninguno';
+    // AC y APNOP buscan siempre acción de inversión u obra; PP, según el ítem de Producto/Proyecto.
+    const modo: ModoActividad =
+      campo !== 'actividad' ? 'ninguno' : this.categoria() !== 'PP' || eligioProyecto ? 'inversion' : 'predeterminada';
     this.modoActividad.set(modo);
     const configCampo = CAMPOS_ESTRUCTURA.find((c) => c.campo === campo);
     this.filasPorPagina.set(modo === 'predeterminada' ? 10 : modo === 'inversion' ? 25 : (configCampo?.filasPorPagina ?? 10));

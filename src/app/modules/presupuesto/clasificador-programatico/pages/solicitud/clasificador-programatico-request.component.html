@@ -243,8 +243,8 @@
       <div class="mt-siaf-md flex items-center gap-siaf-sm">
         <span class="shrink-0 text-xs font-bold uppercase tracking-wide text-text">Filtros por</span>
         <div class="flex min-w-0 flex-1 flex-wrap items-center gap-siaf-sm">
-          @for (chip of chipsFiltros(); track chip) {
-            <siaf-tag variant="input">{{ chip }}</siaf-tag>
+          @for (chip of chipsFiltrosItems(); track chip.clave) {
+            <siaf-tag variant="input" [removable]="actividadApnop()" [removeLabel]="'Quitar filtro ' + chip.texto" (removed)="quitarFiltro(chip.clave)">{{ chip.texto }}</siaf-tag>
           }
         </div>
         @if (puedeBorrarFiltros()) {

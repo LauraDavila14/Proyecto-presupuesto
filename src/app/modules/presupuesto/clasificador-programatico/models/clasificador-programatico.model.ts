@@ -147,6 +147,10 @@ export const CAMPOS_ESTRUCTURA: CampoEstructuraConfig[] = [
       { id: 'act-6', tipo: 'Actividad', codigo: '5000037', nombre: 'Apoyo a la comunidad', funcionalId: 'fun-2' },
       { id: 'act-7', tipo: 'Actividad', codigo: '5000002', nombre: 'Conducción y orientación superior', funcionalId: 'fun-3' },
       { id: 'act-8', tipo: 'Actividad', codigo: '5000808', nombre: 'Funcionamiento de servicios de salud', funcionalId: 'fun-4' },
+      // Solo APNOP sin proyecto: el Tipo «Actividad (Maestro)» se elige en el panel de filtros (Figma 1309:104332).
+      { id: 'mae-1', tipo: 'Actividad (Maestro)', codigo: '5000900', nombre: 'Gestión del catálogo maestro de actividades', funcionalId: 'fun-2' },
+      { id: 'mae-2', tipo: 'Actividad (Maestro)', codigo: '5000901', nombre: 'Mantenimiento de registros institucionales', funcionalId: 'fun-3' },
+      { id: 'mae-3', tipo: 'Actividad (Maestro)', codigo: '5000902', nombre: 'Soporte administrativo transversal', funcionalId: 'fun-1' },
       // Con un Proyecto elegido (PP) la búsqueda ofrece estos tipos en vez de la actividad predeterminada.
       { id: 'inv-1', tipo: 'Acción inversión', codigo: '5006085', nombre: 'Selección asignación y supervisión del bono familiar habitacional', funcionalId: 'fun-1' },
       { id: 'inv-2', tipo: 'Acción inversión', codigo: '5000050', nombre: 'Atender complicaciones obstétricas en unidades de cuidados intensivos', funcionalId: 'fun-2' },

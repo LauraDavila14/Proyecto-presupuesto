@@ -57,9 +57,10 @@ const FILTROS_INVERSION: FiltrosBusqueda = { ...SIN_FILTROS, tipo: 'Acción inve
 
 /**
  * Cómo se busca la actividad: `predeterminada` (sin proyecto elegido: Tipo fijo y filtros funcionales), `inversion`
- * (con un proyecto elegido: Tipo «Acción inversión» u «Obra» a elección) o `ninguno` (las demás búsquedas).
+ * (con un proyecto elegido: Tipo «Acción inversión» u «Obra» a elección), `apnop` (APNOP sin proyecto: Tipo «Actividad
+ * predeterminada» o «Actividad (Maestro)» a elección, Figma 1309:104332) o `ninguno` (las demás búsquedas).
  */
-type ModoActividad = 'ninguno' | 'predeterminada' | 'inversion';
+type ModoActividad = 'ninguno' | 'predeterminada' | 'inversion' | 'apnop';
 
 /**
  * Solicitud de clasificador programático, tipo de acción «Creación» (nodo de Figma 1096:123152): pantalla de
@@ -241,10 +242,10 @@ export class ClasificadorProgramaticoRequestComponent {
    * (Figma 1274:161392). Los desplegables correspondientes del panel siguen el Tipo marcado en el borrador.
    */
   readonly mostrarFuncionales = computed(
-    () => this.actividadPP() || this.campoAbierto() === 'proyecto' || (this.campoAbierto() === 'producto' && this.filtros().tipo === 'Proyecto'),
+    () => this.actividadPP() || (this.actividadApnop() && this.chipsFiltros().length > 0) || this.campoAbierto() === 'proyecto' || (this.campoAbierto() === 'producto' && this.filtros().tipo === 'Proyecto'),
   );
   readonly filtrosFuncionalesVisibles = computed(
-    () => this.actividadPP() || (this.campoAbierto() === 'producto' && this.filtrosBorrador().tipo === 'Proyecto'),
+    () => this.actividadPP() || this.actividadApnop() || (this.campoAbierto() === 'producto' && this.filtrosBorrador().tipo === 'Proyecto'),
   );
   readonly columnasBusqueda = computed<{ key: string; label: string; widthClass?: string }[]>(() => {
     const columnas = this.configCampoAbierto()?.columnas ?? [];
@@ -260,6 +261,10 @@ export class ClasificadorProgramaticoRequestComponent {
     { label: 'Proyecto', value: 'Proyecto' },
   ];
   private readonly opcionesTipoActividad: RadioOption[] = [{ label: 'Actividad predeterminada', value: 'Actividad' }];
+  private readonly opcionesTipoApnop: RadioOption[] = [
+    { label: 'Actividad predeterminada', value: 'Actividad' },
+    { label: 'Actividad (Maestro)', value: 'Actividad (Maestro)' },
+  ];
   private readonly opcionesTipoInversion: RadioOption[] = [
     { label: 'Acción Inversión', value: 'Acción inversión' },
     { label: 'Obra', value: 'Obra' },
@@ -267,14 +272,23 @@ export class ClasificadorProgramaticoRequestComponent {
   readonly modoActividad = signal<ModoActividad>('ninguno');
   readonly actividadPP = computed(() => this.modoActividad() === 'predeterminada');
   readonly actividadInversion = computed(() => this.modoActividad() === 'inversion');
+  readonly actividadApnop = computed(() => this.modoActividad() === 'apnop');
   readonly opcionesTipo = computed(() =>
-    this.actividadPP() ? this.opcionesTipoActividad : this.actividadInversion() ? this.opcionesTipoInversion : this.opcionesTipoProducto,
+    this.actividadPP()
+      ? this.opcionesTipoActividad
+      : this.actividadInversion()
+        ? this.opcionesTipoInversion
+        : this.actividadApnop()
+          ? this.opcionesTipoApnop
+          : this.opcionesTipoProducto,
   );
   /** En PP el panel dice «Seleccionar tipo» (Figma 1274:163749); en AC y APNOP, «Tipo» (Figma 1315:115224). */
   readonly etiquetaTipo = computed(() => (this.actividadInversion() && this.categoria() === 'PP' ? 'Seleccionar tipo' : 'Tipo'));
-  readonly paginacionSuperior = computed(() => this.actividadInversion() || !!this.configCampoAbierto()?.paginacionSuperior);
+  readonly paginacionSuperior = computed(() => this.actividadInversion() || this.actividadApnop() || !!this.configCampoAbierto()?.paginacionSuperior);
   readonly tituloBusqueda = computed(() => {
     if (this.actividadPP()) return 'Seleccionar actividad predeterminada';
+    // APNOP: «Seleccionar actividad» al abrir y la versión larga una vez aplicado un filtro (los dos nodos de Figma).
+    if (this.actividadApnop()) return this.chipsFiltros().length > 0 ? 'Seleccionar actividad/acción inversión/ obra' : 'Seleccionar actividad';
     if (this.actividadInversion()) return this.categoria() === 'PP' ? 'Seleccionar actividad/acción inversión/ obra' : 'Seleccionar acción inversión/obra';
     return this.configCampoAbierto()?.tituloSeleccion ?? '';
   });
@@ -282,13 +296,13 @@ export class ClasificadorProgramaticoRequestComponent {
   private readonly catalogoBusqueda = computed<ItemEstructura[]>(() => {
     const catalogo = this.configCampoAbierto()?.catalogo ?? [];
     if (this.campoAbierto() !== 'actividad') return catalogo;
-    const tipos = this.actividadInversion() ? ['Acción inversión', 'Obra'] : ['Actividad'];
+    const tipos = this.actividadInversion() ? ['Acción inversión', 'Obra'] : this.actividadApnop() ? ['Actividad', 'Actividad (Maestro)'] : ['Actividad'];
     return catalogo.filter((i) => tipos.includes(i['tipo']));
   });
   readonly filtrosAbiertos = signal(false);
   readonly filtros = signal<FiltrosBusqueda>({ ...SIN_FILTROS });
   readonly filtrosBorrador = signal<FiltrosBusqueda>({ ...FILTROS_PRODUCTO });
-  readonly hayFiltrosAvanzados = computed(() => this.actividadPP() || this.actividadInversion() || !!this.configCampoAbierto()?.filtrosAvanzados);
+  readonly hayFiltrosAvanzados = computed(() => this.actividadPP() || this.actividadInversion() || this.actividadApnop() || !!this.configCampoAbierto()?.filtrosAvanzados);
   readonly navFiltrosVisible = computed(() => this.hayFiltrosAvanzados() && this.filtrosAbiertos());
   /** «Aplicar» se habilita cuando el borrador difiere de lo ya aplicado. */
   readonly borradorCambiado = computed(() => JSON.stringify(this.filtrosBorrador()) !== JSON.stringify(this.filtros()));
@@ -303,6 +317,21 @@ export class ClasificadorProgramaticoRequestComponent {
       f.grupo,
     ].filter(Boolean) as string[];
   });
+  /** Los mismos chips con su clave, para quitar uno solo (✕, solo en APNOP). */
+  readonly chipsFiltrosItems = computed(() => {
+    const f = this.filtros();
+    const etiquetaTipo = this.opcionesTipo().find((o) => o.value === f.tipo)?.label ?? f.tipo;
+    const items: { clave: keyof FiltrosBusqueda; texto: string }[] = [
+      { clave: 'tipo', texto: etiquetaTipo },
+      { clave: 'codigo', texto: f.codigo },
+      { clave: 'nombre', texto: f.nombre },
+      { clave: 'funcion', texto: f.funcion },
+      { clave: 'division', texto: f.division },
+      { clave: 'grupo', texto: f.grupo },
+    ];
+    return items.filter((i) => !!i.texto);
+  });
+
   /** «Borrar filtros»: con el Tipo fijo de actividad solo cuenta lo demás, que es lo que se puede quitar. */
   readonly puedeBorrarFiltros = computed(() => {
     const f = this.filtros();
@@ -365,7 +394,7 @@ export class ClasificadorProgramaticoRequestComponent {
     if (!this.mostrarEstructura()) return false;
     const sel = this.seleccion();
     if (this.categoria() === 'PP') return this.camposEstructura().every((c) => !!sel[c.campo]);
-    return !!sel.actividad && (!!sel.proyecto || sel.actividad['tipo'] === 'Actividad');
+    return !!sel.actividad && (!!sel.proyecto || sel.actividad['tipo'].startsWith('Actividad'));
   });
 
   // ── Aviso ──────────────────────────────────────────────────────────
@@ -392,7 +421,7 @@ export class ClasificadorProgramaticoRequestComponent {
   lupaDeshabilitada(campo: CampoEstructura): boolean {
     if (this.seleccion()[campo]) return true;
     // AC y APNOP: con una actividad predeterminada elegida no hay proyecto (es una u otra vía).
-    if (this.categoria() !== 'PP') return campo === 'proyecto' && this.seleccion().actividad?.['tipo'] === 'Actividad';
+    if (this.categoria() !== 'PP') return campo === 'proyecto' && !!this.seleccion().actividad?.['tipo'].startsWith('Actividad');
     const campos = this.camposEstructura();
     const indice = campos.findIndex((c) => c.campo === campo);
     return indice > 0 && !this.seleccion()[campos[indice - 1].campo];
@@ -422,13 +451,14 @@ export class ClasificadorProgramaticoRequestComponent {
     // PP: según el ítem de Producto/Proyecto. AC y APNOP: según haya o no un proyecto elegido (Figma 1315:115224, y la
     // actividad predeterminada si se busca sin proyecto).
     const hayProyecto = this.categoria() === 'PP' ? eligioProyecto : !!this.seleccion().proyecto;
-    const modo: ModoActividad = campo !== 'actividad' ? 'ninguno' : hayProyecto ? 'inversion' : 'predeterminada';
+    const modo: ModoActividad =
+      campo !== 'actividad' ? 'ninguno' : hayProyecto ? 'inversion' : this.categoria() === 'APNOP' ? 'apnop' : 'predeterminada';
     this.modoActividad.set(modo);
     const configCampo = CAMPOS_ESTRUCTURA.find((c) => c.campo === campo);
-    this.filasPorPagina.set(modo === 'predeterminada' || modo === 'inversion' ? 25 : (configCampo?.filasPorPagina ?? 10));
+    this.filasPorPagina.set(modo === 'predeterminada' || modo === 'inversion' || modo === 'apnop' ? 25 : (configCampo?.filasPorPagina ?? 10));
     // «Predeterminada» abre con el filtro de Tipo ya aplicado; «inversión» solo con el panel visible. Ambas abren con el panel.
     this.filtros.set(modo === 'predeterminada' ? { ...FILTROS_ACTIVIDAD_PP } : { ...SIN_FILTROS });
-    this.filtrosBorrador.set(modo === 'predeterminada' ? { ...FILTROS_ACTIVIDAD_PP } : modo === 'inversion' ? { ...FILTROS_INVERSION } : { ...FILTROS_PRODUCTO });
+    this.filtrosBorrador.set(modo === 'predeterminada' ? { ...FILTROS_ACTIVIDAD_PP } : modo === 'inversion' ? { ...FILTROS_INVERSION } : modo === 'apnop' ? { ...FILTROS_ACTIVIDAD_PP } : { ...FILTROS_PRODUCTO });
     this.filtrosAbiertos.set(modo !== 'ninguno');
     this.tempSeleccionId.set(this.seleccion()[campo]?.id ?? null);
     this.campoAbierto.set(campo);
@@ -473,7 +503,7 @@ export class ClasificadorProgramaticoRequestComponent {
 
   abrirFiltros(): void {
     const f = this.filtros();
-    this.filtrosBorrador.set(this.chipsFiltros().length > 0 ? { ...f } : { ...(this.actividadInversion() ? FILTROS_INVERSION : FILTROS_PRODUCTO) });
+    this.filtrosBorrador.set(this.chipsFiltros().length > 0 ? { ...f } : { ...(this.actividadInversion() ? FILTROS_INVERSION : this.actividadApnop() ? FILTROS_ACTIVIDAD_PP : FILTROS_PRODUCTO) });
     this.filtrosAbiertos.set(true);
   }
 
@@ -493,6 +523,11 @@ export class ClasificadorProgramaticoRequestComponent {
     this.filtros.set({ ...this.filtrosBorrador() });
     this.pagina.set(1);
     this.filtrosAbiertos.set(false);
+  }
+
+  quitarFiltro(clave: keyof FiltrosBusqueda): void {
+    this.filtros.update((f) => ({ ...f, [clave]: '' }));
+    this.pagina.set(1);
   }
 
   borrarFiltros(): void {

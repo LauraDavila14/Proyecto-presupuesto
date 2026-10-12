@@ -255,7 +255,7 @@
       </div>
     }
 
-    @if (configCampoAbierto()?.paginacionSuperior) {
+    @if (paginacionSuperior()) {
       <div class="mt-siaf-md">
         <siaf-pagination
           navigation="Activate"
@@ -328,7 +328,7 @@
 
     <div sidePanelNav class="flex flex-col gap-siaf-md p-siaf-md">
       <siaf-radio-group
-        label="Tipo"
+        [label]="etiquetaTipo()"
         name="busqueda-filtro-tipo"
         [options]="opcionesTipo()"
         [disabled]="actividadPP()"

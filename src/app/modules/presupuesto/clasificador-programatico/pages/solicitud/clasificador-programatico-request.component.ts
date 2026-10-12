@@ -355,9 +355,16 @@ export class ClasificadorProgramaticoRequestComponent {
     { label: 'No', value: 'no' },
   ];
 
-  readonly puedeAceptar = computed(
-    () => this.mostrarEstructura() && this.camposEstructura().every((c) => !!this.seleccion()[c.campo]),
-  );
+  /**
+   * PP pide todos sus campos. AC y APNOP aceptan una actividad predeterminada sola (sin proyecto, Figma 1315:115224 y
+   * captura de la solicitud con la actividad elegida) o un proyecto con su acción de inversión u obra.
+   */
+  readonly puedeAceptar = computed(() => {
+    if (!this.mostrarEstructura()) return false;
+    const sel = this.seleccion();
+    if (this.categoria() === 'PP') return this.camposEstructura().every((c) => !!sel[c.campo]);
+    return !!sel.actividad && (!!sel.proyecto || sel.actividad['tipo'] === 'Actividad');
+  });
 
   // ── Aviso ──────────────────────────────────────────────────────────
   readonly avisoAbierto = signal(false);
@@ -382,7 +389,8 @@ export class ClasificadorProgramaticoRequestComponent {
   /** La lupa de un campo se apaga con su selección hecha y, en PP, mientras falte elegir el campo anterior. */
   lupaDeshabilitada(campo: CampoEstructura): boolean {
     if (this.seleccion()[campo]) return true;
-    if (this.categoria() !== 'PP') return false;
+    // AC y APNOP: con una actividad predeterminada elegida no hay proyecto (es una u otra vía).
+    if (this.categoria() !== 'PP') return campo === 'proyecto' && this.seleccion().actividad?.['tipo'] === 'Actividad';
     const campos = this.camposEstructura();
     const indice = campos.findIndex((c) => c.campo === campo);
     return indice > 0 && !this.seleccion()[campos[indice - 1].campo];

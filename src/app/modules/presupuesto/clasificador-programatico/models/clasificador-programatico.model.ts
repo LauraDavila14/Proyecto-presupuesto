@@ -22,8 +22,8 @@ export const CATEGORIAS_PRESUPUESTARIAS: OpcionCatalogo[] = [
   { value: 'APNOP', label: 'APNOP' },
 ];
 
-/** Campos de «Estructura programática»: cada uno se elige con la lupa, en una ventana de selección. */
-export type CampoEstructura = 'programa' | 'producto' | 'actividad' | 'funcional';
+/** Campos de «Estructura programática» que se eligen con la lupa. El clasificador funcional no está: se asigna solo al elegir la actividad. */
+export type CampoEstructura = 'programa' | 'producto' | 'proyecto' | 'actividad';
 
 /** Fila de un catálogo de la estructura programática: `id` más los textos de sus columnas. Datos de ejemplo del taller. */
 export type ItemEstructura = { id: string } & Record<string, string>;
@@ -95,6 +95,27 @@ export const CAMPOS_ESTRUCTURA: CampoEstructuraConfig[] = [
     ],
   },
   {
+    campo: 'proyecto',
+    titulo: 'Proyecto',
+    tituloSeleccion: 'Seleccionar proyecto',
+    columnas: [
+      { key: 'tipo', label: 'Tipo', widthClass: 'w-[160px]', anchoCard: 'lg:basis-[180px]' },
+      { key: 'codigo', label: 'Código', widthClass: 'w-[160px]', anchoCard: 'lg:basis-[180px]' },
+      { key: 'nombre', label: 'Nombre' },
+    ],
+    mostrarFiltro: true,
+    mostrarMasOpciones: false,
+    paginacionSuperior: false,
+    resumen: resumenCodigoNombre,
+    catalogo: [
+      { id: 'proy-1', tipo: 'Proyecto', codigo: '2102', nombre: 'Mejoramiento de la infraestructura vial' },
+      { id: 'proy-2', tipo: 'Proyecto', codigo: '2330', nombre: 'Construcción de vivienda de interés social' },
+      { id: 'proy-3', tipo: 'Proyecto', codigo: '2451', nombre: 'Ampliación del servicio de agua potable y saneamiento' },
+      { id: 'proy-4', tipo: 'Proyecto', codigo: '2518', nombre: 'Instalación de establecimientos de salud' },
+      { id: 'proy-5', tipo: 'Proyecto', codigo: '2602', nombre: 'Mejoramiento de espacios públicos urbanos' },
+    ],
+  },
+  {
     campo: 'actividad',
     titulo: 'Actividad/Acción Inversión/Obra',
     tituloSeleccion: 'Seleccionar actividad/acción inversión/obra',
@@ -108,37 +129,38 @@ export const CAMPOS_ESTRUCTURA: CampoEstructuraConfig[] = [
     paginacionSuperior: false,
     resumen: resumenCodigoNombre,
     catalogo: [
-      { id: 'act-1', tipo: 'Actividad', codigo: '5006085', nombre: 'Selección asignación y supervisión del bono familiar habitacional' },
-      { id: 'act-2', tipo: 'Actividad', codigo: '5000050', nombre: 'Atender complicaciones obstétricas en unidades de cuidados intensivos' },
-      { id: 'act-3', tipo: 'Actividad', codigo: '5005984', nombre: 'Promoción de prácticas saludables para el cuidado de la salud sexual y reproductiva en familias' },
-      { id: 'act-4', tipo: 'Actividad', codigo: '5000510', nombre: 'Atención especializada de la salud' },
-      { id: 'act-5', tipo: 'Actividad', codigo: '5000393', nombre: 'Administración de la gestión documentaria' },
-      { id: 'act-6', tipo: 'Actividad', codigo: '5000037', nombre: 'Apoyo a la comunidad' },
-      { id: 'act-7', tipo: 'Actividad', codigo: '5000002', nombre: 'Conducción y orientación superior' },
-      { id: 'act-8', tipo: 'Actividad', codigo: '5000808', nombre: 'Funcionamiento de servicios de salud' },
-    ],
-  },
-  {
-    campo: 'funcional',
-    titulo: 'Clasificador funcional',
-    tituloSeleccion: 'Seleccionar clasificador funcional',
-    columnas: [
-      { key: 'funcion', label: 'Función' },
-      { key: 'division', label: 'División funcional' },
-      { key: 'grupo', label: 'Grupo funcional' },
-    ],
-    mostrarFiltro: false,
-    mostrarMasOpciones: false,
-    paginacionSuperior: true,
-    resumen: (i) => `${i['funcion']} / ${i['division']} / ${i['grupo']}`,
-    catalogo: [
-      { id: 'fun-1', funcion: '20 Salud', division: '044 Salud individual', grupo: '0096 Atención médica básica' },
-      { id: 'fun-2', funcion: '019 Vivienda y desarrollo urbano', division: '047 Educación básica', grupo: '0103 Educación inicial' },
-      { id: 'fun-3', funcion: '23 Protección social', division: '004 Planeamiento gubernamental', grupo: '0043 Control de riesgos y daños para la salud' },
-      { id: 'fun-4', funcion: '24 No salud', division: '004 Planeamiento gubernamental', grupo: '0043 Control de riesgos y daños para la salud' },
+      { id: 'act-1', tipo: 'Actividad', codigo: '5006085', nombre: 'Selección asignación y supervisión del bono familiar habitacional', funcionalId: 'fun-1' },
+      { id: 'act-2', tipo: 'Actividad', codigo: '5000050', nombre: 'Atender complicaciones obstétricas en unidades de cuidados intensivos', funcionalId: 'fun-2' },
+      { id: 'act-3', tipo: 'Actividad', codigo: '5005984', nombre: 'Promoción de prácticas saludables para el cuidado de la salud sexual y reproductiva en familias', funcionalId: 'fun-3' },
+      { id: 'act-4', tipo: 'Actividad', codigo: '5000510', nombre: 'Atención especializada de la salud', funcionalId: 'fun-4' },
+      { id: 'act-5', tipo: 'Actividad', codigo: '5000393', nombre: 'Administración de la gestión documentaria', funcionalId: 'fun-1' },
+      { id: 'act-6', tipo: 'Actividad', codigo: '5000037', nombre: 'Apoyo a la comunidad', funcionalId: 'fun-2' },
+      { id: 'act-7', tipo: 'Actividad', codigo: '5000002', nombre: 'Conducción y orientación superior', funcionalId: 'fun-3' },
+      { id: 'act-8', tipo: 'Actividad', codigo: '5000808', nombre: 'Funcionamiento de servicios de salud', funcionalId: 'fun-4' },
     ],
   },
 ];
+
+/** Clasificadores funcionales. No se buscan: cada actividad lleva el suyo (`funcionalId`) y se asigna al elegirla. */
+export const FUNCIONALES: ItemEstructura[] = [
+  { id: 'fun-1', funcion: '20 Salud', division: '044 Salud individual', grupo: '0096 Atención médica básica' },
+  { id: 'fun-2', funcion: '019 Vivienda y desarrollo urbano', division: '047 Educación básica', grupo: '0103 Educación inicial' },
+  { id: 'fun-3', funcion: '23 Protección social', division: '004 Planeamiento gubernamental', grupo: '0043 Control de riesgos y daños para la salud' },
+  { id: 'fun-4', funcion: '24 No salud', division: '004 Planeamiento gubernamental', grupo: '0043 Control de riesgos y daños para la salud' },
+];
+
+export const COLUMNAS_FUNCIONAL: { key: string; label: string }[] = [
+  { key: 'funcion', label: 'Función' },
+  { key: 'division', label: 'División funcional' },
+  { key: 'grupo', label: 'Grupo funcional' },
+];
+
+/** Categorías presupuestarias y los campos de estructura que pide cada una (nodos de Figma 1274:152395 y 1245:141176). */
+export const CAMPOS_POR_CATEGORIA: Record<string, CampoEstructura[]> = {
+  PP: ['programa', 'producto', 'actividad'],
+  AC: ['proyecto', 'actividad'],
+  APNOP: ['proyecto', 'actividad'],
+};
 
 /** Un registro de clasificador agregado a la solicitud (fila de la tabla «Registro de clasificador»). */
 export interface RegistroClasificador {
@@ -146,7 +168,7 @@ export interface RegistroClasificador {
   /** Códigos de proceso marcados (`P`, `G` o ambos). */
   procesos: string[];
   categoriaPresupuestaria: string;
-  estructura: Record<CampoEstructura, ItemEstructura>;
+  estructura: Partial<Record<CampoEstructura, ItemEstructura>> & { actividad: ItemEstructura; funcional: ItemEstructura };
 }
 
 /** Texto de los procesos de un registro, p. ej. «Programación (P), Gestión (G)». */

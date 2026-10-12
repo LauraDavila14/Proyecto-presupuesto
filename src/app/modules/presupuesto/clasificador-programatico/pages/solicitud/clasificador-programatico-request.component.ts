@@ -23,6 +23,9 @@ import { TextFieldComponent } from '../../../../../shared/ui/text-field/text-fie
 import { PROCESS_ROUTE } from '../../config/clasificador-programatico.rutas';
 import {
   CAMPOS_ESTRUCTURA,
+  CAMPOS_POR_CATEGORIA,
+  COLUMNAS_FUNCIONAL,
+  FUNCIONALES,
   CATEGORIAS_PRESUPUESTARIAS,
   CampoEstructura,
   FINALIDAD_FIJA,
@@ -123,8 +126,8 @@ export class ClasificadorProgramaticoRequestComponent {
     this.registros().map((r) => ({
       id: r.id,
       categoria: r.categoriaPresupuestaria,
-      programa: r.estructura.programa['codigo'],
-      producto: r.estructura.producto['codigo'],
+      programa: r.estructura.programa?.['codigo'] ?? '-',
+      producto: (r.estructura.producto ?? r.estructura.proyecto)?.['codigo'] ?? '-',
       actividad: r.estructura.actividad['codigo'],
       finalidad: FINALIDAD_FIJA,
       funcion: codigoFuncional(r.estructura.funcional['funcion']),
@@ -182,8 +185,18 @@ export class ClasificadorProgramaticoRequestComponent {
   readonly mostrarEstructura = computed(() => this.procesosMarcados().length > 0 && !!this.categoria());
 
   // «Estructura programática»: un campo por catálogo, elegido en el side-nav de selección.
-  readonly camposEstructura = CAMPOS_ESTRUCTURA;
+  // Los campos dependen de la categoría: PP pide Programa → Producto/Proyecto → Actividad (cada lupa se habilita al
+  // elegir el anterior); AC y APNOP piden Proyecto y Actividad, con las dos lupas activas. El clasificador funcional
+  // no se busca: se asigna solo con la actividad elegida.
+  readonly camposEstructura = computed(() =>
+    (CAMPOS_POR_CATEGORIA[this.categoria()] ?? []).map((campo) => CAMPOS_ESTRUCTURA.find((c) => c.campo === campo)!),
+  );
+  readonly columnasFuncional = COLUMNAS_FUNCIONAL;
   readonly seleccion = signal<Record<CampoEstructura, ItemEstructura | null>>(this.seleccionVacia());
+  readonly funcionalAsignado = computed<ItemEstructura | null>(() => {
+    const funcionalId = this.seleccion().actividad?.['funcionalId'];
+    return FUNCIONALES.find((f) => f.id === funcionalId) ?? null;
+  });
   readonly campoAbierto = signal<CampoEstructura | null>(null);
   readonly busqueda = signal('');
   readonly tempSeleccionId = signal<string | null>(null);
@@ -199,7 +212,8 @@ export class ClasificadorProgramaticoRequestComponent {
     const catalogo = this.configCampoAbierto()?.catalogo ?? [];
     const texto = this.busqueda().trim().toLowerCase();
     if (!texto) return catalogo;
-    return catalogo.filter((i) => Object.values(i).some((valor) => valor.toLowerCase().includes(texto)));
+    const claves = this.columnasBusqueda().map((c) => c.key);
+    return catalogo.filter((i) => claves.some((clave) => i[clave].toLowerCase().includes(texto)));
   });
   readonly totalFilas = computed(() => this.filasFiltradas().length);
   readonly totalPaginas = computed(() => Math.max(1, Math.ceil(this.totalFilas() / this.filasPorPagina())));
@@ -215,7 +229,7 @@ export class ClasificadorProgramaticoRequestComponent {
   ];
 
   readonly puedeAceptar = computed(
-    () => this.mostrarEstructura() && CAMPOS_ESTRUCTURA.every((c) => !!this.seleccion()[c.campo]),
+    () => this.mostrarEstructura() && this.camposEstructura().every((c) => !!this.seleccion()[c.campo]),
   );
 
   // ── Aviso ──────────────────────────────────────────────────────────
@@ -230,6 +244,26 @@ export class ClasificadorProgramaticoRequestComponent {
     this.procesosMarcados.update((actuales) =>
       marcado ? [...actuales.filter((c) => c !== codigo), codigo] : actuales.filter((c) => c !== codigo),
     );
+  }
+
+  cambiarCategoria(categoria: string): void {
+    if (categoria === this.categoria()) return;
+    this.categoria.set(categoria);
+    this.seleccion.set(this.seleccionVacia());
+  }
+
+  /** La lupa de un campo se apaga con su selección hecha y, en PP, mientras falte elegir el campo anterior. */
+  lupaDeshabilitada(campo: CampoEstructura): boolean {
+    if (this.seleccion()[campo]) return true;
+    if (this.categoria() !== 'PP') return false;
+    const campos = this.camposEstructura();
+    const indice = campos.findIndex((c) => c.campo === campo);
+    return indice > 0 && !this.seleccion()[campos[indice - 1].campo];
+  }
+
+  /** Campos de la card del clasificador funcional asignado. */
+  camposCardFuncional(item: ItemEstructura): SummaryCardField[] {
+    return COLUMNAS_FUNCIONAL.map((c) => ({ label: c.label, value: item[c.key] }));
   }
 
   abrirPanel(): void {
@@ -272,7 +306,14 @@ export class ClasificadorProgramaticoRequestComponent {
 
   /** Quita la selección de un campo (✕ de la card): reactiva su lupa y le devuelve el foco. */
   quitarSeleccion(campo: CampoEstructura, titulo: string): void {
-    this.seleccion.update((actual) => ({ ...actual, [campo]: null }));
+    // En PP, quitar un campo vacía también los siguientes: dependen de él.
+    const campos = this.camposEstructura().map((c) => c.campo);
+    const quitados = this.categoria() === 'PP' ? campos.slice(campos.indexOf(campo)) : [campo];
+    this.seleccion.update((actual) => {
+      const siguiente = { ...actual };
+      for (const c of quitados) siguiente[c] = null;
+      return siguiente;
+    });
     setTimeout(() => this.host.nativeElement.querySelector<HTMLElement>(`button[aria-label="Buscar ${titulo.toLowerCase()}"]`)?.focus());
   }
 
@@ -309,10 +350,11 @@ export class ClasificadorProgramaticoRequestComponent {
         procesos: this.procesosMarcados(),
         categoriaPresupuestaria: this.categoria(),
         estructura: {
-          programa: sel.programa!,
-          producto: sel.producto!,
+          ...(sel.programa && { programa: sel.programa }),
+          ...(sel.producto && { producto: sel.producto }),
+          ...(sel.proyecto && { proyecto: sel.proyecto }),
           actividad: sel.actividad!,
-          funcional: sel.funcional!,
+          funcional: this.funcionalAsignado()!,
         },
       },
     ]);
@@ -367,7 +409,7 @@ export class ClasificadorProgramaticoRequestComponent {
   }
 
   private seleccionVacia(): Record<CampoEstructura, ItemEstructura | null> {
-    return { programa: null, producto: null, actividad: null, funcional: null };
+    return { programa: null, producto: null, proyecto: null, actividad: null };
   }
 
   private mostrarAviso(variante: SnackbarVariant): void {

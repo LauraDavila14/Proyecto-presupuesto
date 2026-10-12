@@ -55,20 +55,18 @@
                 label="Categoría presupuestaria"
                 [options]="categorias"
                 [value]="categoria()"
-                (valueChange)="categoria.set($any($event))"
+                (valueChange)="cambiarCategoria($any($event))"
               />
             </div>
           </div>
           @if (mostrarEstructura()) {
             <div class="flex flex-col gap-siaf-md">
               <h3 class="m-0 text-sm font-bold uppercase text-text">Estructura programática</h3>
-              @for (campo of camposEstructura; track campo.campo) {
+              @for (campo of camposEstructura(); track campo.campo) {
                 <div class="flex flex-col gap-siaf-xs">
                   <div class="flex items-center justify-between gap-siaf-md">
-                    <h4 class="m-0 text-sm font-bold text-text">
-                      {{ campo.titulo }} <span class="text-[var(--sys-color-text-feedback-danger)]">*</span>
-                    </h4>
-                    <siaf-button variant="filled" icon="search" [iconOnly]="true" [ariaLabel]="'Buscar ' + campo.titulo.toLowerCase()" [disabled]="!!seleccion()[campo.campo]" (click)="abrirBusqueda(campo.campo)" />
+                    <h4 class="m-0 text-sm font-bold text-text">{{ campo.titulo }}</h4>
+                    <siaf-button variant="filled" icon="search" [iconOnly]="true" [ariaLabel]="'Buscar ' + campo.titulo.toLowerCase()" [disabled]="lupaDeshabilitada(campo.campo)" (click)="abrirBusqueda(campo.campo)" />
                   </div>
                   @if (seleccion()[campo.campo]; as item) {
                     <siaf-summary-card
@@ -85,6 +83,17 @@
                   }
                 </div>
               }
+
+              <div class="flex flex-col gap-siaf-xs">
+                <h4 class="m-0 text-sm font-bold uppercase text-text">Clasificador funcional</h4>
+                @if (funcionalAsignado(); as funcional) {
+                  <siaf-summary-card [fields]="camposCardFuncional(funcional)" [bordered]="true" [showClose]="false" />
+                } @else {
+                  <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
+                    <p class="m-0 text-sm text-[var(--sys-color-text-neutral-medium)]">No se ha seleccionado ningún tipo.</p>
+                  </div>
+                }
+              </div>
             </div>
 
             <div class="flex flex-col gap-siaf-sm">

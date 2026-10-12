@@ -349,7 +349,7 @@
         [value]="filtrosBorrador().nombre"
         (valueChange)="cambiarFiltro('nombre', $any($event))"
       />
-      @if (actividadPP()) {
+      @if (filtrosFuncionalesVisibles()) {
         <siaf-input type="select" label="Función" [options]="opcionesFuncion()" [value]="filtrosBorrador().funcion" (valueChange)="cambiarFiltro('funcion', $any($event))" />
         <siaf-input type="select" label="División funcional" [options]="opcionesDivision()" [value]="filtrosBorrador().division" (valueChange)="cambiarFiltro('division', $any($event))" />
         <siaf-input type="select" label="Grupo funcional" [options]="opcionesGrupo()" [value]="filtrosBorrador().grupo" (valueChange)="cambiarFiltro('grupo', $any($event))" />

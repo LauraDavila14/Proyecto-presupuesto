@@ -229,9 +229,19 @@ export class ClasificadorProgramaticoRequestComponent {
   readonly configCampoAbierto = computed(() => CAMPOS_ESTRUCTURA.find((c) => c.campo === this.campoAbierto()) ?? null);
   /** En la actividad de PP la grilla suma los datos del clasificador funcional asociado (Figma 1274:158317). */
   private readonly columnasFuncionalesActividad = COLUMNAS_FUNCIONAL.map((c) => ({ ...c, widthClass: 'w-[200px]' }));
+  /**
+   * Las columnas funcionales aparecen en la actividad de PP y en Producto/Proyecto con el Tipo «Proyecto» aplicado
+   * (Figma 1274:161392). Los desplegables correspondientes del panel siguen el Tipo marcado en el borrador.
+   */
+  readonly mostrarFuncionales = computed(
+    () => this.actividadPP() || (this.campoAbierto() === 'producto' && this.filtros().tipo === 'Proyecto'),
+  );
+  readonly filtrosFuncionalesVisibles = computed(
+    () => this.actividadPP() || (this.campoAbierto() === 'producto' && this.filtrosBorrador().tipo === 'Proyecto'),
+  );
   readonly columnasBusqueda = computed<{ key: string; label: string; widthClass?: string }[]>(() => {
     const columnas = this.configCampoAbierto()?.columnas ?? [];
-    return this.actividadPP() ? [...columnas, ...this.columnasFuncionalesActividad] : columnas;
+    return this.mostrarFuncionales() ? [...columnas, ...this.columnasFuncionalesActividad] : columnas;
   });
 
   // Filtros de la búsqueda (panel «Filtros» de `siaf-side-panel`). Se editan en un borrador y recién «Aplicar» los pasa
@@ -324,7 +334,7 @@ export class ClasificadorProgramaticoRequestComponent {
   readonly filasBusqueda = computed<ItemEstructura[]>(() => {
     const desde = (this.pagina() - 1) * this.filasPorPagina();
     const pagina = this.filasFiltradas().slice(desde, desde + this.filasPorPagina());
-    if (!this.actividadPP()) return pagina;
+    if (!this.mostrarFuncionales()) return pagina;
     return pagina.map((i) => ({
       ...i,
       funcion: this.datoFuncional(i, 'funcion'),

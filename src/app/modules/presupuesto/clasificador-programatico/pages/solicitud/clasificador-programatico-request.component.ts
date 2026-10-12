@@ -29,7 +29,6 @@ import {
   FUNCIONALES,
   CATEGORIAS_PRESUPUESTARIAS,
   CampoEstructura,
-  FINALIDAD_FIJA,
   ItemEstructura,
   PROCESOS_CLASIFICADOR,
   RegistroClasificador,
@@ -46,6 +45,10 @@ interface FiltrosBusqueda {
   division: string;
   grupo: string;
 }
+
+/** Lo que muestra el resumen de registros cuando no hay programa ni producto/proyecto (Figma: captura del resumen). */
+const CODIGO_PROGRAMA_VACIO = '0000';
+const CODIGO_PRODUCTO_VACIO = '0000000';
 
 const SIN_FILTROS: FiltrosBusqueda = { tipo: '', codigo: '', nombre: '', funcion: '', division: '', grupo: '' };
 const FILTROS_PRODUCTO: FiltrosBusqueda = { ...SIN_FILTROS, tipo: 'Producto' };
@@ -150,10 +153,9 @@ export class ClasificadorProgramaticoRequestComponent {
     this.registros().map((r) => ({
       id: r.id,
       categoria: r.categoriaPresupuestaria,
-      programa: r.estructura.programa?.['codigo'] ?? '-',
-      producto: (r.estructura.producto ?? r.estructura.proyecto)?.['codigo'] ?? '-',
+      programa: r.estructura.programa?.['codigo'] ?? CODIGO_PROGRAMA_VACIO,
+      producto: (r.estructura.producto ?? r.estructura.proyecto)?.['codigo'] ?? CODIGO_PRODUCTO_VACIO,
       actividad: r.estructura.actividad['codigo'],
-      finalidad: FINALIDAD_FIJA,
       funcion: codigoFuncional(r.estructura.funcional['funcion']),
       division: codigoFuncional(r.estructura.funcional['division']),
       grupo: codigoFuncional(r.estructura.funcional['grupo']),

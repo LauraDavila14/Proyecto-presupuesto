@@ -202,6 +202,3 @@ export function nombreProcesos(codigos: readonly string[]): string {
 export function codigoFuncional(texto: string): string {
   return texto.split(' ')[0] ?? '';
 }
-
-/** Finalidad: no se elige en el formulario; el diseño la muestra fija (nodo de Figma 1096:122648). */
-export const FINALIDAD_FIJA = '0000000';

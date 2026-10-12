@@ -16,6 +16,9 @@ import { RequestApprovalModalsComponent } from '../../../../../shared/components
 import { SolicitudeHeaderState } from '../../../../../shared/components/solicitude-header/solicitude-header.component';
 import { DocumentSummaryCardComponent } from '../../../../../shared/ui/document-summary-card/document-summary-card.component';
 import { ReadonlyFieldComponent } from '../../../../../shared/ui/readonly-field/readonly-field.component';
+import { TextAreaControlComponent } from '../../../../../shared/ui/text-area-control/text-area-control.component';
+import { UploadedFileCardComponent, UploadedFileInfo } from '../../../../../shared/ui/uploaded-file-card/uploaded-file-card.component';
+import { UploadSideNavComponent } from '../../../../../shared/ui/upload-side-nav/upload-side-nav.component';
 import { TagComponent } from '../../../../../shared/ui/tag/tag.component';
 import { SidePanelComponent } from '../../../../../shared/ui/side-panel/side-panel.component';
 import { SnackbarComponent, SnackbarVariant } from '../../../../../shared/ui/snackbar/snackbar.component';
@@ -23,7 +26,9 @@ import { SummaryCardComponent, SummaryCardField } from '../../../../../shared/ui
 import { TextFieldComponent } from '../../../../../shared/ui/text-field/text-field.component';
 import { PROCESS_ROUTE } from '../../config/clasificador-programatico.rutas';
 import {
+  CAMPO_FUNCIONAL,
   CAMPOS_ESTRUCTURA,
+  CampoBusqueda,
   CAMPOS_POR_CATEGORIA,
   COLUMNAS_FUNCIONAL,
   FUNCIONALES,
@@ -94,6 +99,9 @@ type ModoActividad = 'ninguno' | 'predeterminada' | 'inversion' | 'apnop';
     SummaryCardComponent,
     TableControlsComponent,
     TagComponent,
+    TextAreaControlComponent,
+    UploadedFileCardComponent,
+    UploadSideNavComponent,
     SolicitudeInfoCardComponent,
     SolicitudePageLayoutComponent,
     TextFieldComponent,
@@ -222,21 +230,33 @@ export class ClasificadorProgramaticoRequestComponent {
   );
   readonly columnasFuncional = COLUMNAS_FUNCIONAL;
   readonly seleccion = signal<Record<CampoEstructura, ItemEstructura | null>>(this.seleccionVacia());
+  readonly esMaestro = computed(() => this.seleccion().actividad?.['tipo'] === TIPO_MAESTRO);
+  readonly funcionalManual = signal<ItemEstructura | null>(null);
+
+  // «Sustento del registro»: solo con una actividad Maestro. Comentario (hasta 200) y adjunto PDF, ambos opcionales.
+  readonly comentarioSustento = signal('');
+  readonly archivoSustento = signal<UploadedFileInfo | null>(null);
+  readonly panelSustentoAbierto = signal(false);
+
   /**
    * Clasificador funcional asignado: el del Proyecto elegido (apenas se elige, Figma 1274:162180; en AC y APNOP,
    * Figma 1315:114230) o, con un Producto, el de la actividad elegida.
    */
   readonly funcionalAsignado = computed<ItemEstructura | null>(() => {
+    // Con una actividad Maestro (APNOP) el funcional no se asigna: se elige a mano con su lupa (Figma: captura del formulario).
+    if (this.esMaestro()) return this.funcionalManual();
     const sel = this.seleccion();
     const origen = sel.proyecto ?? (sel.producto?.['tipo'] === 'Proyecto' ? sel.producto : sel.actividad);
     return FUNCIONALES.find((f) => f.id === origen?.['funcionalId']) ?? null;
   });
-  readonly campoAbierto = signal<CampoEstructura | null>(null);
+  readonly campoAbierto = signal<CampoBusqueda | null>(null);
   readonly busqueda = signal('');
   readonly tempSeleccionId = signal<string | null>(null);
   readonly hayFilaElegida = computed(() => !!this.tempSeleccionId());
 
-  readonly configCampoAbierto = computed(() => CAMPOS_ESTRUCTURA.find((c) => c.campo === this.campoAbierto()) ?? null);
+  readonly configCampoAbierto = computed(() =>
+    this.campoAbierto() === 'funcional' ? CAMPO_FUNCIONAL : (CAMPOS_ESTRUCTURA.find((c) => c.campo === this.campoAbierto()) ?? null),
+  );
   /** En la actividad de PP la grilla suma los datos del clasificador funcional asociado (Figma 1274:158317). */
   private readonly columnasFuncionalesActividad = COLUMNAS_FUNCIONAL.map((c) => ({ ...c, widthClass: 'w-[200px]' }));
   /**
@@ -396,6 +416,7 @@ export class ClasificadorProgramaticoRequestComponent {
     if (!this.mostrarEstructura()) return false;
     const sel = this.seleccion();
     if (this.categoria() === 'PP') return this.camposEstructura().every((c) => !!sel[c.campo]);
+    if (this.esMaestro() && !this.funcionalManual()) return false;
     return !!sel.actividad && (!!sel.proyecto || sel.actividad['tipo'].startsWith('Actividad'));
   });
 
@@ -417,6 +438,14 @@ export class ClasificadorProgramaticoRequestComponent {
     if (categoria === this.categoria()) return;
     this.categoria.set(categoria);
     this.seleccion.set(this.seleccionVacia());
+    this.reiniciarMaestro();
+  }
+
+  /** Vacía lo que depende de una actividad Maestro: funcional elegido a mano y sustento. */
+  private reiniciarMaestro(): void {
+    this.funcionalManual.set(null);
+    this.comentarioSustento.set('');
+    this.archivoSustento.set(null);
   }
 
   /** La lupa de un campo se apaga con su selección hecha y, en PP, mientras falte elegir el campo anterior. */
@@ -438,6 +467,7 @@ export class ClasificadorProgramaticoRequestComponent {
     this.procesosMarcados.set([]);
     this.categoria.set('');
     this.seleccion.set(this.seleccionVacia());
+    this.reiniciarMaestro();
     this.agregando.set(true);
   }
 
@@ -445,7 +475,7 @@ export class ClasificadorProgramaticoRequestComponent {
     this.agregando.set(false);
   }
 
-  abrirBusqueda(campo: CampoEstructura): void {
+  abrirBusqueda(campo: CampoBusqueda): void {
     this.busqueda.set('');
     this.pagina.set(1);
     // En PP, la actividad se busca distinto según el ítem elegido en Producto/Proyecto.
@@ -462,7 +492,8 @@ export class ClasificadorProgramaticoRequestComponent {
     this.filtros.set(modo === 'predeterminada' ? { ...FILTROS_ACTIVIDAD_PP } : { ...SIN_FILTROS });
     this.filtrosBorrador.set(modo === 'predeterminada' ? { ...FILTROS_ACTIVIDAD_PP } : modo === 'inversion' ? { ...FILTROS_INVERSION } : modo === 'apnop' ? { ...FILTROS_ACTIVIDAD_PP } : { ...FILTROS_PRODUCTO });
     this.filtrosAbiertos.set(modo !== 'ninguno');
-    this.tempSeleccionId.set(this.seleccion()[campo]?.id ?? null);
+    const previo = campo === 'funcional' ? this.funcionalManual() : this.seleccion()[campo];
+    this.tempSeleccionId.set(previo?.id ?? null);
     this.campoAbierto.set(campo);
   }
 
@@ -496,7 +527,19 @@ export class ClasificadorProgramaticoRequestComponent {
       for (const c of quitados) siguiente[c] = null;
       return siguiente;
     });
+    if (quitados.includes('actividad')) this.reiniciarMaestro();
     setTimeout(() => this.host.nativeElement.querySelector<HTMLElement>(`button[aria-label="Buscar ${titulo.toLowerCase()}"]`)?.focus());
+  }
+
+  /** Quita el funcional elegido a mano (✕ de su card): reactiva su lupa y le devuelve el foco. */
+  quitarFuncional(): void {
+    this.funcionalManual.set(null);
+    setTimeout(() => this.host.nativeElement.querySelector<HTMLElement>('button[aria-label="Buscar clasificador funcional"]')?.focus());
+  }
+
+  onSustentoConfirmado(archivo: File): void {
+    this.archivoSustento.set(archivo);
+    this.panelSustentoAbierto.set(false);
   }
 
   resumen(campo: CampoEstructura, item: ItemEstructura): string {
@@ -539,7 +582,8 @@ export class ClasificadorProgramaticoRequestComponent {
 
   /** Texto de una celda: la propiedad del catálogo o, para las columnas funcionales, el dato de su clasificador. */
   private textoDeColumna(item: ItemEstructura, clave: string): string {
-    return clave === 'funcion' || clave === 'division' || clave === 'grupo' ? this.datoFuncional(item, clave) : (item[clave] ?? '');
+    if (item[clave] !== undefined) return item[clave];
+    return clave === 'funcion' || clave === 'division' || clave === 'grupo' ? this.datoFuncional(item, clave) : '';
   }
 
   /** Función, división o grupo del clasificador funcional asociado a una actividad. */
@@ -567,7 +611,8 @@ export class ClasificadorProgramaticoRequestComponent {
     const campo = this.campoAbierto();
     if (campo) {
       const item = this.configCampoAbierto()?.catalogo.find((i) => i.id === this.tempSeleccionId()) ?? null;
-      this.seleccion.update((actual) => ({ ...actual, [campo]: item }));
+      if (campo === 'funcional') this.funcionalManual.set(item);
+      else this.seleccion.update((actual) => ({ ...actual, [campo]: item }));
     }
     this.campoAbierto.set(null);
   }
@@ -590,6 +635,9 @@ export class ClasificadorProgramaticoRequestComponent {
           actividad: sel.actividad!,
           funcional: this.funcionalAsignado()!,
         },
+        ...(this.esMaestro() && {
+          sustento: { comentario: this.comentarioSustento(), archivo: this.archivoSustento()?.name ?? '' },
+        }),
       },
     ]);
 

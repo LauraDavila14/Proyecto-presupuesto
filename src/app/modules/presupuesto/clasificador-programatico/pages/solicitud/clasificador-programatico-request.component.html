@@ -85,12 +85,23 @@
               }
 
               <div class="flex flex-col gap-siaf-xs">
-                <h4 class="m-0 text-sm font-bold uppercase text-text">Clasificador funcional</h4>
+                <div class="flex items-center justify-between gap-siaf-md">
+                  <h4 class="m-0 text-sm font-bold uppercase text-text">Clasificador funcional</h4>
+                  @if (esMaestro()) {
+                    <siaf-button variant="filled" icon="search" [iconOnly]="true" ariaLabel="Buscar clasificador funcional" [disabled]="!!funcionalManual()" (click)="abrirBusqueda('funcional')" />
+                  }
+                </div>
                 @if (funcionalAsignado(); as funcional) {
-                  <siaf-summary-card [fields]="camposCardFuncional(funcional)" [bordered]="true" [showClose]="false" />
+                  <siaf-summary-card
+                    [fields]="camposCardFuncional(funcional)"
+                    [bordered]="true"
+                    [showClose]="esMaestro()"
+                    closeLabel="Quitar clasificador funcional"
+                    (closed)="quitarFuncional()"
+                  />
                 } @else {
                   <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
-                    <p class="m-0 text-sm text-[var(--sys-color-text-neutral-medium)]">No se ha seleccionado ningún tipo.</p>
+                    <p class="m-0 text-sm text-[var(--sys-color-text-neutral-medium)]">{{ esMaestro() ? 'No se ha seleccionado ningún tipo. Haga clic en el botón para realizar una selección.' : 'No se ha seleccionado ningún tipo.' }}</p>
                   </div>
                 }
               </div>
@@ -109,6 +120,29 @@
                 </div>
               </div>
             </div>
+
+            @if (esMaestro()) {
+              <div class="flex flex-col gap-siaf-md">
+                <h3 class="m-0 text-sm font-bold uppercase text-text">Sustento del registro</h3>
+                <div class="flex flex-col gap-siaf-xs">
+                  <h4 class="m-0 text-sm font-bold uppercase text-text">Comentario</h4>
+                  <text-area-control placeholder="Comentario de creación" [maxlength]="200" [value]="comentarioSustento()" (valueChange)="comentarioSustento.set($event)" />
+                </div>
+                <div class="flex flex-col gap-siaf-xs">
+                  <div class="flex min-h-10 items-center justify-between gap-siaf-md">
+                    <h4 class="m-0 text-sm font-bold uppercase text-text">Adjunto</h4>
+                    <siaf-button variant="accent" size="md" icon="file_upload" [iconOnly]="true" ariaLabel="Subir archivo" (click)="panelSustentoAbierto.set(true)" />
+                  </div>
+                  @if (archivoSustento()) {
+                    <siaf-uploaded-file-card [file]="archivoSustento()" (replace)="panelSustentoAbierto.set(true)" (removed)="archivoSustento.set(null)" />
+                  } @else {
+                    <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
+                      <p class="m-0 text-sm text-[var(--sys-color-text-neutral-medium)]">No se han adjuntado archivos. Por favor, haga clic en el botón para subir un archivo.</p>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
           }
         </div>
       } @else if (registros().length === 0) {
@@ -354,6 +388,8 @@
       }
     </div>
   </siaf-side-panel>
+
+  <siaf-upload-side-nav [open]="panelSustentoAbierto()" (closed)="panelSustentoAbierto.set(false)" (confirmed)="onSustentoConfirmado($event)" />
 
   <siaf-snackbar [variant]="aviso()" [open]="avisoAbierto()" (closed)="avisoAbierto.set(false)" />
 </div>

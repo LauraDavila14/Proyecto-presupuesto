@@ -28,6 +28,9 @@ export type CampoEstructura = 'programa' | 'producto' | 'proyecto' | 'actividad'
 /** Fila de un catálogo de la estructura programática: `id` más los textos de sus columnas. Datos de ejemplo del taller. */
 export type ItemEstructura = { id: string } & Record<string, string>;
 
+/** Campos que abren una búsqueda: los de la estructura más el clasificador funcional (solo con una actividad Maestro). */
+export type CampoBusqueda = CampoEstructura | 'funcional';
+
 export interface CampoEstructuraConfig {
   campo: CampoEstructura;
   /** Título de la fila en el formulario. */
@@ -179,6 +182,19 @@ export const COLUMNAS_FUNCIONAL: { key: string; label: string }[] = [
   { key: 'grupo', label: 'Grupo funcional' },
 ];
 
+/** Búsqueda del clasificador funcional, que se abre desde su lupa cuando la actividad elegida es Maestro (APNOP). */
+export const CAMPO_FUNCIONAL: Omit<CampoEstructuraConfig, 'campo'> & { campo: 'funcional' } = {
+  campo: 'funcional',
+  titulo: 'Clasificador funcional',
+  tituloSeleccion: 'Seleccionar clasificador funcional',
+  columnas: COLUMNAS_FUNCIONAL,
+  catalogo: FUNCIONALES,
+  mostrarFiltro: false,
+  mostrarMasOpciones: false,
+  paginacionSuperior: true,
+  resumen: (i) => `${i['funcion']} / ${i['division']} / ${i['grupo']}`,
+};
+
 /** Categorías presupuestarias y los campos de estructura que pide cada una (nodos de Figma 1274:152395 y 1245:141176). */
 export const CAMPOS_POR_CATEGORIA: Record<string, CampoEstructura[]> = {
   PP: ['programa', 'producto', 'actividad'],
@@ -193,6 +209,8 @@ export interface RegistroClasificador {
   procesos: string[];
   categoriaPresupuestaria: string;
   estructura: Partial<Record<CampoEstructura, ItemEstructura>> & { actividad: ItemEstructura; funcional: ItemEstructura };
+  /** Solo con una actividad Maestro (APNOP): «Sustento del registro». */
+  sustento?: { comentario: string; archivo: string };
 }
 
 /** Texto de los procesos de un registro, p. ej. «Programación (P), Gestión (G)». */

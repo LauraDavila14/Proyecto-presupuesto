@@ -221,9 +221,10 @@
 
   <siaf-side-panel
     [open]="campoAbierto() !== null"
-    [title]="configCampoAbierto()?.tituloSeleccion ?? ''"
+    [title]="tituloBusqueda()"
     [confirmDisabled]="!hayFilaElegida()"
     [showNav]="navFiltrosVisible()"
+    [navConfirmDisabled]="!borradorCambiado()"
     navTitle="Filtros"
     navConfirmLabel="Aplicar"
     (navConfirmed)="aplicarFiltros()"
@@ -248,7 +249,9 @@
             <siaf-tag variant="input">{{ chip }}</siaf-tag>
           }
         </div>
-        <siaf-button variant="outline" size="sm" icon="delete" (click)="borrarFiltros()">Borrar filtros</siaf-button>
+        @if (puedeBorrarFiltros()) {
+          <siaf-button variant="outline" size="sm" icon="delete" (click)="borrarFiltros()">Borrar filtros</siaf-button>
+        }
       </div>
     }
 
@@ -327,7 +330,8 @@
       <siaf-radio-group
         label="Tipo"
         name="busqueda-filtro-tipo"
-        [options]="opcionesTipo"
+        [options]="opcionesTipo()"
+        [disabled]="actividadPP()"
         [value]="filtrosBorrador().tipo"
         (valueChange)="cambiarFiltro('tipo', $event)"
       />
@@ -345,6 +349,11 @@
         [value]="filtrosBorrador().nombre"
         (valueChange)="cambiarFiltro('nombre', $any($event))"
       />
+      @if (actividadPP()) {
+        <siaf-input type="select" label="Función" [options]="opcionesFuncion()" [value]="filtrosBorrador().funcion" (valueChange)="cambiarFiltro('funcion', $any($event))" />
+        <siaf-input type="select" label="División funcional" [options]="opcionesDivision()" [value]="filtrosBorrador().division" (valueChange)="cambiarFiltro('division', $any($event))" />
+        <siaf-input type="select" label="Grupo funcional" [options]="opcionesGrupo()" [value]="filtrosBorrador().grupo" (valueChange)="cambiarFiltro('grupo', $any($event))" />
+      }
     </div>
   </siaf-side-panel>
 

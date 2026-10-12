@@ -41,7 +41,15 @@ interface FiltrosBusqueda {
   tipo: string;
   codigo: string;
   nombre: string;
+  /** Solo en la búsqueda de actividad de PP: datos del clasificador funcional asociado a la actividad. */
+  funcion: string;
+  division: string;
+  grupo: string;
 }
+
+const SIN_FILTROS: FiltrosBusqueda = { tipo: '', codigo: '', nombre: '', funcion: '', division: '', grupo: '' };
+const FILTROS_PRODUCTO: FiltrosBusqueda = { ...SIN_FILTROS, tipo: 'Producto' };
+const FILTROS_ACTIVIDAD_PP: FiltrosBusqueda = { ...SIN_FILTROS, tipo: 'Actividad' };
 
 /**
  * Solicitud de clasificador programático, tipo de acción «Creación» (nodo de Figma 1096:123152): pantalla de
@@ -214,28 +222,48 @@ export class ClasificadorProgramaticoRequestComponent {
   readonly configCampoAbierto = computed(() => CAMPOS_ESTRUCTURA.find((c) => c.campo === this.campoAbierto()) ?? null);
   readonly columnasBusqueda = computed(() => this.configCampoAbierto()?.columnas ?? []);
 
-  // Filtros de la búsqueda de Producto/Proyecto (panel «Filtros» de `siaf-side-panel`): Tipo, Código y Nombre.
-  // Se editan en un borrador y recién «Aplicar» los pasa a la grilla.
-  readonly opcionesTipo: RadioOption[] = [
+  // Filtros de la búsqueda (panel «Filtros» de `siaf-side-panel`). Se editan en un borrador y recién «Aplicar» los pasa
+  // a la grilla. Producto/Proyecto (PP): Tipo, Código y Nombre. Actividad (PP, nodo de Figma 1311:108206): abre con el
+  // panel visible y el Tipo fijo en «Actividad predeterminada» (solo se puede elegir una actividad); además filtra por
+  // Función, División y Grupo del clasificador funcional asociado.
+  private readonly opcionesTipoProducto: RadioOption[] = [
     { label: 'Producto predeterminado', value: 'Producto' },
     { label: 'Proyecto', value: 'Proyecto' },
   ];
+  private readonly opcionesTipoActividad: RadioOption[] = [{ label: 'Actividad predeterminada', value: 'Actividad' }];
+  readonly actividadPP = signal(false);
+  readonly opcionesTipo = computed(() => (this.actividadPP() ? this.opcionesTipoActividad : this.opcionesTipoProducto));
+  readonly tituloBusqueda = computed(() => (this.actividadPP() ? 'Seleccionar actividad predeterminada' : (this.configCampoAbierto()?.tituloSeleccion ?? '')));
   readonly filtrosAbiertos = signal(false);
-  readonly filtros = signal<FiltrosBusqueda>({ tipo: '', codigo: '', nombre: '' });
-  readonly filtrosBorrador = signal<FiltrosBusqueda>({ tipo: 'Producto', codigo: '', nombre: '' });
-  readonly hayFiltrosAvanzados = computed(() => !!this.configCampoAbierto()?.filtrosAvanzados);
+  readonly filtros = signal<FiltrosBusqueda>({ ...SIN_FILTROS });
+  readonly filtrosBorrador = signal<FiltrosBusqueda>({ ...FILTROS_PRODUCTO });
+  readonly hayFiltrosAvanzados = computed(() => this.actividadPP() || !!this.configCampoAbierto()?.filtrosAvanzados);
   readonly navFiltrosVisible = computed(() => this.hayFiltrosAvanzados() && this.filtrosAbiertos());
+  /** «Aplicar» se habilita cuando el borrador difiere de lo ya aplicado. */
+  readonly borradorCambiado = computed(() => JSON.stringify(this.filtrosBorrador()) !== JSON.stringify(this.filtros()));
   readonly chipsFiltros = computed(() => {
     const f = this.filtros();
     return [
-      f.tipo && (this.opcionesTipo.find((o) => o.value === f.tipo)?.label ?? f.tipo),
+      f.tipo && (this.opcionesTipo().find((o) => o.value === f.tipo)?.label ?? f.tipo),
       f.codigo,
       f.nombre,
+      f.funcion,
+      f.division,
+      f.grupo,
     ].filter(Boolean) as string[];
   });
-  /** Opciones de los desplegables Código y Nombre: las del catálogo, del tipo elegido en el borrador. */
-  readonly opcionesCodigo = computed(() => this.valoresDeColumna('codigo'));
-  readonly opcionesNombre = computed(() => this.valoresDeColumna('nombre'));
+  /** «Borrar filtros»: con el Tipo fijo de actividad solo cuenta lo demás, que es lo que se puede quitar. */
+  readonly puedeBorrarFiltros = computed(() => {
+    const f = this.filtros();
+    const extra = f.codigo || f.nombre || f.funcion || f.division || f.grupo;
+    return this.actividadPP() ? !!extra : !!(f.tipo || extra);
+  });
+  /** Opciones de los desplegables: las del catálogo, del tipo elegido en el borrador. */
+  readonly opcionesCodigo = computed(() => this.valoresDeColumna((i) => i['codigo']));
+  readonly opcionesNombre = computed(() => this.valoresDeColumna((i) => i['nombre']));
+  readonly opcionesFuncion = computed(() => this.valoresDeColumna((i) => this.datoFuncional(i, 'funcion')));
+  readonly opcionesDivision = computed(() => this.valoresDeColumna((i) => this.datoFuncional(i, 'division')));
+  readonly opcionesGrupo = computed(() => this.valoresDeColumna((i) => this.datoFuncional(i, 'grupo')));
 
   // Paginación de la ventana de selección (en memoria).
   readonly pagina = signal(1);
@@ -245,7 +273,13 @@ export class ClasificadorProgramaticoRequestComponent {
     const f = this.filtros();
     const texto = this.busqueda().trim().toLowerCase();
     const filtrado = catalogo.filter(
-      (i) => (!f.tipo || i['tipo'] === f.tipo) && (!f.codigo || i['codigo'] === f.codigo) && (!f.nombre || i['nombre'] === f.nombre),
+      (i) =>
+        (!f.tipo || i['tipo'] === f.tipo) &&
+        (!f.codigo || i['codigo'] === f.codigo) &&
+        (!f.nombre || i['nombre'] === f.nombre) &&
+        (!f.funcion || this.datoFuncional(i, 'funcion') === f.funcion) &&
+        (!f.division || this.datoFuncional(i, 'division') === f.division) &&
+        (!f.grupo || this.datoFuncional(i, 'grupo') === f.grupo),
     );
     if (!texto) return filtrado;
     const claves = this.columnasBusqueda().map((c) => c.key);
@@ -316,9 +350,13 @@ export class ClasificadorProgramaticoRequestComponent {
   abrirBusqueda(campo: CampoEstructura): void {
     this.busqueda.set('');
     this.pagina.set(1);
-    this.filasPorPagina.set(CAMPOS_ESTRUCTURA.find((c) => c.campo === campo)?.filasPorPagina ?? 10);
-    this.filtros.set({ tipo: '', codigo: '', nombre: '' });
-    this.filtrosAbiertos.set(false);
+    const esActividadPP = campo === 'actividad' && this.categoria() === 'PP';
+    this.actividadPP.set(esActividadPP);
+    this.filasPorPagina.set(esActividadPP ? 25 : (CAMPOS_ESTRUCTURA.find((c) => c.campo === campo)?.filasPorPagina ?? 10));
+    // Actividad de PP abre con el filtro de Tipo ya aplicado y el panel visible.
+    this.filtros.set(esActividadPP ? { ...FILTROS_ACTIVIDAD_PP } : { ...SIN_FILTROS });
+    this.filtrosBorrador.set(esActividadPP ? { ...FILTROS_ACTIVIDAD_PP } : { ...FILTROS_PRODUCTO });
+    this.filtrosAbiertos.set(esActividadPP);
     this.tempSeleccionId.set(this.seleccion()[campo]?.id ?? null);
     this.campoAbierto.set(campo);
   }
@@ -362,7 +400,7 @@ export class ClasificadorProgramaticoRequestComponent {
 
   abrirFiltros(): void {
     const f = this.filtros();
-    this.filtrosBorrador.set(f.tipo || f.codigo || f.nombre ? { ...f } : { tipo: 'Producto', codigo: '', nombre: '' });
+    this.filtrosBorrador.set(this.chipsFiltros().length > 0 ? { ...f } : { ...FILTROS_PRODUCTO });
     this.filtrosAbiertos.set(true);
   }
 
@@ -371,7 +409,11 @@ export class ClasificadorProgramaticoRequestComponent {
   }
 
   cambiarFiltro<K extends keyof FiltrosBusqueda>(campo: K, valor: FiltrosBusqueda[K]): void {
-    this.filtrosBorrador.update((f) => ({ ...f, [campo]: valor, ...(campo === 'tipo' ? { codigo: '', nombre: '' } : {}) }));
+    this.filtrosBorrador.update((f) => ({
+      ...f,
+      [campo]: valor,
+      ...(campo === 'tipo' ? { codigo: '', nombre: '', funcion: '', division: '', grupo: '' } : {}),
+    }));
   }
 
   aplicarFiltros(): void {
@@ -381,14 +423,19 @@ export class ClasificadorProgramaticoRequestComponent {
   }
 
   borrarFiltros(): void {
-    this.filtros.set({ tipo: '', codigo: '', nombre: '' });
+    this.filtros.set(this.actividadPP() ? { ...FILTROS_ACTIVIDAD_PP } : { ...SIN_FILTROS });
     this.pagina.set(1);
   }
 
-  private valoresDeColumna(clave: 'codigo' | 'nombre'): { label: string; value: string }[] {
+  /** Función, división o grupo del clasificador funcional asociado a una actividad. */
+  private datoFuncional(item: ItemEstructura, clave: 'funcion' | 'division' | 'grupo'): string {
+    return FUNCIONALES.find((f) => f.id === item['funcionalId'])?.[clave] ?? '';
+  }
+
+  private valoresDeColumna(valor: (item: ItemEstructura) => string): { label: string; value: string }[] {
     const tipo = this.filtrosBorrador().tipo;
     const catalogo = this.configCampoAbierto()?.catalogo ?? [];
-    const valores = catalogo.filter((i) => !tipo || i['tipo'] === tipo).map((i) => i[clave]);
+    const valores = catalogo.filter((i) => !tipo || i['tipo'] === tipo).map(valor).filter(Boolean);
     return [...new Set(valores)].map((v) => ({ label: v, value: v }));
   }
 

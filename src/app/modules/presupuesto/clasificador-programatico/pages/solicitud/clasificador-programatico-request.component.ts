@@ -53,8 +53,8 @@ const FILTROS_ACTIVIDAD_PP: FiltrosBusqueda = { ...SIN_FILTROS, tipo: 'Actividad
 const FILTROS_INVERSION: FiltrosBusqueda = { ...SIN_FILTROS, tipo: 'Acción inversión' };
 
 /**
- * Cómo se busca la actividad: `predeterminada` (PP con un Producto elegido: Tipo fijo, filtros funcionales), `inversion`
- * (PP con un Proyecto elegido: Tipo «Acción inversión» u «Obra» a elección) o `ninguno` (AC y APNOP).
+ * Cómo se busca la actividad: `predeterminada` (sin proyecto elegido: Tipo fijo y filtros funcionales), `inversion`
+ * (con un proyecto elegido: Tipo «Acción inversión» u «Obra» a elección) o `ninguno` (las demás búsquedas).
  */
 type ModoActividad = 'ninguno' | 'predeterminada' | 'inversion';
 
@@ -276,7 +276,7 @@ export class ClasificadorProgramaticoRequestComponent {
     if (this.actividadInversion()) return this.categoria() === 'PP' ? 'Seleccionar actividad/acción inversión/ obra' : 'Seleccionar acción inversión/obra';
     return this.configCampoAbierto()?.tituloSeleccion ?? '';
   });
-  /** Catálogo de la búsqueda abierta; en actividad, solo los tipos que corresponden al modo (AC y APNOP: «Actividad»). */
+  /** Catálogo de la búsqueda abierta; en actividad, solo los tipos que corresponden al modo. */
   private readonly catalogoBusqueda = computed<ItemEstructura[]>(() => {
     const catalogo = this.configCampoAbierto()?.catalogo ?? [];
     if (this.campoAbierto() !== 'actividad') return catalogo;
@@ -409,12 +409,13 @@ export class ClasificadorProgramaticoRequestComponent {
     this.pagina.set(1);
     // En PP, la actividad se busca distinto según el ítem elegido en Producto/Proyecto.
     const eligioProyecto = this.seleccion().producto?.['tipo'] === 'Proyecto';
-    // AC y APNOP buscan siempre acción de inversión u obra; PP, según el ítem de Producto/Proyecto.
-    const modo: ModoActividad =
-      campo !== 'actividad' ? 'ninguno' : this.categoria() !== 'PP' || eligioProyecto ? 'inversion' : 'predeterminada';
+    // PP: según el ítem de Producto/Proyecto. AC y APNOP: según haya o no un proyecto elegido (Figma 1315:115224, y la
+    // actividad predeterminada si se busca sin proyecto).
+    const hayProyecto = this.categoria() === 'PP' ? eligioProyecto : !!this.seleccion().proyecto;
+    const modo: ModoActividad = campo !== 'actividad' ? 'ninguno' : hayProyecto ? 'inversion' : 'predeterminada';
     this.modoActividad.set(modo);
     const configCampo = CAMPOS_ESTRUCTURA.find((c) => c.campo === campo);
-    this.filasPorPagina.set(modo === 'predeterminada' ? 10 : modo === 'inversion' ? 25 : (configCampo?.filasPorPagina ?? 10));
+    this.filasPorPagina.set(modo === 'predeterminada' || modo === 'inversion' ? 25 : (configCampo?.filasPorPagina ?? 10));
     // «Predeterminada» abre con el filtro de Tipo ya aplicado; «inversión» solo con el panel visible. Ambas abren con el panel.
     this.filtros.set(modo === 'predeterminada' ? { ...FILTROS_ACTIVIDAD_PP } : { ...SIN_FILTROS });
     this.filtrosBorrador.set(modo === 'predeterminada' ? { ...FILTROS_ACTIVIDAD_PP } : modo === 'inversion' ? { ...FILTROS_INVERSION } : { ...FILTROS_PRODUCTO });

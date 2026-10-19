@@ -1,85 +1,99 @@
-import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { CurrentUserService } from '../../../../../core/auth/current-user.service';
 import { BreadcrumbItem } from '../../../../../shared/components/breadcrumb/breadcrumb.component';
-import { TableControlsComponent } from '../../../../../shared/components/table-controls/table-controls.component';
 import { FormTableSearchComponent } from '../../../../../shared/components/form-table-search/form-table-search.component';
 import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
+import { RequestApprovalModalsComponent } from '../../../../../shared/components/request-approval-modals/request-approval-modals.component';
+import { SolicitudeHeaderState } from '../../../../../shared/components/solicitude-header/solicitude-header.component';
 import { SolicitudeInfoCardComponent, SolicitudeInfoField } from '../../../../../shared/components/solicitude-info-card/solicitude-info-card.component';
 import { SolicitudePageLayoutComponent } from '../../../../../shared/components/solicitude-page-layout/solicitude-page-layout.component';
+import { TableControlsComponent } from '../../../../../shared/components/table-controls/table-controls.component';
 import { ButtonComponent } from '../../../../../shared/ui/button/button.component';
 import { CheckboxComponent } from '../../../../../shared/ui/checkbox/checkbox.component';
 import { DateTimePickerComponent } from '../../../../../shared/ui/date-time-picker/date-time-picker.component';
-import { RadioComponent, RadioOption } from '../../../../../shared/ui/radio/radio.component';
-import { RequestApprovalModalsComponent } from '../../../../../shared/components/request-approval-modals/request-approval-modals.component';
-import { SolicitudeHeaderState } from '../../../../../shared/components/solicitude-header/solicitude-header.component';
 import { DocumentSummaryCardComponent } from '../../../../../shared/ui/document-summary-card/document-summary-card.component';
+import { RadioComponent, RadioOption } from '../../../../../shared/ui/radio/radio.component';
 import { ReadonlyFieldComponent } from '../../../../../shared/ui/readonly-field/readonly-field.component';
-import { TextAreaControlComponent } from '../../../../../shared/ui/text-area-control/text-area-control.component';
-import { UploadedFileCardComponent, UploadedFileInfo } from '../../../../../shared/ui/uploaded-file-card/uploaded-file-card.component';
-import { UploadSideNavComponent } from '../../../../../shared/ui/upload-side-nav/upload-side-nav.component';
-import { TagComponent } from '../../../../../shared/ui/tag/tag.component';
 import { SidePanelComponent } from '../../../../../shared/ui/side-panel/side-panel.component';
 import { SnackbarComponent, SnackbarVariant } from '../../../../../shared/ui/snackbar/snackbar.component';
-import { SummaryCardComponent, SummaryCardField } from '../../../../../shared/ui/summary-card/summary-card.component';
+import { TagComponent } from '../../../../../shared/ui/tag/tag.component';
 import { TextFieldComponent } from '../../../../../shared/ui/text-field/text-field.component';
 import { PROCESS_ROUTE } from '../../config/clasificador-programatico.rutas';
 import {
-  CAMPO_FUNCIONAL,
-  CAMPOS_ESTRUCTURA,
-  CampoBusqueda,
-  CAMPOS_POR_CATEGORIA,
-  COLUMNAS_FUNCIONAL,
-  FUNCIONALES,
+  CADENAS_ACTIVIDAD,
+  CADENAS_PP,
   CATEGORIAS_PRESUPUESTARIAS,
-  CampoEstructura,
-  ItemEstructura,
+  CadenaClasificador,
   PROCESOS_CLASIFICADOR,
   RegistroClasificador,
-  codigoFuncional,
+  TIPOS_CADENA_ACTIVIDAD,
+  TIPOS_CADENA_PP,
 } from '../../models/clasificador-programatico.model';
 
-/** Filtros de la búsqueda de Producto/Proyecto; vacío = sin filtrar. */
-interface FiltrosBusqueda {
+/** Una cadena con la categoría presupuestaria del registro, tal como la muestran las grillas. */
+type FilaCadena = CadenaClasificador & { categoria: string };
+
+/** Una columna de las grillas de cadenas. */
+interface ColumnaCadena {
+  key: keyof FilaCadena;
+  label: string;
+}
+
+/** Filtros del panel «Seleccionar cadena»; vacío = sin filtrar. */
+interface FiltrosCadena {
   tipo: string;
-  codigo: string;
-  nombre: string;
-  /** Solo en la búsqueda de actividad de PP: datos del clasificador funcional asociado a la actividad. */
+  programa: string;
+  producto: string;
+  actividad: string;
   funcion: string;
   division: string;
   grupo: string;
 }
 
-/** Lo que muestra el resumen de registros cuando no hay programa ni producto/proyecto (Figma: captura del resumen). */
+const SIN_FILTROS: FiltrosCadena = { tipo: '', programa: '', producto: '', actividad: '', funcion: '', division: '', grupo: '' };
+
+/** Lo que muestra el resumen de registros cuando la cadena no tiene programa ni producto/proyecto. */
 const CODIGO_PROGRAMA_VACIO = '0000';
 const CODIGO_PRODUCTO_VACIO = '0000000';
 
-const SIN_FILTROS: FiltrosBusqueda = { tipo: '', codigo: '', nombre: '', funcion: '', division: '', grupo: '' };
-const FILTROS_PRODUCTO: FiltrosBusqueda = { ...SIN_FILTROS, tipo: 'Producto' };
-/** Tipo de actividad de APNOP sin datos funcionales: ni columnas ni filtros de Función, División y Grupo (Figma 1309:104419). */
-const TIPO_MAESTRO = 'Actividad (Maestro)';
-const FILTROS_ACTIVIDAD_PP: FiltrosBusqueda = { ...SIN_FILTROS, tipo: 'Actividad' };
-const FILTROS_INVERSION: FiltrosBusqueda = { ...SIN_FILTROS, tipo: 'Acción inversión' };
+const COLUMNAS_FUNCIONAL: ColumnaCadena[] = [
+  { key: 'funcion', label: 'Función' },
+  { key: 'division', label: 'División' },
+  { key: 'grupo', label: 'Grupo' },
+];
+const COLUMNAS_ESTRUCTURA_PP: ColumnaCadena[] = [
+  { key: 'programa', label: 'Programa' },
+  { key: 'producto', label: 'Producto/Proyecto' },
+  { key: 'actividad', label: 'Actividad/Acción Inversión/Obra' },
+];
+const COLUMNAS_ESTRUCTURA_ACTIVIDAD: ColumnaCadena[] = [{ key: 'actividad', label: 'Actividad/Acción Inversión/Obra' }];
+const COLUMNA_CATEGORIA: ColumnaCadena = { key: 'categoria', label: 'Categ. pptal' };
+
+/** Desplegables del panel de filtros: PP filtra por toda la estructura; AC y APNOP, solo por la actividad. */
+const FILTROS_PP: { clave: keyof FiltrosCadena; label: string }[] = [
+  { clave: 'programa', label: 'Programa' },
+  { clave: 'producto', label: 'Producto' },
+  { clave: 'actividad', label: 'Actividad' },
+  { clave: 'funcion', label: 'Función' },
+  { clave: 'division', label: 'División funcional' },
+  { clave: 'grupo', label: 'Grupo funcional' },
+];
+const FILTROS_ACTIVIDAD = FILTROS_PP.filter((f) => !['programa', 'producto'].includes(f.clave));
 
 /**
- * Cómo se busca la actividad: `predeterminada` (sin proyecto elegido: Tipo fijo y filtros funcionales), `inversion`
- * (con un proyecto elegido: Tipo «Acción inversión» u «Obra» a elección), `apnop` (APNOP sin proyecto: Tipo «Actividad
- * predeterminada» o «Actividad (Maestro)» a elección, Figma 1309:104332) o `ninguno` (las demás búsquedas).
- */
-type ModoActividad = 'ninguno' | 'predeterminada' | 'inversion' | 'apnop';
-
-/**
- * Solicitud de clasificador programático, tipo de acción «Creación» (nodo de Figma 1096:123152): pantalla de
- * ejemplo del taller. Los registros que agrega el usuario viven en memoria de este componente — no hay solicitud
- * real, backend simulado ni persistencia: «Grabar» solo confirma con un aviso y «Verificar y enviar» queda
- * deshabilitado, porque no hay un flujo de aprobación detrás.
+ * Solicitud de clasificador programático, tipo de acción «Creación»: pantalla de ejemplo del taller. Los registros
+ * que agrega el usuario viven en memoria de este componente — no hay solicitud real, backend simulado ni
+ * persistencia: «Grabar» abre su confirmación y deja el documento Elaborado, y «Verificar y enviar» se habilita solo
+ * con el documento elaborado.
  *
  * Al pulsar (+) en «Registro de clasificador» se abre el panel con «Proceso» (Programación y/o Gestión) y el
- * desplegable «Categoría presupuestaria» (PP, AC, APNOP). Con un proceso y una categoría elegidos aparecen
- * «Estructura programática» (cuatro campos que se eligen con la lupa) y «Vigencia» (Estado «Sí» y fechas que
- * asigna el sistema al aceptarse la solicitud: solo lectura). «Aceptar» se habilita con los cuatro campos
- * elegidos y agrega una fila a la tabla.
+ * desplegable «Categoría presupuestaria» (PP, AC, APNOP). Con un proceso y una categoría elegidos aparece «Buscar
+ * cadena» (nodos de Figma 1391:117188 y 1391:117304): su lupa abre el panel «Seleccionar cadena» (`siaf-side-panel`
+ * con panel de filtros), donde se marcan una o varias cadenas ya existentes. Al aceptar quedan en una tabla dentro
+ * del registro. «Aceptar» se habilita con al menos una cadena y agrega una fila al resumen por cada cadena elegida.
  */
 @Component({
   selector: 'siaf-clasificador-programatico-request',
@@ -87,23 +101,20 @@ type ModoActividad = 'ninguno' | 'predeterminada' | 'inversion' | 'apnop';
   imports: [
     ButtonComponent,
     CheckboxComponent,
-    DocumentSummaryCardComponent,
-    ReadonlyFieldComponent,
-    RequestApprovalModalsComponent,
     DateTimePickerComponent,
+    DocumentSummaryCardComponent,
     FormTableSearchComponent,
+    NgTemplateOutlet,
     PaginationComponent,
     RadioComponent,
+    ReadonlyFieldComponent,
+    RequestApprovalModalsComponent,
     SidePanelComponent,
     SnackbarComponent,
-    SummaryCardComponent,
-    TableControlsComponent,
-    TagComponent,
-    TextAreaControlComponent,
-    UploadedFileCardComponent,
-    UploadSideNavComponent,
     SolicitudeInfoCardComponent,
     SolicitudePageLayoutComponent,
+    TableControlsComponent,
+    TagComponent,
     TextFieldComponent,
   ],
   templateUrl: './clasificador-programatico-request.component.html',
@@ -111,7 +122,6 @@ type ModoActividad = 'ninguno' | 'predeterminada' | 'inversion' | 'apnop';
 })
 export class ClasificadorProgramaticoRequestComponent {
   private readonly router = inject(Router);
-  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly currentUser = inject(CurrentUserService);
 
   readonly heading = 'Solicitud de clasificador programático';
@@ -152,24 +162,24 @@ export class ClasificadorProgramaticoRequestComponent {
   readonly modalEliminar = signal(false);
   private numeroSiguiente = 1;
 
-  // ── Tabla de registros (nodo de Figma 1096:122648) ────────────────
+  // ── Resumen de registros (nodo de Figma 1096:122648) ──────────────
   readonly busquedaRegistros = signal('');
   readonly paginaRegistros = signal(1);
   readonly filasRegistros = signal(10);
   /** Casillas marcadas: solo visuales, no hay acciones sobre la selección. */
   readonly filasMarcadas = signal<string[]>([]);
 
-  /** Filas de la tabla con los códigos que muestra el diseño. */
+  /** Filas del resumen con los códigos que muestra el diseño. */
   readonly filasTabla = computed(() =>
     this.registros().map((r) => ({
       id: r.id,
       categoria: r.categoriaPresupuestaria,
-      programa: r.estructura.programa?.['codigo'] ?? CODIGO_PROGRAMA_VACIO,
-      producto: (r.estructura.producto ?? r.estructura.proyecto)?.['codigo'] ?? CODIGO_PRODUCTO_VACIO,
-      actividad: r.estructura.actividad['codigo'],
-      funcion: codigoFuncional(r.estructura.funcional['funcion']),
-      division: codigoFuncional(r.estructura.funcional['division']),
-      grupo: codigoFuncional(r.estructura.funcional['grupo']),
+      programa: r.cadena.programa || CODIGO_PROGRAMA_VACIO,
+      producto: r.cadena.producto || CODIGO_PRODUCTO_VACIO,
+      actividad: r.cadena.actividad,
+      funcion: r.cadena.funcion,
+      division: r.cadena.division,
+      grupo: r.cadena.grupo,
       estado: 'SI',
       fechaDesde: '-',
     })),
@@ -218,189 +228,39 @@ export class ClasificadorProgramaticoRequestComponent {
   readonly procesosMarcados = signal<string[]>([]);
   readonly categoria = signal('');
 
-  /** «Estructura programática» y «Vigencia» aparecen cuando ya hay proceso y categoría. */
-  readonly mostrarEstructura = computed(() => this.procesosMarcados().length > 0 && !!this.categoria());
+  /** «Buscar cadena» y «Vigencia» aparecen cuando ya hay proceso y categoría. */
+  readonly mostrarCadena = computed(() => this.procesosMarcados().length > 0 && !!this.categoria());
+  readonly esPP = computed(() => this.categoria() === 'PP');
 
-  // «Estructura programática»: un campo por catálogo, elegido en el side-nav de selección.
-  // Los campos dependen de la categoría: PP pide Programa → Producto/Proyecto → Actividad (cada lupa se habilita al
-  // elegir el anterior); AC y APNOP piden Proyecto y Actividad, con las dos lupas activas. El clasificador funcional
-  // no se busca: se asigna solo con la actividad elegida.
-  readonly camposEstructura = computed(() =>
-    (CAMPOS_POR_CATEGORIA[this.categoria()] ?? []).map((campo) => CAMPOS_ESTRUCTURA.find((c) => c.campo === campo)!),
-  );
+  /** Catálogo de cadenas de la categoría: PP trae programa y producto; AC y APNOP, solo la actividad. */
+  private readonly catalogoCadenas = computed<CadenaClasificador[]>(() => (this.esPP() ? CADENAS_PP : CADENAS_ACTIVIDAD));
+  private readonly tiposCadena = computed<RadioOption[]>(() => (this.esPP() ? TIPOS_CADENA_PP : TIPOS_CADENA_ACTIVIDAD));
+  readonly opcionesTipo = this.tiposCadena;
+  readonly camposFiltro = computed(() => (this.esPP() ? FILTROS_PP : FILTROS_ACTIVIDAD));
+
+  readonly columnasEstructura = computed<ColumnaCadena[]>(() => (this.esPP() ? COLUMNAS_ESTRUCTURA_PP : COLUMNAS_ESTRUCTURA_ACTIVIDAD));
   readonly columnasFuncional = COLUMNAS_FUNCIONAL;
-  readonly seleccion = signal<Record<CampoEstructura, ItemEstructura | null>>(this.seleccionVacia());
-  readonly esMaestro = computed(() => this.seleccion().actividad?.['tipo'] === TIPO_MAESTRO);
-  readonly funcionalManual = signal<ItemEstructura | null>(null);
+  /** El panel «Seleccionar cadena» suma la categoría; la tabla del registro no (Figma 1391:117304). */
+  readonly columnasEstructuraPanel = computed<ColumnaCadena[]>(() => [COLUMNA_CATEGORIA, ...this.columnasEstructura()]);
 
-  // «Sustento del registro»: solo con una actividad Maestro. Comentario (hasta 200) y adjunto PDF, ambos opcionales.
-  readonly comentarioSustento = signal('');
-  readonly archivoSustento = signal<UploadedFileInfo | null>(null);
-  readonly panelSustentoAbierto = signal(false);
+  // Cadenas elegidas, en la tabla de «Buscar cadena».
+  readonly cadenasElegidas = signal<CadenaClasificador[]>([]);
+  readonly busquedaCadenas = signal('');
+  readonly paginaCadenas = signal(1);
+  readonly filasCadenas = signal(25);
+  /** Casillas marcadas de la tabla: se puede marcar cualquier registro, sin más acción. */
+  readonly marcadasCadenas = signal<string[]>([]);
 
-  /**
-   * Clasificador funcional asignado: el del Proyecto elegido (apenas se elige, Figma 1274:162180; en AC y APNOP,
-   * Figma 1315:114230) o, con un Producto, el de la actividad elegida.
-   */
-  readonly funcionalAsignado = computed<ItemEstructura | null>(() => {
-    // Con una actividad Maestro (APNOP) el funcional no se asigna: se elige a mano con su lupa (Figma: captura del formulario).
-    if (this.esMaestro()) return this.funcionalManual();
-    const sel = this.seleccion();
-    const origen = sel.proyecto ?? (sel.producto?.['tipo'] === 'Proyecto' ? sel.producto : sel.actividad);
-    return FUNCIONALES.find((f) => f.id === origen?.['funcionalId']) ?? null;
-  });
-  readonly campoAbierto = signal<CampoBusqueda | null>(null);
-  readonly busqueda = signal('');
-  readonly tempSeleccionId = signal<string | null>(null);
-  readonly hayFilaElegida = computed(() => !!this.tempSeleccionId());
-
-  readonly configCampoAbierto = computed(() =>
-    this.campoAbierto() === 'funcional' ? CAMPO_FUNCIONAL : (CAMPOS_ESTRUCTURA.find((c) => c.campo === this.campoAbierto()) ?? null),
-  );
-  /** En la actividad de PP la grilla suma los datos del clasificador funcional asociado (Figma 1274:158317). */
-  private readonly columnasFuncionalesActividad = COLUMNAS_FUNCIONAL.map((c) => ({ ...c, widthClass: 'w-[200px]' }));
-  /**
-   * Las columnas funcionales aparecen en la actividad de PP y en Producto/Proyecto con el Tipo «Proyecto» aplicado
-   * (Figma 1274:161392). Los desplegables correspondientes del panel siguen el Tipo marcado en el borrador.
-   */
-  readonly mostrarFuncionales = computed(
-    () => this.actividadPP() || (this.actividadApnop() && this.chipsFiltros().length > 0 && this.filtros().tipo !== TIPO_MAESTRO) || this.campoAbierto() === 'proyecto' || (this.campoAbierto() === 'producto' && this.filtros().tipo === 'Proyecto'),
-  );
-  readonly filtrosFuncionalesVisibles = computed(
-    () => this.actividadPP() || (this.actividadApnop() && this.filtrosBorrador().tipo !== TIPO_MAESTRO) || (this.campoAbierto() === 'producto' && this.filtrosBorrador().tipo === 'Proyecto'),
-  );
-  readonly columnasBusqueda = computed<{ key: string; label: string; widthClass?: string }[]>(() => {
-    const columnas = this.configCampoAbierto()?.columnas ?? [];
-    return this.mostrarFuncionales() ? [...columnas, ...this.columnasFuncionalesActividad] : columnas;
+  private readonly filasElegidas = computed<FilaCadena[]>(() => this.conCategoria(this.cadenasElegidas()));
+  private readonly filasElegidasFiltradas = computed(() => this.filtrarPorTexto(this.filasElegidas(), this.busquedaCadenas()));
+  readonly totalCadenas = computed(() => this.filasElegidasFiltradas().length);
+  readonly totalPaginasCadenas = computed(() => Math.max(1, Math.ceil(this.totalCadenas() / this.filasCadenas())));
+  readonly filasCadenasPagina = computed(() => {
+    const desde = (this.paginaCadenas() - 1) * this.filasCadenas();
+    return this.filasElegidasFiltradas().slice(desde, desde + this.filasCadenas());
   });
 
-  // Filtros de la búsqueda (panel «Filtros» de `siaf-side-panel`). Se editan en un borrador y recién «Aplicar» los pasa
-  // a la grilla. Producto/Proyecto (PP): Tipo, Código y Nombre. Actividad (PP, nodo de Figma 1311:108206): abre con el
-  // panel visible y el Tipo fijo en «Actividad predeterminada» (solo se puede elegir una actividad); además filtra por
-  // Función, División y Grupo del clasificador funcional asociado.
-  private readonly opcionesTipoProducto: RadioOption[] = [
-    { label: 'Producto predeterminado', value: 'Producto' },
-    { label: 'Proyecto', value: 'Proyecto' },
-  ];
-  private readonly opcionesTipoActividad: RadioOption[] = [{ label: 'Actividad predeterminada', value: 'Actividad' }];
-  private readonly opcionesTipoApnop: RadioOption[] = [
-    { label: 'Actividad predeterminada', value: 'Actividad' },
-    { label: 'Actividad (Maestro)', value: TIPO_MAESTRO },
-  ];
-  private readonly opcionesTipoInversion: RadioOption[] = [
-    { label: 'Acción Inversión', value: 'Acción inversión' },
-    { label: 'Obra', value: 'Obra' },
-  ];
-  readonly modoActividad = signal<ModoActividad>('ninguno');
-  readonly actividadPP = computed(() => this.modoActividad() === 'predeterminada');
-  readonly actividadInversion = computed(() => this.modoActividad() === 'inversion');
-  readonly actividadApnop = computed(() => this.modoActividad() === 'apnop');
-  readonly opcionesTipo = computed(() =>
-    this.actividadPP()
-      ? this.opcionesTipoActividad
-      : this.actividadInversion()
-        ? this.opcionesTipoInversion
-        : this.actividadApnop()
-          ? this.opcionesTipoApnop
-          : this.opcionesTipoProducto,
-  );
-  /** En PP el panel dice «Seleccionar tipo» (Figma 1274:163749); en AC y APNOP, «Tipo» (Figma 1315:115224). */
-  readonly etiquetaTipo = computed(() => (this.actividadInversion() && this.categoria() === 'PP' ? 'Seleccionar tipo' : 'Tipo'));
-  readonly paginacionSuperior = computed(() => this.actividadInversion() || this.actividadApnop() || !!this.configCampoAbierto()?.paginacionSuperior);
-  readonly tituloBusqueda = computed(() => {
-    if (this.actividadPP()) return 'Seleccionar actividad predeterminada';
-    // APNOP: «Seleccionar actividad» al abrir y la versión larga una vez aplicado un filtro (los dos nodos de Figma).
-    if (this.actividadApnop()) return this.chipsFiltros().length > 0 ? 'Seleccionar actividad/acción inversión/ obra' : 'Seleccionar actividad';
-    if (this.actividadInversion()) return this.categoria() === 'PP' ? 'Seleccionar actividad/acción inversión/ obra' : 'Seleccionar acción inversión/obra';
-    return this.configCampoAbierto()?.tituloSeleccion ?? '';
-  });
-  /** Catálogo de la búsqueda abierta; en actividad, solo los tipos que corresponden al modo. */
-  private readonly catalogoBusqueda = computed<ItemEstructura[]>(() => {
-    const catalogo = this.configCampoAbierto()?.catalogo ?? [];
-    if (this.campoAbierto() !== 'actividad') return catalogo;
-    const tipos = this.actividadInversion() ? ['Acción inversión', 'Obra'] : this.actividadApnop() ? ['Actividad', 'Actividad (Maestro)'] : ['Actividad'];
-    return catalogo.filter((i) => tipos.includes(i['tipo']));
-  });
-  readonly filtrosAbiertos = signal(false);
-  readonly filtros = signal<FiltrosBusqueda>({ ...SIN_FILTROS });
-  readonly filtrosBorrador = signal<FiltrosBusqueda>({ ...FILTROS_PRODUCTO });
-  readonly hayFiltrosAvanzados = computed(() => this.actividadPP() || this.actividadInversion() || this.actividadApnop() || !!this.configCampoAbierto()?.filtrosAvanzados);
-  readonly navFiltrosVisible = computed(() => this.hayFiltrosAvanzados() && this.filtrosAbiertos());
-  /** «Aplicar» se habilita cuando el borrador difiere de lo ya aplicado. */
-  readonly borradorCambiado = computed(() => JSON.stringify(this.filtrosBorrador()) !== JSON.stringify(this.filtros()));
-  readonly chipsFiltros = computed(() => {
-    const f = this.filtros();
-    return [
-      f.tipo && (this.opcionesTipo().find((o) => o.value === f.tipo)?.label ?? f.tipo),
-      f.codigo,
-      f.nombre,
-      f.funcion,
-      f.division,
-      f.grupo,
-    ].filter(Boolean) as string[];
-  });
-  /** Los mismos chips con su clave, para quitar uno solo (✕, solo en APNOP). */
-  readonly chipsFiltrosItems = computed(() => {
-    const f = this.filtros();
-    const etiquetaTipo = this.opcionesTipo().find((o) => o.value === f.tipo)?.label ?? f.tipo;
-    const items: { clave: keyof FiltrosBusqueda; texto: string }[] = [
-      { clave: 'tipo', texto: etiquetaTipo },
-      { clave: 'codigo', texto: f.codigo },
-      { clave: 'nombre', texto: f.nombre },
-      { clave: 'funcion', texto: f.funcion },
-      { clave: 'division', texto: f.division },
-      { clave: 'grupo', texto: f.grupo },
-    ];
-    return items.filter((i) => !!i.texto);
-  });
-
-  /** «Borrar filtros»: con el Tipo fijo de actividad solo cuenta lo demás, que es lo que se puede quitar. */
-  readonly puedeBorrarFiltros = computed(() => {
-    const f = this.filtros();
-    const extra = f.codigo || f.nombre || f.funcion || f.division || f.grupo;
-    // En la actividad de PP el botón se muestra siempre (Figma 1274:158317); solo quita lo extra.
-    return this.actividadPP() ? true : !!(f.tipo || extra);
-  });
-  /** Opciones de los desplegables: las del catálogo, del tipo elegido en el borrador. */
-  readonly opcionesCodigo = computed(() => this.valoresDeColumna((i) => i['codigo']));
-  readonly opcionesNombre = computed(() => this.valoresDeColumna((i) => i['nombre']));
-  readonly opcionesFuncion = computed(() => this.valoresDeColumna((i) => this.datoFuncional(i, 'funcion')));
-  readonly opcionesDivision = computed(() => this.valoresDeColumna((i) => this.datoFuncional(i, 'division')));
-  readonly opcionesGrupo = computed(() => this.valoresDeColumna((i) => this.datoFuncional(i, 'grupo')));
-
-  // Paginación de la ventana de selección (en memoria).
-  readonly pagina = signal(1);
-  readonly filasPorPagina = signal(10);
-  private readonly filasFiltradas = computed<ItemEstructura[]>(() => {
-    const catalogo = this.catalogoBusqueda();
-    const f = this.filtros();
-    const texto = this.busqueda().trim().toLowerCase();
-    const filtrado = catalogo.filter(
-      (i) =>
-        (!f.tipo || i['tipo'] === f.tipo) &&
-        (!f.codigo || i['codigo'] === f.codigo) &&
-        (!f.nombre || i['nombre'] === f.nombre) &&
-        (!f.funcion || this.datoFuncional(i, 'funcion') === f.funcion) &&
-        (!f.division || this.datoFuncional(i, 'division') === f.division) &&
-        (!f.grupo || this.datoFuncional(i, 'grupo') === f.grupo),
-    );
-    if (!texto) return filtrado;
-    const claves = this.columnasBusqueda().map((c) => c.key);
-    return filtrado.filter((i) => claves.some((clave) => this.textoDeColumna(i, clave).toLowerCase().includes(texto)));
-  });
-  readonly totalFilas = computed(() => this.filasFiltradas().length);
-  readonly totalPaginas = computed(() => Math.max(1, Math.ceil(this.totalFilas() / this.filasPorPagina())));
-  readonly filasBusqueda = computed<ItemEstructura[]>(() => {
-    const desde = (this.pagina() - 1) * this.filasPorPagina();
-    const pagina = this.filasFiltradas().slice(desde, desde + this.filasPorPagina());
-    if (!this.mostrarFuncionales()) return pagina;
-    return pagina.map((i) => ({
-      ...i,
-      funcion: this.datoFuncional(i, 'funcion'),
-      division: this.datoFuncional(i, 'division'),
-      grupo: this.datoFuncional(i, 'grupo'),
-    }));
-  });
+  readonly puedeAceptar = computed(() => this.mostrarCadena() && this.cadenasElegidas().length > 0);
 
   // «Vigencia»: solo lectura (Estado «Sí»; las fechas las asigna el sistema al aceptarse la solicitud).
   readonly opcionesEstado: RadioOption[] = [
@@ -408,93 +268,90 @@ export class ClasificadorProgramaticoRequestComponent {
     { label: 'No', value: 'no' },
   ];
 
-  /**
-   * PP pide todos sus campos. AC y APNOP aceptan una actividad predeterminada sola (sin proyecto, Figma 1315:115224 y
-   * captura de la solicitud con la actividad elegida) o un proyecto con su acción de inversión u obra.
-   */
-  readonly puedeAceptar = computed(() => {
-    if (!this.mostrarEstructura()) return false;
-    const sel = this.seleccion();
-    if (this.categoria() === 'PP') return this.camposEstructura().every((c) => !!sel[c.campo]);
-    if (this.esMaestro() && !this.funcionalManual()) return false;
-    return !!sel.actividad && (!!sel.proyecto || sel.actividad['tipo'].startsWith('Actividad'));
+  buscarEnCadenas(texto: string): void {
+    this.busquedaCadenas.set(texto);
+    this.paginaCadenas.set(1);
+  }
+
+  cambiarPaginaCadenas(delta: number): void {
+    this.paginaCadenas.update((p) => Math.min(this.totalPaginasCadenas(), Math.max(1, p + delta)));
+  }
+
+  cambiarFilasCadenas(filas: number): void {
+    this.filasCadenas.set(filas);
+    this.paginaCadenas.set(1);
+  }
+
+  marcarCadena(id: string, marcar: boolean): void {
+    this.marcadasCadenas.update((m) => (marcar ? [...m.filter((x) => x !== id), id] : m.filter((x) => x !== id)));
+  }
+
+  // ── Panel «Seleccionar cadena» (siaf-side-panel con filtros) ───────
+  readonly panelCadenaAbierto = signal(false);
+  readonly busqueda = signal('');
+  readonly pagina = signal(1);
+  readonly filasPorPagina = signal(25);
+  /** Cadenas marcadas en el panel; «Aceptar» las pasa a la tabla del registro. */
+  readonly marcadasPanel = signal<string[]>([]);
+  readonly filtrosAbiertos = signal(false);
+  readonly filtros = signal<FiltrosCadena>({ ...SIN_FILTROS });
+  readonly filtrosBorrador = signal<FiltrosCadena>({ ...SIN_FILTROS });
+
+  /** «Aplicar» se habilita cuando el borrador difiere de lo ya aplicado. */
+  readonly borradorCambiado = computed(() => JSON.stringify(this.filtrosBorrador()) !== JSON.stringify(this.filtros()));
+  readonly chipsFiltros = computed(() => {
+    const f = this.filtros();
+    return [f.tipo, f.programa, f.producto, f.actividad, f.funcion, f.division, f.grupo].filter(Boolean);
   });
 
-  // ── Aviso ──────────────────────────────────────────────────────────
-  readonly avisoAbierto = signal(false);
-  readonly aviso = signal<SnackbarVariant>('record-done');
-
-  estaMarcado(codigo: string): boolean {
-    return this.procesosMarcados().includes(codigo);
-  }
-
-  marcarProceso(codigo: string, marcado: boolean): void {
-    this.procesosMarcados.update((actuales) =>
-      marcado ? [...actuales.filter((c) => c !== codigo), codigo] : actuales.filter((c) => c !== codigo),
+  private readonly cadenasFiltradas = computed<FilaCadena[]>(() => {
+    const f = this.filtros();
+    const filas = this.conCategoria(this.catalogoCadenas()).filter(
+      (c) =>
+        (!f.tipo || c.tipo === f.tipo) &&
+        (!f.programa || c.programa === f.programa) &&
+        (!f.producto || c.producto === f.producto) &&
+        (!f.actividad || c.actividad === f.actividad) &&
+        (!f.funcion || c.funcion === f.funcion) &&
+        (!f.division || c.division === f.division) &&
+        (!f.grupo || c.grupo === f.grupo),
     );
-  }
+    return this.filtrarPorTexto(filas, this.busqueda());
+  });
+  readonly totalFilas = computed(() => this.cadenasFiltradas().length);
+  readonly totalPaginas = computed(() => Math.max(1, Math.ceil(this.totalFilas() / this.filasPorPagina())));
+  readonly filasPanel = computed<FilaCadena[]>(() => {
+    const desde = (this.pagina() - 1) * this.filasPorPagina();
+    return this.cadenasFiltradas().slice(desde, desde + this.filasPorPagina());
+  });
 
-  cambiarCategoria(categoria: string): void {
-    if (categoria === this.categoria()) return;
-    this.categoria.set(categoria);
-    this.seleccion.set(this.seleccionVacia());
-    this.reiniciarMaestro();
-  }
-
-  /** Vacía lo que depende de una actividad Maestro: funcional elegido a mano y sustento. */
-  private reiniciarMaestro(): void {
-    this.funcionalManual.set(null);
-    this.comentarioSustento.set('');
-    this.archivoSustento.set(null);
-  }
-
-  /** La lupa de un campo se apaga con su selección hecha y, en PP, mientras falte elegir el campo anterior. */
-  lupaDeshabilitada(campo: CampoEstructura): boolean {
-    if (this.seleccion()[campo]) return true;
-    // AC y APNOP: con una actividad predeterminada elegida no hay proyecto (es una u otra vía).
-    if (this.categoria() !== 'PP') return campo === 'proyecto' && !!this.seleccion().actividad?.['tipo'].startsWith('Actividad');
-    const campos = this.camposEstructura();
-    const indice = campos.findIndex((c) => c.campo === campo);
-    return indice > 0 && !this.seleccion()[campos[indice - 1].campo];
-  }
-
-  /** Campos de la card del clasificador funcional asignado. */
-  camposCardFuncional(item: ItemEstructura): SummaryCardField[] {
-    return COLUMNAS_FUNCIONAL.map((c) => ({ label: c.label, value: item[c.key] }));
-  }
-
-  abrirPanel(): void {
-    this.procesosMarcados.set([]);
-    this.categoria.set('');
-    this.seleccion.set(this.seleccionVacia());
-    this.reiniciarMaestro();
-    this.agregando.set(true);
-  }
-
-  cerrarPanel(): void {
-    this.agregando.set(false);
-  }
-
-  abrirBusqueda(campo: CampoBusqueda): void {
+  abrirCadena(): void {
     this.busqueda.set('');
     this.pagina.set(1);
-    // En PP, la actividad se busca distinto según el ítem elegido en Producto/Proyecto.
-    const eligioProyecto = this.seleccion().producto?.['tipo'] === 'Proyecto';
-    // PP: según el ítem de Producto/Proyecto. AC y APNOP: según haya o no un proyecto elegido (Figma 1315:115224, y la
-    // actividad predeterminada si se busca sin proyecto).
-    const hayProyecto = this.categoria() === 'PP' ? eligioProyecto : !!this.seleccion().proyecto;
-    const modo: ModoActividad =
-      campo !== 'actividad' ? 'ninguno' : hayProyecto ? 'inversion' : this.categoria() === 'APNOP' ? 'apnop' : 'predeterminada';
-    this.modoActividad.set(modo);
-    const configCampo = CAMPOS_ESTRUCTURA.find((c) => c.campo === campo);
-    this.filasPorPagina.set(modo === 'predeterminada' || modo === 'inversion' || modo === 'apnop' ? 25 : (configCampo?.filasPorPagina ?? 10));
-    // «Predeterminada» abre con el filtro de Tipo ya aplicado; «inversión» solo con el panel visible. Ambas abren con el panel.
-    this.filtros.set(modo === 'predeterminada' ? { ...FILTROS_ACTIVIDAD_PP } : { ...SIN_FILTROS });
-    this.filtrosBorrador.set(modo === 'predeterminada' ? { ...FILTROS_ACTIVIDAD_PP } : modo === 'inversion' ? { ...FILTROS_INVERSION } : modo === 'apnop' ? { ...FILTROS_ACTIVIDAD_PP } : { ...FILTROS_PRODUCTO });
-    this.filtrosAbiertos.set(modo !== 'ninguno');
-    const previo = campo === 'funcional' ? this.funcionalManual() : this.seleccion()[campo];
-    this.tempSeleccionId.set(previo?.id ?? null);
-    this.campoAbierto.set(campo);
+    this.filasPorPagina.set(25);
+    // Abre con el panel de filtros visible y el primer Tipo marcado, sin aplicar todavía.
+    this.filtros.set({ ...SIN_FILTROS });
+    this.filtrosBorrador.set({ ...SIN_FILTROS, tipo: this.tiposCadena()[0].value });
+    this.filtrosAbiertos.set(true);
+    this.marcadasPanel.set(this.cadenasElegidas().map((c) => c.id));
+    this.panelCadenaAbierto.set(true);
+  }
+
+  cerrarCadena(): void {
+    this.panelCadenaAbierto.set(false);
+    this.filtrosAbiertos.set(false);
+  }
+
+  onAceptarCadena(): void {
+    const ids = this.marcadasPanel();
+    this.cadenasElegidas.set(this.catalogoCadenas().filter((c) => ids.includes(c.id)));
+    this.marcadasCadenas.set([]);
+    this.paginaCadenas.set(1);
+    this.cerrarCadena();
+  }
+
+  marcarEnPanel(id: string, marcar: boolean): void {
+    this.marcadasPanel.update((m) => (marcar ? [...m.filter((x) => x !== id), id] : m.filter((x) => x !== id)));
   }
 
   buscar(texto: string): void {
@@ -511,44 +368,9 @@ export class ClasificadorProgramaticoRequestComponent {
     this.pagina.set(1);
   }
 
-  /** Campos de la `siaf-summary-card` de un campo elegido: una etiqueta/valor por cada columna de su búsqueda. */
-  camposCard(campo: CampoEstructura, item: ItemEstructura): SummaryCardField[] {
-    const columnas = CAMPOS_ESTRUCTURA.find((c) => c.campo === campo)!.columnas;
-    return columnas.map((c) => ({ label: c.label, value: item[c.key], widthClass: c.anchoCard }));
-  }
-
-  /** Quita la selección de un campo (✕ de la card): reactiva su lupa y le devuelve el foco. */
-  quitarSeleccion(campo: CampoEstructura, titulo: string): void {
-    // En PP, quitar un campo vacía también los siguientes: dependen de él.
-    const campos = this.camposEstructura().map((c) => c.campo);
-    const quitados = this.categoria() === 'PP' ? campos.slice(campos.indexOf(campo)) : [campo];
-    this.seleccion.update((actual) => {
-      const siguiente = { ...actual };
-      for (const c of quitados) siguiente[c] = null;
-      return siguiente;
-    });
-    if (quitados.includes('actividad')) this.reiniciarMaestro();
-    setTimeout(() => this.host.nativeElement.querySelector<HTMLElement>(`button[aria-label="Buscar ${titulo.toLowerCase()}"]`)?.focus());
-  }
-
-  /** Quita el funcional elegido a mano (✕ de su card): reactiva su lupa y le devuelve el foco. */
-  quitarFuncional(): void {
-    this.funcionalManual.set(null);
-    setTimeout(() => this.host.nativeElement.querySelector<HTMLElement>('button[aria-label="Buscar clasificador funcional"]')?.focus());
-  }
-
-  onSustentoConfirmado(archivo: File): void {
-    this.archivoSustento.set(archivo);
-    this.panelSustentoAbierto.set(false);
-  }
-
-  resumen(campo: CampoEstructura, item: ItemEstructura): string {
-    return CAMPOS_ESTRUCTURA.find((c) => c.campo === campo)!.resumen(item);
-  }
-
   abrirFiltros(): void {
     const f = this.filtros();
-    this.filtrosBorrador.set(this.chipsFiltros().length > 0 ? { ...f } : { ...(this.actividadInversion() ? FILTROS_INVERSION : this.actividadApnop() ? FILTROS_ACTIVIDAD_PP : FILTROS_PRODUCTO) });
+    this.filtrosBorrador.set(this.chipsFiltros().length > 0 ? { ...f } : { ...SIN_FILTROS, tipo: this.tiposCadena()[0].value });
     this.filtrosAbiertos.set(true);
   }
 
@@ -556,11 +378,12 @@ export class ClasificadorProgramaticoRequestComponent {
     this.filtrosAbiertos.set(false);
   }
 
-  cambiarFiltro<K extends keyof FiltrosBusqueda>(campo: K, valor: FiltrosBusqueda[K]): void {
+  cambiarFiltro<K extends keyof FiltrosCadena>(campo: K, valor: FiltrosCadena[K]): void {
     this.filtrosBorrador.update((f) => ({
       ...f,
       [campo]: valor,
-      ...(campo === 'tipo' ? { codigo: '', nombre: '', funcion: '', division: '', grupo: '' } : {}),
+      // Al cambiar el Tipo, los desplegables dependientes se vacían.
+      ...(campo === 'tipo' ? { programa: '', producto: '', actividad: '', funcion: '', division: '', grupo: '' } : {}),
     }));
   }
 
@@ -570,75 +393,61 @@ export class ClasificadorProgramaticoRequestComponent {
     this.filtrosAbiertos.set(false);
   }
 
-  quitarFiltro(clave: keyof FiltrosBusqueda): void {
-    this.filtros.update((f) => ({ ...f, [clave]: '' }));
-    this.pagina.set(1);
-  }
-
   borrarFiltros(): void {
-    this.filtros.set(this.actividadPP() ? { ...FILTROS_ACTIVIDAD_PP } : { ...SIN_FILTROS });
+    this.filtros.set({ ...SIN_FILTROS });
     this.pagina.set(1);
   }
 
-  /** Texto de una celda: la propiedad del catálogo o, para las columnas funcionales, el dato de su clasificador. */
-  private textoDeColumna(item: ItemEstructura, clave: string): string {
-    if (item[clave] !== undefined) return item[clave];
-    return clave === 'funcion' || clave === 'division' || clave === 'grupo' ? this.datoFuncional(item, clave) : '';
-  }
-
-  /** Función, división o grupo del clasificador funcional asociado a una actividad. */
-  private datoFuncional(item: ItemEstructura, clave: 'funcion' | 'division' | 'grupo'): string {
-    return FUNCIONALES.find((f) => f.id === item['funcionalId'])?.[clave] ?? '';
-  }
-
-  private valoresDeColumna(valor: (item: ItemEstructura) => string): { label: string; value: string }[] {
+  /** Opciones de un desplegable del panel de filtros: los valores del catálogo, del Tipo marcado en el borrador. */
+  opcionesDe(clave: keyof FiltrosCadena): { label: string; value: string }[] {
     const tipo = this.filtrosBorrador().tipo;
-    const catalogo = this.catalogoBusqueda();
-    const valores = catalogo.filter((i) => !tipo || i['tipo'] === tipo).map(valor).filter(Boolean);
+    const valores = this.catalogoCadenas()
+      .filter((c) => !tipo || c.tipo === tipo)
+      .map((c) => c[clave])
+      .filter(Boolean);
     return [...new Set(valores)].map((v) => ({ label: v, value: v }));
   }
 
-  cerrarBusqueda(): void {
-    this.campoAbierto.set(null);
-    this.filtrosAbiertos.set(false);
+  // ── Panel «Registro de clasificador»: acciones ─────────────────────
+  estaMarcado(codigo: string): boolean {
+    return this.procesosMarcados().includes(codigo);
   }
 
-  seleccionarFila(id: string): void {
-    this.tempSeleccionId.set(id);
+  marcarProceso(codigo: string, marcado: boolean): void {
+    this.procesosMarcados.update((actuales) =>
+      marcado ? [...actuales.filter((c) => c !== codigo), codigo] : actuales.filter((c) => c !== codigo),
+    );
   }
 
-  onAceptarBusqueda(): void {
-    const campo = this.campoAbierto();
-    if (campo) {
-      const item = this.configCampoAbierto()?.catalogo.find((i) => i.id === this.tempSeleccionId()) ?? null;
-      if (campo === 'funcional') this.funcionalManual.set(item);
-      else this.seleccion.update((actual) => ({ ...actual, [campo]: item }));
-    }
-    this.campoAbierto.set(null);
+  cambiarCategoria(categoria: string): void {
+    if (categoria === this.categoria()) return;
+    this.categoria.set(categoria);
+    // Las cadenas dependen de la categoría: se vacían.
+    this.reiniciarCadenas();
+  }
+
+  abrirPanel(): void {
+    this.procesosMarcados.set([]);
+    this.categoria.set('');
+    this.reiniciarCadenas();
+    this.agregando.set(true);
+  }
+
+  cerrarPanel(): void {
+    this.agregando.set(false);
   }
 
   confirmarRegistro(): void {
     if (!this.puedeAceptar()) return;
 
-    const sel = this.seleccion();
-    this.correlativo += 1;
     this.registros.update((registros) => [
       ...registros,
-      {
-        id: `reg-${this.correlativo}`,
+      ...this.cadenasElegidas().map((cadena) => ({
+        id: `reg-${++this.correlativo}`,
         procesos: this.procesosMarcados(),
         categoriaPresupuestaria: this.categoria(),
-        estructura: {
-          ...(sel.programa && { programa: sel.programa }),
-          ...(sel.producto && { producto: sel.producto }),
-          ...(sel.proyecto && { proyecto: sel.proyecto }),
-          actividad: sel.actividad!,
-          funcional: this.funcionalAsignado()!,
-        },
-        ...(this.esMaestro() && {
-          sustento: { comentario: this.comentarioSustento(), archivo: this.archivoSustento()?.name ?? '' },
-        }),
-      },
+        cadena,
+      })),
     ]);
 
     this.agregando.set(false);
@@ -684,14 +493,31 @@ export class ClasificadorProgramaticoRequestComponent {
     void this.router.navigate([PROCESS_ROUTE]);
   }
 
+  // ── Aviso ──────────────────────────────────────────────────────────
+  readonly avisoAbierto = signal(false);
+  readonly aviso = signal<SnackbarVariant>('record-done');
+
+  private reiniciarCadenas(): void {
+    this.cadenasElegidas.set([]);
+    this.marcadasCadenas.set([]);
+    this.busquedaCadenas.set('');
+    this.paginaCadenas.set(1);
+  }
+
+  private conCategoria(cadenas: CadenaClasificador[]): FilaCadena[] {
+    return cadenas.map((c) => ({ ...c, categoria: this.categoria() }));
+  }
+
+  private filtrarPorTexto(filas: FilaCadena[], texto: string): FilaCadena[] {
+    const t = texto.trim().toLowerCase();
+    if (!t) return filas;
+    return filas.filter((f) => [f.categoria, f.tipo, f.programa, f.producto, f.actividad, f.funcion, f.division, f.grupo].some((v) => v.toLowerCase().includes(t)));
+  }
+
   private fechaYHoraActual(): string {
     const ahora = new Date();
     const dos = (n: number): string => String(n).padStart(2, '0');
     return `${dos(ahora.getDate())}/${dos(ahora.getMonth() + 1)}/${ahora.getFullYear()}   ${dos(ahora.getHours())}:${dos(ahora.getMinutes())}:${dos(ahora.getSeconds())}`;
-  }
-
-  private seleccionVacia(): Record<CampoEstructura, ItemEstructura | null> {
-    return { programa: null, producto: null, proyecto: null, actividad: null };
   }
 
   private mostrarAviso(variante: SnackbarVariant): void {

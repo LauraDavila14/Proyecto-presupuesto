@@ -1,7 +1,8 @@
 /**
- * Modelo del clasificador programático (nodo de Figma 1096:123152, «Solicitud de clasificador programático»,
- * tipo de acción «Creación»). Pantalla de ejemplo del taller: los registros que agrega el usuario viven en
- * memoria del componente, no hay API ni backend simulado detrás (a diferencia de «Registro de cuentas bancarias»).
+ * Modelo del clasificador programático (nodos de Figma 1391:117188, 1394:125651, 1398:128618 y 1391:117304,
+ * «Solicitud de clasificador programático», tipo de acción «Creación»). Pantalla de ejemplo del taller: los
+ * registros que agrega el usuario viven en memoria del componente, no hay API ni backend simulado detrás (a
+ * diferencia de «Registro de cuentas bancarias»).
  */
 
 export interface OpcionCatalogo {
@@ -22,205 +23,59 @@ export const CATEGORIAS_PRESUPUESTARIAS: OpcionCatalogo[] = [
   { value: 'APNOP', label: 'APNOP' },
 ];
 
-/** Campos de «Estructura programática» que se eligen con la lupa. El clasificador funcional no está: se asigna solo al elegir la actividad. */
-export type CampoEstructura = 'programa' | 'producto' | 'proyecto' | 'actividad';
-
-/** Fila de un catálogo de la estructura programática: `id` más los textos de sus columnas. Datos de ejemplo del taller. */
-export type ItemEstructura = { id: string } & Record<string, string>;
-
-/** Campos que abren una búsqueda: los de la estructura más el clasificador funcional (solo con una actividad Maestro). */
-export type CampoBusqueda = CampoEstructura | 'funcional';
-
-export interface CampoEstructuraConfig {
-  campo: CampoEstructura;
-  /** Título de la fila en el formulario. */
-  titulo: string;
-  /** Título de la ventana de selección (nodos de Figma 1231:136953, 1231:137206, 1231:137538 y 1231:138743). */
-  tituloSeleccion: string;
-  /** `widthClass`: ancho en la grilla de la búsqueda. `anchoCard`: ancho fijo del campo en la card del elegido (alinea las columnas entre cards). */
-  columnas: { key: string; label: string; widthClass?: string; anchoCard?: string }[];
-  catalogo: ItemEstructura[];
-  /** Botones junto al buscador de la ventana: solo visuales. */
-  mostrarFiltro: boolean;
-  mostrarMasOpciones: boolean;
-  /** Paginación también arriba de la grilla (solo el clasificador funcional). */
-  paginacionSuperior: boolean;
-  /** Con panel «Filtros» (Tipo, Código, Nombre) detrás del ícono de filtro de la búsqueda; nodos de Figma 1274:156515 y 1274:157301. */
-  filtrosAvanzados?: boolean;
-  /** Filas por página con que abre la búsqueda (por defecto 10). */
-  filasPorPagina?: number;
-  /** Texto con el que se muestra la fila elegida en el formulario y en la tabla de registros. */
-  resumen: (item: ItemEstructura) => string;
+/**
+ * Una cadena: una estructura programática ya existente con su clasificador funcional (códigos). Se elige en
+ * «Buscar cadena». En AC y APNOP no hay programa ni producto (quedan vacíos). Datos de ejemplo del taller.
+ */
+export interface CadenaClasificador {
+  id: string;
+  tipo: string;
+  programa: string;
+  producto: string;
+  actividad: string;
+  funcion: string;
+  division: string;
+  grupo: string;
 }
 
-const resumenCodigoNombre = (i: ItemEstructura): string => `${i['codigo']} — ${i['nombre']}`;
-
-export const CAMPOS_ESTRUCTURA: CampoEstructuraConfig[] = [
-  {
-    campo: 'programa',
-    titulo: 'Programa',
-    tituloSeleccion: 'Seleccionar programa',
-    columnas: [
-      { key: 'codigo', label: 'Código', widthClass: 'w-[180px]', anchoCard: 'lg:basis-[180px]' },
-      { key: 'nombre', label: 'Nombre' },
-    ],
-    mostrarFiltro: true,
-    mostrarMasOpciones: true,
-    paginacionSuperior: false,
-    resumen: resumenCodigoNombre,
-    catalogo: [
-      { id: 'prg-1', codigo: '0002', nombre: 'Salud materno neonatal' },
-      { id: 'prg-2', codigo: '0016', nombre: 'TBC-VIH/SIDA' },
-      { id: 'prg-3', codigo: '0017', nombre: 'Enfermedades metaxenicas y zoonosis' },
-      { id: 'prg-4', codigo: '0018', nombre: 'Enfermedades no transmisibles' },
-      { id: 'prg-5', codigo: '0146', nombre: 'Acceso de las familias a vivienda y entorno urbano adecuado' },
-      { id: 'prg-6', codigo: '0030', nombre: 'Reducción de delitos y faltas que afectan la seguridad ciudadana' },
-      { id: 'prg-7', codigo: '0035', nombre: 'Lucha contra el terrorismo' },
-    ],
-  },
-  {
-    campo: 'producto',
-    titulo: 'Producto/Proyecto',
-    tituloSeleccion: 'Seleccionar producto/proyecto',
-    columnas: [
-      { key: 'tipo', label: 'Tipo', widthClass: 'w-[160px]', anchoCard: 'lg:basis-[180px]' },
-      { key: 'codigo', label: 'Código', widthClass: 'w-[160px]', anchoCard: 'lg:basis-[180px]' },
-      { key: 'nombre', label: 'Nombre' },
-    ],
-    mostrarFiltro: true,
-    mostrarMasOpciones: false,
-    paginacionSuperior: true,
-    filtrosAvanzados: true,
-    filasPorPagina: 25,
-    resumen: resumenCodigoNombre,
-    catalogo: [
-      { id: 'pro-1', tipo: 'Producto', codigo: '3000001', nombre: 'Acciones comunes' },
-      { id: 'pro-2', tipo: 'Producto', codigo: '3000879', nombre: 'Adolescentes con atención preventiva de anemia y otras deficiencias nutricionales' },
-      { id: 'pro-3', tipo: 'Producto', codigo: '3000830', nombre: 'Familias acceden a viviendas en condiciones adecuadas' },
-      { id: 'pro-4', tipo: 'Producto', codigo: '3033295', nombre: 'Atención del parto normal' },
-      { id: 'pro-5', tipo: 'Producto', codigo: '3000002', nombre: 'Población informada sobre salud sexual, salud reproductiva y métodos de planificación familiar' },
-      { id: 'pro-6', tipo: 'Producto', codigo: '3000005', nombre: 'Adolescentes acceden a servicios de salud para prevención del embarazo' },
-      { id: 'pro-7', tipo: 'Producto', codigo: '3033172', nombre: 'Atención prenatal reenfocada' },
-      { id: 'pro-8', tipo: 'Proyecto', codigo: '2102', nombre: 'Mejoramiento de la infraestructura vial', funcionalId: 'fun-2' },
-      { id: 'pro-9', tipo: 'Proyecto', codigo: '2330', nombre: 'Construcción de vivienda de interés social', funcionalId: 'fun-2' },
-      { id: 'pro-10', tipo: 'Proyecto', codigo: '2451', nombre: 'Ampliación del servicio de agua potable y saneamiento', funcionalId: 'fun-3' },
-    ],
-  },
-  {
-    campo: 'proyecto',
-    titulo: 'Proyecto',
-    tituloSeleccion: 'Seleccionar proyecto',
-    // La grilla suma Función, División y Grupo del clasificador funcional del proyecto (Figma 1315:114230).
-    columnas: [
-      { key: 'codigo', label: 'Código', widthClass: 'w-[160px]', anchoCard: 'lg:basis-[180px]' },
-      { key: 'nombre', label: 'Nombre' },
-    ],
-    mostrarFiltro: true,
-    mostrarMasOpciones: false,
-    paginacionSuperior: true,
-    filasPorPagina: 25,
-    resumen: resumenCodigoNombre,
-    catalogo: [
-      { id: 'proy-1', tipo: 'Proyecto', codigo: '2102', nombre: 'Mejoramiento de la infraestructura vial', funcionalId: 'fun-2' },
-      { id: 'proy-2', tipo: 'Proyecto', codigo: '2330', nombre: 'Construcción de vivienda de interés social', funcionalId: 'fun-2' },
-      { id: 'proy-3', tipo: 'Proyecto', codigo: '2451', nombre: 'Ampliación del servicio de agua potable y saneamiento', funcionalId: 'fun-3' },
-      { id: 'proy-4', tipo: 'Proyecto', codigo: '2518', nombre: 'Instalación de establecimientos de salud', funcionalId: 'fun-1' },
-      { id: 'proy-5', tipo: 'Proyecto', codigo: '2602', nombre: 'Mejoramiento de espacios públicos urbanos', funcionalId: 'fun-4' },
-    ],
-  },
-  {
-    campo: 'actividad',
-    titulo: 'Actividad/Acción Inversión/Obra',
-    tituloSeleccion: 'Seleccionar actividad/acción inversión/obra',
-    columnas: [
-      { key: 'tipo', label: 'Tipo', widthClass: 'w-[160px]', anchoCard: 'lg:basis-[180px]' },
-      { key: 'codigo', label: 'Código', widthClass: 'w-[160px]', anchoCard: 'lg:basis-[180px]' },
-      { key: 'nombre', label: 'Nombre' },
-    ],
-    mostrarFiltro: true,
-    mostrarMasOpciones: false,
-    paginacionSuperior: false,
-    resumen: resumenCodigoNombre,
-    catalogo: [
-      { id: 'act-1', tipo: 'Actividad', codigo: '5006085', nombre: 'Selección asignación y supervisión del bono familiar habitacional', funcionalId: 'fun-1' },
-      { id: 'act-2', tipo: 'Actividad', codigo: '5000050', nombre: 'Atender complicaciones obstétricas en unidades de cuidados intensivos', funcionalId: 'fun-2' },
-      { id: 'act-3', tipo: 'Actividad', codigo: '5005984', nombre: 'Promoción de prácticas saludables para el cuidado de la salud sexual y reproductiva en familias', funcionalId: 'fun-3' },
-      { id: 'act-4', tipo: 'Actividad', codigo: '5000510', nombre: 'Atención especializada de la salud', funcionalId: 'fun-4' },
-      { id: 'act-5', tipo: 'Actividad', codigo: '5000393', nombre: 'Administración de la gestión documentaria', funcionalId: 'fun-1' },
-      { id: 'act-6', tipo: 'Actividad', codigo: '5000037', nombre: 'Apoyo a la comunidad', funcionalId: 'fun-2' },
-      { id: 'act-7', tipo: 'Actividad', codigo: '5000002', nombre: 'Conducción y orientación superior', funcionalId: 'fun-3' },
-      { id: 'act-8', tipo: 'Actividad', codigo: '5000808', nombre: 'Funcionamiento de servicios de salud', funcionalId: 'fun-4' },
-      // Solo APNOP sin proyecto: el Tipo «Actividad (Maestro)» se elige en el panel de filtros (Figma 1309:104332).
-      { id: 'mae-1', tipo: 'Actividad (Maestro)', codigo: '5000900', nombre: 'Gestión del catálogo maestro de actividades', funcionalId: 'fun-2' },
-      { id: 'mae-2', tipo: 'Actividad (Maestro)', codigo: '5000901', nombre: 'Mantenimiento de registros institucionales', funcionalId: 'fun-3' },
-      { id: 'mae-3', tipo: 'Actividad (Maestro)', codigo: '5000902', nombre: 'Soporte administrativo transversal', funcionalId: 'fun-1' },
-      // Con un Proyecto elegido (PP) la búsqueda ofrece estos tipos en vez de la actividad predeterminada.
-      { id: 'inv-1', tipo: 'Acción inversión', codigo: '5006085', nombre: 'Selección asignación y supervisión del bono familiar habitacional', funcionalId: 'fun-1' },
-      { id: 'inv-2', tipo: 'Acción inversión', codigo: '5000050', nombre: 'Atender complicaciones obstétricas en unidades de cuidados intensivos', funcionalId: 'fun-2' },
-      { id: 'inv-3', tipo: 'Acción inversión', codigo: '5005984', nombre: 'Promoción de prácticas saludables para el cuidado de la salud sexual y reproductiva en familias', funcionalId: 'fun-3' },
-      { id: 'inv-4', tipo: 'Acción inversión', codigo: '5000510', nombre: 'Atención especializada de la salud', funcionalId: 'fun-4' },
-      { id: 'inv-5', tipo: 'Acción inversión', codigo: '5000393', nombre: 'Administración de la gestión documentaria', funcionalId: 'fun-1' },
-      { id: 'inv-6', tipo: 'Acción inversión', codigo: '5000037', nombre: 'Conducción y orientación superior', funcionalId: 'fun-2' },
-      { id: 'obr-1', tipo: 'Obra', codigo: '6000012', nombre: 'Ejecución de obra de infraestructura vial', funcionalId: 'fun-3' },
-      { id: 'obr-2', tipo: 'Obra', codigo: '6000145', nombre: 'Construcción de local institucional', funcionalId: 'fun-4' },
-      { id: 'obr-3', tipo: 'Obra', codigo: '6000230', nombre: 'Rehabilitación de espacios públicos', funcionalId: 'fun-1' },
-    ],
-  },
+/** Tipos de cadena del filtro de PP (Figma 1394:125651). */
+export const TIPOS_CADENA_PP: OpcionCatalogo[] = [
+  { value: 'Producto predeterminado', label: 'Producto predeterminado' },
+  { value: 'Inversión', label: 'Inversión' },
 ];
 
-/** Clasificadores funcionales. No se buscan: cada actividad lleva el suyo (`funcionalId`) y se asigna al elegirla. */
-export const FUNCIONALES: ItemEstructura[] = [
-  { id: 'fun-1', funcion: '20 Salud', division: '044 Salud individual', grupo: '0096 Atención médica básica' },
-  { id: 'fun-2', funcion: '019 Vivienda y desarrollo urbano', division: '047 Educación básica', grupo: '0103 Educación inicial' },
-  { id: 'fun-3', funcion: '23 Protección social', division: '004 Planeamiento gubernamental', grupo: '0043 Control de riesgos y daños para la salud' },
-  { id: 'fun-4', funcion: '24 No salud', division: '004 Planeamiento gubernamental', grupo: '0043 Control de riesgos y daños para la salud' },
+/** Tipos de cadena del filtro de AC y APNOP (Figma 1398:128618). */
+export const TIPOS_CADENA_ACTIVIDAD: OpcionCatalogo[] = [
+  { value: 'Actividad predeterminada', label: 'Actividad predeterminada' },
+  { value: 'Inversión', label: 'Inversión' },
 ];
 
-export const COLUMNAS_FUNCIONAL: { key: string; label: string }[] = [
-  { key: 'funcion', label: 'Función' },
-  { key: 'division', label: 'División funcional' },
-  { key: 'grupo', label: 'Grupo funcional' },
+export const CADENAS_PP: CadenaClasificador[] = [
+  { id: 'cpp-1', tipo: 'Producto predeterminado', programa: '0146', producto: '3000830', actividad: '5006085', funcion: '019', division: '042', grupo: '0091' },
+  { id: 'cpp-2', tipo: 'Inversión', programa: '0146', producto: '2623863', actividad: '0000010', funcion: '015', division: '036', grupo: '0074' },
+  { id: 'cpp-3', tipo: 'Inversión', programa: '0146', producto: '2623863', actividad: '0000015', funcion: '015', division: '036', grupo: '0074' },
+  { id: 'cpp-4', tipo: 'Producto predeterminado', programa: '0090', producto: '3000001', actividad: '5000276', funcion: '22', division: '047', grupo: '0103' },
+  { id: 'cpp-5', tipo: 'Producto predeterminado', programa: '0002', producto: '3000879', actividad: '5000050', funcion: '20', division: '044', grupo: '0096' },
+  { id: 'cpp-6', tipo: 'Producto predeterminado', programa: '0016', producto: '3000002', actividad: '5005984', funcion: '23', division: '004', grupo: '0043' },
+  { id: 'cpp-7', tipo: 'Inversión', programa: '0146', producto: '2102', actividad: '0000020', funcion: '019', division: '047', grupo: '0103' },
+  { id: 'cpp-8', tipo: 'Producto predeterminado', programa: '0030', producto: '3033295', actividad: '5000510', funcion: '24', division: '004', grupo: '0043' },
 ];
 
-/** Búsqueda del clasificador funcional, que se abre desde su lupa cuando la actividad elegida es Maestro (APNOP). */
-export const CAMPO_FUNCIONAL: Omit<CampoEstructuraConfig, 'campo'> & { campo: 'funcional' } = {
-  campo: 'funcional',
-  titulo: 'Clasificador funcional',
-  tituloSeleccion: 'Seleccionar clasificador funcional',
-  columnas: COLUMNAS_FUNCIONAL,
-  catalogo: FUNCIONALES,
-  mostrarFiltro: false,
-  mostrarMasOpciones: false,
-  paginacionSuperior: true,
-  resumen: (i) => `${i['funcion']} / ${i['division']} / ${i['grupo']}`,
-};
+export const CADENAS_ACTIVIDAD: CadenaClasificador[] = [
+  { id: 'cac-1', tipo: 'Actividad predeterminada', programa: '', producto: '', actividad: '5006085', funcion: '019', division: '042', grupo: '0091' },
+  { id: 'cac-2', tipo: 'Inversión', programa: '', producto: '', actividad: '0000010', funcion: '015', division: '036', grupo: '0074' },
+  { id: 'cac-3', tipo: 'Inversión', programa: '', producto: '', actividad: '0000015', funcion: '015', division: '036', grupo: '0074' },
+  { id: 'cac-4', tipo: 'Actividad predeterminada', programa: '', producto: '', actividad: '5000276', funcion: '22', division: '047', grupo: '0103' },
+  { id: 'cac-5', tipo: 'Actividad predeterminada', programa: '', producto: '', actividad: '5000050', funcion: '20', division: '044', grupo: '0096' },
+  { id: 'cac-6', tipo: 'Actividad predeterminada', programa: '', producto: '', actividad: '5005984', funcion: '23', division: '004', grupo: '0043' },
+  { id: 'cac-7', tipo: 'Inversión', programa: '', producto: '', actividad: '0000020', funcion: '019', division: '047', grupo: '0103' },
+];
 
-/** Categorías presupuestarias y los campos de estructura que pide cada una (nodos de Figma 1274:152395 y 1245:141176). */
-export const CAMPOS_POR_CATEGORIA: Record<string, CampoEstructura[]> = {
-  PP: ['programa', 'producto', 'actividad'],
-  AC: ['proyecto', 'actividad'],
-  APNOP: ['proyecto', 'actividad'],
-};
-
-/** Un registro de clasificador agregado a la solicitud (fila de la tabla «Registro de clasificador»). */
+/** Un registro de clasificador agregado a la solicitud (fila del resumen «Registro de clasificador»). */
 export interface RegistroClasificador {
   id: string;
   /** Códigos de proceso marcados (`P`, `G` o ambos). */
   procesos: string[];
   categoriaPresupuestaria: string;
-  estructura: Partial<Record<CampoEstructura, ItemEstructura>> & { actividad: ItemEstructura; funcional: ItemEstructura };
-  /** Solo con una actividad Maestro (APNOP): «Sustento del registro». */
-  sustento?: { comentario: string; archivo: string };
-}
-
-/** Texto de los procesos de un registro, p. ej. «Programación (P), Gestión (G)». */
-export function nombreProcesos(codigos: readonly string[]): string {
-  return PROCESOS_CLASIFICADOR.filter((p) => codigos.includes(p.value))
-    .map((p) => p.label)
-    .join(', ');
-}
-
-/** Código (primer término) de un texto del clasificador funcional, p. ej. «019 Vivienda y desarrollo urbano» → «019». */
-export function codigoFuncional(texto: string): string {
-  return texto.split(' ')[0] ?? '';
+  cadena: CadenaClasificador;
 }

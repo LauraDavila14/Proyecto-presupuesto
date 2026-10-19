@@ -1,48 +1,3 @@
-<!-- Grilla de cadenas, compartida por el panel «Seleccionar cadena» y la tabla del registro: encabezados agrupados y casillas. -->
-<ng-template #tablaCadenas let-filas="filas" let-columnas="columnas" let-enPanel="enPanel">
-  <div class="overflow-x-auto">
-    <table class="w-full min-w-[640px] border-collapse text-left text-sm">
-      <thead>
-        <tr class="bg-[var(--sys-color-bg-surfaces-surface-high)] text-center">
-          <th rowspan="2" class="w-12 border-b border-[var(--sys-color-divider-strong)] px-siaf-sm"></th>
-          <th [attr.colspan]="columnas.length" class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Estructura programática</th>
-          <th colspan="3" class="border-b border-l border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Clasificador funcional</th>
-        </tr>
-        <tr class="bg-[var(--sys-color-bg-surfaces-surface-high)] text-left">
-          @for (col of columnas; track col.key) {
-            <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">{{ col.label }}</th>
-          }
-          @for (col of columnasFuncional; track col.key; let primera = $first) {
-            <th [class]="primera ? 'border-b border-l border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text' : 'border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text'">{{ col.label }}</th>
-          }
-        </tr>
-      </thead>
-      <tbody>
-        @for (fila of filas; track fila.id) {
-          <tr>
-            <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-sm py-siaf-sm">
-              <siaf-checkbox
-                [checked]="enPanel ? marcadasPanel().includes(fila.id) : marcadasCadenas().includes(fila.id)"
-                (checkedChange)="enPanel ? marcarEnPanel(fila.id, $event) : marcarCadena(fila.id, $event)"
-              />
-            </td>
-            @for (col of columnas; track col.key) {
-              <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ fila[col.key] }}</td>
-            }
-            @for (col of columnasFuncional; track col.key) {
-              <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ fila[col.key] }}</td>
-            }
-          </tr>
-        } @empty {
-          <tr>
-            <td [attr.colspan]="columnas.length + 4" class="px-siaf-md py-siaf-lg text-center text-text-muted">No se encontraron resultados.</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
-</ng-template>
-
 <div class="min-h-[calc(100vh-56px)] bg-[var(--sys-color-bg-surfaces-surface-lowest)] text-text">
   <siaf-solicitude-page-layout
     [breadcrumbs]="breadcrumbs"
@@ -104,46 +59,52 @@
               />
             </div>
           </div>
-          @if (mostrarCadena()) {
+          @if (mostrarEstructura()) {
             <div class="flex flex-col gap-siaf-md">
-              <div class="flex items-center justify-between gap-siaf-md">
-                <h3 class="m-0 text-sm font-bold uppercase text-text">Buscar cadena</h3>
-                <siaf-button variant="filled" icon="search" [iconOnly]="true" ariaLabel="Buscar cadena" (click)="abrirCadena()" />
-              </div>
-
-              @if (cadenasElegidas().length === 0) {
-                <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
-                  <p class="m-0 text-sm text-[var(--sys-color-text-neutral-medium)]">No se ha seleccionado ninguna estructura previa. Haga clic en el botón para realizar una selección.</p>
-                </div>
-              } @else {
-                <div class="flex flex-col gap-siaf-md">
-                  <siaf-form-table-search [value]="busquedaCadenas()" [showMore]="false" (valueChange)="buscarEnCadenas($event)" />
-                  <siaf-pagination
-                    navigation="Activate"
-                    position="Top"
-                    [page]="paginaCadenas()"
-                    [pageSize]="filasCadenas()"
-                    [totalItems]="totalCadenas()"
-                    [totalPages]="totalPaginasCadenas()"
-                    (previous)="cambiarPaginaCadenas(-1)"
-                    (next)="cambiarPaginaCadenas(1)"
-                  />
-                  <ng-container *ngTemplateOutlet="tablaCadenas; context: { filas: filasCadenasPagina(), columnas: columnasEstructura(), enPanel: false }" />
-                  <siaf-pagination
-                    navigation="Activate"
-                    position="Bottom"
-                    [rowPage]="true"
-                    [page]="paginaCadenas()"
-                    [pageSize]="filasCadenas()"
-                    [totalItems]="totalCadenas()"
-                    [totalPages]="totalPaginasCadenas()"
-                    [rowsPerPage]="filasCadenas()"
-                    (previous)="cambiarPaginaCadenas(-1)"
-                    (next)="cambiarPaginaCadenas(1)"
-                    (rowsPerPageChange)="cambiarFilasCadenas($event)"
-                  />
+              <h3 class="m-0 text-sm font-bold uppercase text-text">Estructura programática</h3>
+              @for (campo of camposEstructura(); track campo.campo) {
+                <div class="flex flex-col gap-siaf-xs">
+                  <div class="flex items-center justify-between gap-siaf-md">
+                    <h4 class="m-0 text-sm font-bold text-text">{{ campo.titulo }}</h4>
+                    <siaf-button variant="filled" icon="search" [iconOnly]="true" [ariaLabel]="'Buscar ' + campo.titulo.toLowerCase()" [disabled]="lupaDeshabilitada(campo.campo)" (click)="abrirBusqueda(campo.campo)" />
+                  </div>
+                  @if (seleccion()[campo.campo]; as item) {
+                    <siaf-summary-card
+                      [fields]="camposCard(campo.campo, item)"
+                      [bordered]="true"
+                      [showClose]="true"
+                      [closeLabel]="'Quitar ' + campo.titulo.toLowerCase()"
+                      (closed)="quitarSeleccion(campo.campo, campo.titulo)"
+                    />
+                  } @else {
+                    <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
+                      <p class="m-0 text-sm text-[var(--sys-color-text-neutral-medium)]">No se ha seleccionado ningún tipo. Haga clic en el botón para realizar una selección.</p>
+                    </div>
+                  }
                 </div>
               }
+
+              <div class="flex flex-col gap-siaf-xs">
+                <div class="flex items-center justify-between gap-siaf-md">
+                  <h4 class="m-0 text-sm font-bold uppercase text-text">Clasificador funcional</h4>
+                  @if (esMaestro()) {
+                    <siaf-button variant="filled" icon="search" [iconOnly]="true" ariaLabel="Buscar clasificador funcional" [disabled]="!!funcionalManual()" (click)="abrirBusqueda('funcional')" />
+                  }
+                </div>
+                @if (funcionalAsignado(); as funcional) {
+                  <siaf-summary-card
+                    [fields]="camposCardFuncional(funcional)"
+                    [bordered]="true"
+                    [showClose]="esMaestro()"
+                    closeLabel="Quitar clasificador funcional"
+                    (closed)="quitarFuncional()"
+                  />
+                } @else {
+                  <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
+                    <p class="m-0 text-sm text-[var(--sys-color-text-neutral-medium)]">{{ esMaestro() ? 'No se ha seleccionado ningún tipo. Haga clic en el botón para realizar una selección.' : 'No se ha seleccionado ningún tipo.' }}</p>
+                  </div>
+                }
+              </div>
             </div>
 
             <div class="flex flex-col gap-siaf-sm">
@@ -159,6 +120,29 @@
                 </div>
               </div>
             </div>
+
+            @if (esMaestro()) {
+              <div class="flex flex-col gap-siaf-md">
+                <h3 class="m-0 text-sm font-bold uppercase text-text">Sustento del registro</h3>
+                <div class="flex flex-col gap-siaf-xs">
+                  <h4 class="m-0 text-sm font-bold uppercase text-text">Comentario</h4>
+                  <text-area-control placeholder="Comentario de creación" [maxlength]="200" [value]="comentarioSustento()" (valueChange)="comentarioSustento.set($event)" />
+                </div>
+                <div class="flex flex-col gap-siaf-xs">
+                  <div class="flex min-h-10 items-center justify-between gap-siaf-md">
+                    <h4 class="m-0 text-sm font-bold uppercase text-text">Adjunto</h4>
+                    <siaf-button variant="accent" size="md" icon="file_upload" [iconOnly]="true" ariaLabel="Subir archivo" (click)="panelSustentoAbierto.set(true)" />
+                  </div>
+                  @if (archivoSustento()) {
+                    <siaf-uploaded-file-card [file]="archivoSustento()" (replace)="panelSustentoAbierto.set(true)" (removed)="archivoSustento.set(null)" />
+                  } @else {
+                    <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
+                      <p class="m-0 text-sm text-[var(--sys-color-text-neutral-medium)]">No se han adjuntado archivos. Por favor, haga clic en el botón para subir un archivo.</p>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
           }
         </div>
       } @else if (registros().length === 0) {
@@ -268,48 +252,94 @@
   />
 
   <siaf-side-panel
-    [open]="panelCadenaAbierto()"
-    title="Seleccionar cadena"
-    [confirmDisabled]="marcadasPanel().length === 0"
-    [showNav]="filtrosAbiertos()"
+    [open]="campoAbierto() !== null"
+    [title]="tituloBusqueda()"
+    [confirmDisabled]="!hayFilaElegida()"
+    [showNav]="navFiltrosVisible()"
     [navConfirmDisabled]="!borradorCambiado()"
     navTitle="Filtros"
     navConfirmLabel="Aplicar"
     (navConfirmed)="aplicarFiltros()"
     (navCanceled)="cerrarFiltros()"
-    (closed)="cerrarCadena()"
-    (canceled)="cerrarCadena()"
-    (confirmed)="onAceptarCadena()"
+    (closed)="cerrarBusqueda()"
+    (canceled)="cerrarBusqueda()"
+    (confirmed)="onAceptarBusqueda()"
   >
-    <siaf-form-table-search [value]="busqueda()" [showMore]="false" (valueChange)="buscar($event)" (filter)="abrirFiltros()" />
+    <siaf-form-table-search
+      [value]="busqueda()"
+      [showFilter]="configCampoAbierto()?.mostrarFiltro ?? true"
+      [showMore]="configCampoAbierto()?.mostrarMasOpciones ?? true"
+      (valueChange)="buscar($event)"
+      (filter)="abrirFiltros()"
+    />
 
     @if (chipsFiltros().length > 0) {
       <div class="mt-siaf-md flex items-center gap-siaf-sm">
         <span class="shrink-0 text-xs font-bold uppercase tracking-wide text-text">Filtros por</span>
         <div class="flex min-w-0 flex-1 flex-wrap items-center gap-siaf-sm">
-          @for (chip of chipsFiltros(); track chip) {
-            <siaf-tag variant="input">{{ chip }}</siaf-tag>
+          @for (chip of chipsFiltrosItems(); track chip.clave) {
+            <siaf-tag variant="input" [removable]="actividadApnop()" [removeLabel]="'Quitar filtro ' + chip.texto" (removed)="quitarFiltro(chip.clave)">{{ chip.texto }}</siaf-tag>
           }
         </div>
-        <siaf-button variant="outline" size="sm" icon="delete" (click)="borrarFiltros()">Borrar filtros</siaf-button>
+        @if (puedeBorrarFiltros()) {
+          <siaf-button variant="outline" size="sm" icon="delete" (click)="borrarFiltros()">Borrar filtros</siaf-button>
+        }
       </div>
     }
 
-    <div class="mt-siaf-md">
-      <siaf-pagination
-        navigation="Activate"
-        position="Top"
-        [page]="pagina()"
-        [pageSize]="filasPorPagina()"
-        [totalItems]="totalFilas()"
-        [totalPages]="totalPaginas()"
-        (previous)="cambiarPagina(-1)"
-        (next)="cambiarPagina(1)"
-      />
-    </div>
+    @if (paginacionSuperior()) {
+      <div class="mt-siaf-md">
+        <siaf-pagination
+          navigation="Activate"
+          position="Top"
+          [page]="pagina()"
+          [pageSize]="filasPorPagina()"
+          [totalItems]="totalFilas()"
+          [totalPages]="totalPaginas()"
+          (previous)="cambiarPagina(-1)"
+          (next)="cambiarPagina(1)"
+        />
+      </div>
+    }
 
-    <div class="mt-siaf-md">
-      <ng-container *ngTemplateOutlet="tablaCadenas; context: { filas: filasPanel(), columnas: columnasEstructuraPanel(), enPanel: true }" />
+    <div class="mt-siaf-md overflow-x-auto">
+      <table class="w-full border-collapse text-left text-sm">
+        <thead>
+          <tr class="h-10 bg-[var(--sys-color-bg-surfaces-surface-high)] text-xs font-bold uppercase text-text">
+            <th class="w-12 rounded-l-siaf-sm px-siaf-sm"></th>
+            @for (col of columnasBusqueda(); track col.key; let ultima = $last) {
+              <th class="px-siaf-md py-siaf-sm" [class.rounded-r-siaf-sm]="ultima" [class]="col.widthClass ?? ''">{{ col.label }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (fila of filasBusqueda(); track fila.id) {
+            <tr
+              class="h-12 cursor-pointer border-b border-[var(--sys-color-divider-default)] text-[var(--sys-color-text-neutral-medium)] hover:bg-surface-muted"
+              [class.bg-[var(--sys-color-bg-states-light-selected)]]="tempSeleccionId() === fila.id"
+              (click)="seleccionarFila(fila.id)"
+            >
+              <td class="px-siaf-sm" (click)="$event.stopPropagation()">
+                <input
+                  class="size-4 accent-brand-primary"
+                  type="radio"
+                  name="clasificador-estructura-radio"
+                  aria-label="Seleccionar fila"
+                  [checked]="tempSeleccionId() === fila.id"
+                  (change)="seleccionarFila(fila.id)"
+                />
+              </td>
+              @for (col of columnasBusqueda(); track col.key) {
+                <td class="px-siaf-md py-siaf-sm">{{ fila[col.key] }}</td>
+              }
+            </tr>
+          } @empty {
+            <tr>
+              <td [attr.colspan]="columnasBusqueda().length + 1" class="px-siaf-md py-siaf-lg text-center text-text-muted">No se encontraron resultados.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
     </div>
 
     <div class="mt-siaf-md">
@@ -330,23 +360,36 @@
 
     <div sidePanelNav class="flex flex-col gap-siaf-md p-siaf-md">
       <siaf-radio-group
-        label="Tipo"
-        name="cadena-filtro-tipo"
+        [label]="etiquetaTipo()"
+        name="busqueda-filtro-tipo"
         [options]="opcionesTipo()"
+        [disabled]="actividadPP()"
         [value]="filtrosBorrador().tipo"
         (valueChange)="cambiarFiltro('tipo', $event)"
       />
-      @for (campo of camposFiltro(); track campo.clave) {
-        <siaf-input
-          type="select"
-          [label]="campo.label"
-          [options]="opcionesDe(campo.clave)"
-          [value]="filtrosBorrador()[campo.clave]"
-          (valueChange)="cambiarFiltro(campo.clave, $any($event))"
-        />
+      <siaf-input
+        type="select"
+        label="Código"
+        [options]="opcionesCodigo()"
+        [value]="filtrosBorrador().codigo"
+        (valueChange)="cambiarFiltro('codigo', $any($event))"
+      />
+      <siaf-input
+        type="select"
+        label="Nombre"
+        [options]="opcionesNombre()"
+        [value]="filtrosBorrador().nombre"
+        (valueChange)="cambiarFiltro('nombre', $any($event))"
+      />
+      @if (filtrosFuncionalesVisibles()) {
+        <siaf-input type="select" label="Función" [options]="opcionesFuncion()" [value]="filtrosBorrador().funcion" (valueChange)="cambiarFiltro('funcion', $any($event))" />
+        <siaf-input type="select" label="División funcional" [options]="opcionesDivision()" [value]="filtrosBorrador().division" (valueChange)="cambiarFiltro('division', $any($event))" />
+        <siaf-input type="select" label="Grupo funcional" [options]="opcionesGrupo()" [value]="filtrosBorrador().grupo" (valueChange)="cambiarFiltro('grupo', $any($event))" />
       }
     </div>
   </siaf-side-panel>
+
+  <siaf-upload-side-nav [open]="panelSustentoAbierto()" (closed)="panelSustentoAbierto.set(false)" (confirmed)="onSustentoConfirmado($event)" />
 
   <siaf-snackbar [variant]="aviso()" [open]="avisoAbierto()" (closed)="avisoAbierto.set(false)" />
 </div>

@@ -83,10 +83,10 @@ export const DEFAULT_PROCESS_TREE: ProcessMenuNode[] = [
                       {
                         label: 'Solicitud de clasificador programático',
                         route: '/procesos/clasificador-programatico/solicitud',
-                        actionTypes: ['Creación', 'Modificación'],
+                        actionTypes: ['Creación', 'Modificación', 'Anulación'],
                       },
                     ],
-                    actionTypeOptions: ['Creación', 'Modificación'],
+                    actionTypeOptions: ['Creación', 'Modificación', 'Anulación'],
                   },
                   { id: 'clasificador-programatico-consultas', label: 'Consultas y reportes del clasificador programático', comingSoon: true },
                 ],

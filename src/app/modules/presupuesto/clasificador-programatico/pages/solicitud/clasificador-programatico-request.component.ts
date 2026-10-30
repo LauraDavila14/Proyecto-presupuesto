@@ -25,6 +25,8 @@ import { SnackbarComponent, SnackbarVariant } from '../../../../../shared/ui/sna
 import { SummaryCardComponent, SummaryCardField } from '../../../../../shared/ui/summary-card/summary-card.component';
 import { TextFieldComponent } from '../../../../../shared/ui/text-field/text-field.component';
 import { PROCESS_ROUTE } from '../../config/clasificador-programatico.rutas';
+import { CADENAS_PP } from '../../models/cadenas-programaticas.mock';
+import { CadenaSearchPanelComponent } from './cadena-search-panel/cadena-search-panel.component';
 import {
   CAMPO_FUNCIONAL,
   CAMPOS_ESTRUCTURA,
@@ -102,6 +104,7 @@ function formatearFechaApertura(fecha: Date): string {
     DateTimePickerComponent,
     FormTableSearchComponent,
     PaginationComponent,
+    CadenaSearchPanelComponent,
     RadioComponent,
     SidePanelComponent,
     SnackbarComponent,
@@ -238,6 +241,15 @@ export class ClasificadorProgramaticoRequestComponent {
     { label: 'Registrar cadena', value: 'registrar' },
   ];
   readonly criterio = signal('buscar');
+
+  // «Buscar cadena»: panel «Seleccionar cadena» (nodos de Figma 2009:315630 y 1865:311851), solo con PP. Aceptar lo
+  // cierra; mostrar la cadena elegida en el formulario queda para su diseño.
+  readonly cadenasPp = CADENAS_PP;
+  readonly cadenaAbierta = signal(false);
+
+  abrirCadenas(): void {
+    if (this.categoria() === 'PP') this.cadenaAbierta.set(true);
+  }
 
   /** «Estructura programática» y «Vigencia» aparecen cuando ya hay proceso y categoría. */
   readonly mostrarEstructura = computed(() => this.procesosMarcados().length > 0 && !!this.categoria());

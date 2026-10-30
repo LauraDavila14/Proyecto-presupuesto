@@ -48,7 +48,7 @@ describe('RegistroDetalleComponent', () => {
     expect(detalle.estructura().map((c) => c.etiqueta)).toEqual(['Categoría presupuestaria', 'Programa presupuestal', 'Inversión', 'AI / Obra']);
   });
 
-  it('en AC muestra «Proyecto» y «-» donde no hay dato', () => {
+  it('en AC muestra «Proyecto» y no muestra el campo sin dato (Programa)', () => {
     abrir({
       id: 'reg-2',
       procesos: ['P'],
@@ -59,10 +59,36 @@ describe('RegistroDetalleComponent', () => {
         funcional: { id: 'f', funcion: '20 Salud', division: '044 Salud individual', grupo: '0096 Atención médica básica' },
       },
     });
-    const campos = detalle.estructura();
-    expect(campos[0].valor).toBe('AC - Acciones centrales');
-    expect(campos[1]).toEqual({ etiqueta: 'Programa presupuestal', valor: '-' });
-    expect(campos[2]).toEqual({ etiqueta: 'Proyecto', valor: '2102 Mejoramiento vial' });
+    expect(detalle.estructura()).toEqual([
+      { etiqueta: 'Categoría presupuestaria', valor: 'AC - Acciones centrales' },
+      { etiqueta: 'Proyecto', valor: '2102 Mejoramiento vial' },
+      { etiqueta: 'Actividad', valor: '5000037 Apoyo a la comunidad' },
+    ]);
+  });
+
+  it('una cadena de actividad de AC no muestra Programa ni Producto', () => {
+    abrir({
+      id: 'reg-3',
+      procesos: ['P'],
+      categoriaPresupuestaria: 'AC',
+      tipoCadena: 'actividad',
+      estructura: {
+        actividad: { id: 'a', codigo: '5000001', nombre: 'Planeamiento y presupuesto' },
+        funcional: { id: 'f', funcion: '02 Relaciones exteriores', division: '006 Gestión', grupo: '0005 Planeamiento institucional' },
+      },
+    });
+    expect(detalle.estructura().map((c) => c.etiqueta)).toEqual(['Categoría presupuestaria', 'Actividad']);
+    fixture.detectChanges();
+    const texto = (fixture.nativeElement as HTMLElement).textContent!;
+    expect(texto).not.toContain('Programa presupuestal');
+    expect(texto).toContain('Estado');
+    expect(texto).toContain('Fecha desde');
+  });
+
+  it('sin clasificador funcional no muestra esa sección', () => {
+    abrir({ ...registroPp, estructura: { ...registroPp.estructura, funcional: { id: 'f' } } });
+    expect(detalle.funcional()).toEqual([]);
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Clasificador funcional');
   });
 
   it('la flecha de la cabecera emite returned', () => {

@@ -8,7 +8,7 @@ import { CadenaProgramatica, codigoNombre } from '../../../models/cadenas-progra
 
 /**
  * Cadenas elegidas en «Buscar cadena» del registro de clasificador (nodo de Figma 1769:174293): buscador, paginación
- * y tabla con la estructura programática (Programa, que AC no tiene, Pro / Inv, Act / AI / Obr) y el clasificador funcional de cada
+ * y tabla con la estructura programática (Programa, que AC y APNOP no tienen, Pro / Inv o Inversión sin programa, Act / AI / Obr) y el clasificador funcional de cada
  * cadena. Con filas marcadas, la barra superior (`siaf-table-controls`) suma «seleccionar todo» y la acción Borrar
  * (nodo de Figma de la acción de borrar). Las marcas viven en quien lo usa (`marcadas` / `marcadasChange`) y `borrar`
  * avisa que se quieren quitar las marcadas. El embudo del buscador es solo visual.
@@ -50,7 +50,7 @@ import { CadenaProgramatica, codigoNombre } from '../../../models/cadenas-progra
               @if (conPrograma()) {
                 <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Programa</th>
               }
-              <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Pro / Inv</th>
+              <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">{{ conPrograma() ? 'Pro / Inv' : 'Inversión' }}</th>
               <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Act / AI / Obr</th>
               <th class="border-b border-l border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Función</th>
               <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Div_F</th>

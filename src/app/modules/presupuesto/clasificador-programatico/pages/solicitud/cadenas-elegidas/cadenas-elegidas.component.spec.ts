@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { CADENAS_AC, CADENAS_PP } from '../../../models/cadenas-programaticas.mock';
+import { CADENAS_AC, CADENAS_APNOP, CADENAS_APNOP_INVERSION, CADENAS_PP } from '../../../models/cadenas-programaticas.mock';
 import { CadenasElegidasComponent } from './cadenas-elegidas.component';
 
 describe('CadenasElegidasComponent', () => {
@@ -27,7 +27,25 @@ describe('CadenasElegidasComponent', () => {
     fixture.detectChanges();
     const cabecera = (fixture.nativeElement as HTMLElement).querySelector('thead')!.textContent!;
     expect(cabecera).not.toContain('Programa');
-    expect(cabecera).toContain('Pro / Inv');
+    expect(cabecera).toContain('Inversión');
+    expect(cabecera).not.toContain('Pro / Inv');
+  });
+
+  it('con Programa, la columna se llama «Pro / Inv»', () => {
+    expect((fixture.nativeElement as HTMLElement).querySelector('thead')!.textContent).toContain('Pro / Inv');
+  });
+
+  it('mezcla cadenas de actividad e inversión de APNOP, con «-» en Inversión para las de actividad', () => {
+    fixture.componentRef.setInput('cadenas', [CADENAS_APNOP[0], CADENAS_APNOP_INVERSION[0], CADENAS_APNOP_INVERSION[1]]);
+    fixture.detectChanges();
+    const filas = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('tbody tr')).map((tr) =>
+      Array.from(tr.querySelectorAll('td')).slice(1, 3).map((td) => td.textContent!.trim()),
+    );
+    expect(filas).toEqual([
+      ['-', '5000643 Desarrollo de acciones de política exterior'],
+      ['2355896', '0000158 Saneamiento físico legal del terreno para el servicio del control fronterizo'],
+      ['2355896', '0001427 Adquisición de terreno para el servicio de control fronterizo'],
+    ]);
   });
 
   it('busca entre las elegidas por código o nombre', () => {

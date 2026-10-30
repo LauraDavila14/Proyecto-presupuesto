@@ -379,6 +379,12 @@ const INVERSIONES_APNOP: Concepto[] = [
   { codigo: '2374832', nombre: 'Mejoramiento de la gestión de áreas naturales protegidas' },
 ];
 
+/** Filas de inversión del diseño de APNOP (todas con la inversión 2355896). */
+const AI_OBR_APNOP_DISENO: [string, string][] = [
+  ['0000158', 'Saneamiento físico legal del terreno para el servicio del control fronterizo'],
+  ['0001427', 'Adquisición de terreno para el servicio de control fronterizo'],
+];
+
 const AI_OBR_APNOP: string[] = [
   'Elaboración de expediente técnico para la recuperación de servicios ambientales',
   'Supervisión de obra',
@@ -394,15 +400,19 @@ const FUNCIONAL_APNOP_INVERSION = {
   grupo: { codigo: '0123', nombre: 'Gestión integrada de recursos naturales' },
 };
 
-/** Cadenas de APNOP de inversión; la primera es la de la tabla de registros del diseño (2355896 / 0000158). */
-export const CADENAS_APNOP_INVERSION: CadenaProgramatica[] = Array.from({ length: TOTAL_CADENAS }, (_, i) => ({
-  id: `apni-${i + 1}`,
-  categoria: 'APNOP',
-  tipo: 'inversion' as const,
-  producto: INVERSIONES_APNOP[i % INVERSIONES_APNOP.length],
-  actividad: { codigo: String(158 + i * 9).padStart(7, '0'), nombre: AI_OBR_APNOP[i % AI_OBR_APNOP.length] },
-  ...FUNCIONAL_APNOP_INVERSION,
-}));
+/** Cadenas de APNOP de inversión; las primeras son las del diseño (2355896 con 0000158 y 0001427). */
+export const CADENAS_APNOP_INVERSION: CadenaProgramatica[] = Array.from({ length: TOTAL_CADENAS }, (_, i) => {
+  const [codigo, nombre] = AI_OBR_APNOP_DISENO[i] ?? [String(1500 + i * 9).padStart(7, '0'), AI_OBR_APNOP[i % AI_OBR_APNOP.length]];
+  const inversion = i < AI_OBR_APNOP_DISENO.length ? INVERSIONES_APNOP[0] : INVERSIONES_APNOP[i % INVERSIONES_APNOP.length];
+  return {
+    id: `apni-${i + 1}`,
+    categoria: 'APNOP',
+    tipo: 'inversion' as const,
+    producto: inversion,
+    actividad: { codigo, nombre },
+    ...FUNCIONAL_APNOP_INVERSION,
+  };
+});
 
 /** Todas las cadenas que ofrece «Buscar cadena» (PP, AC y APNOP). */
 export const CADENAS_TODAS: CadenaProgramatica[] = [

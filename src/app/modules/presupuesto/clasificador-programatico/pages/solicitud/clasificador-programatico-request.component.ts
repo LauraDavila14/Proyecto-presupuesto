@@ -231,6 +231,14 @@ export class ClasificadorProgramaticoRequestComponent {
   readonly procesosMarcados = signal<string[]>([]);
   readonly categoria = signal('');
 
+  // «Criterio» (solo APNOP): «Buscar cadena» por defecto; «Registrar cadena» queda marcado sin cambiar el contenido
+  // hasta tener su diseño.
+  readonly opcionesCriterio: RadioOption[] = [
+    { label: 'Buscar cadena', value: 'buscar' },
+    { label: 'Registrar cadena', value: 'registrar' },
+  ];
+  readonly criterio = signal('buscar');
+
   /** «Estructura programática» y «Vigencia» aparecen cuando ya hay proceso y categoría. */
   readonly mostrarEstructura = computed(() => this.procesosMarcados().length > 0 && !!this.categoria());
 
@@ -450,6 +458,7 @@ export class ClasificadorProgramaticoRequestComponent {
   cambiarCategoria(categoria: string): void {
     if (categoria === this.categoria()) return;
     this.categoria.set(categoria);
+    this.criterio.set('buscar');
     this.seleccion.set(this.seleccionVacia());
     this.reiniciarMaestro();
   }
@@ -479,6 +488,7 @@ export class ClasificadorProgramaticoRequestComponent {
   abrirPanel(): void {
     this.procesosMarcados.set([]);
     this.categoria.set('');
+    this.criterio.set('buscar');
     this.seleccion.set(this.seleccionVacia());
     this.reiniciarMaestro();
     this.agregando.set(true);

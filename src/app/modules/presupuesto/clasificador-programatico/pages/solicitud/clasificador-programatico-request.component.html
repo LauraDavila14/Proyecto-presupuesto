@@ -60,50 +60,20 @@
             </div>
           </div>
           @if (mostrarEstructura()) {
-            <div class="flex flex-col gap-siaf-md">
-              <h3 class="m-0 text-sm font-bold uppercase text-text">Estructura programática</h3>
-              @for (campo of camposEstructura(); track campo.campo) {
-                <div class="flex flex-col gap-siaf-xs">
-                  <div class="flex items-center justify-between gap-siaf-md">
-                    <h4 class="m-0 text-sm font-bold text-text">{{ campo.titulo }}</h4>
-                    <siaf-button variant="filled" icon="search" [iconOnly]="true" [ariaLabel]="'Buscar ' + campo.titulo.toLowerCase()" [disabled]="lupaDeshabilitada(campo.campo)" (click)="abrirBusqueda(campo.campo)" />
-                  </div>
-                  @if (seleccion()[campo.campo]; as item) {
-                    <siaf-summary-card
-                      [fields]="camposCard(campo.campo, item)"
-                      [bordered]="true"
-                      [showClose]="true"
-                      [closeLabel]="'Quitar ' + campo.titulo.toLowerCase()"
-                      (closed)="quitarSeleccion(campo.campo, campo.titulo)"
-                    />
-                  } @else {
-                    <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
-                      <p class="m-0 text-sm text-[var(--sys-color-text-neutral-medium)]">No se ha seleccionado ningún tipo. Haga clic en el botón para realizar una selección.</p>
-                    </div>
-                  }
-                </div>
-              }
+            @if (categoria() === 'APNOP') {
+              <div class="flex flex-col gap-siaf-sm">
+                <h3 class="m-0 text-sm font-bold uppercase text-text">Criterio</h3>
+                <siaf-radio-group name="criterio-cadena" [inline]="true" [options]="opcionesCriterio" [value]="criterio()" (valueChange)="criterio.set($event)" />
+              </div>
+            }
 
-              <div class="flex flex-col gap-siaf-xs">
-                <div class="flex items-center justify-between gap-siaf-md">
-                  <h4 class="m-0 text-sm font-bold uppercase text-text">Clasificador funcional</h4>
-                  @if (esMaestro()) {
-                    <siaf-button variant="filled" icon="search" [iconOnly]="true" ariaLabel="Buscar clasificador funcional" [disabled]="!!funcionalManual()" (click)="abrirBusqueda('funcional')" />
-                  }
-                </div>
-                @if (funcionalAsignado(); as funcional) {
-                  <siaf-summary-card
-                    [fields]="camposCardFuncional(funcional)"
-                    [bordered]="true"
-                    [showClose]="esMaestro()"
-                    closeLabel="Quitar clasificador funcional"
-                    (closed)="quitarFuncional()"
-                  />
-                } @else {
-                  <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
-                    <p class="m-0 text-sm text-[var(--sys-color-text-neutral-medium)]">{{ esMaestro() ? 'No se ha seleccionado ningún tipo. Haga clic en el botón para realizar una selección.' : 'No se ha seleccionado ningún tipo.' }}</p>
-                  </div>
-                }
+            <div class="flex flex-col gap-siaf-lg">
+              <div class="flex items-center justify-between gap-siaf-md">
+                <h3 class="m-0 text-sm font-bold uppercase text-text">Buscar cadena</h3>
+                <siaf-button variant="filled" icon="search" [iconOnly]="true" ariaLabel="Buscar cadena" />
+              </div>
+              <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
+                <p class="m-0 text-sm text-[var(--sys-color-text-neutral-medium)]">No se ha seleccionado ninguna cadena predeterminada. Haga clic en el botón para realizar una selección.</p>
               </div>
             </div>
 

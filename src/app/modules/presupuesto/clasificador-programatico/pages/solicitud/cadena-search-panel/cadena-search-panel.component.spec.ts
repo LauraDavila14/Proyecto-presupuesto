@@ -98,6 +98,25 @@ describe('CadenaSearchPanelComponent', () => {
       expect(panel.filasPagina()[0].actividad.codigo).toBe('0000420');
     });
 
+    it('tras Aplicar muestra las etiquetas de los filtros y «Borrar filtros» los quita', () => {
+      expect(panel.filtrosVisibles()).toBe(false);
+      panel.abrirFiltros();
+      panel.cambiarTipo('inversion');
+      panel.cambiarValor('actividad', '0000011');
+      panel.aplicarFiltros();
+      expect(panel.filtrosVisibles()).toBe(true);
+      expect(panel.chips()).toEqual(['Inversión', '0000011']);
+
+      panel.buscar('gestión');
+      panel.marcar('inv-5', true);
+      panel.borrarFiltros();
+      expect(panel.filtrosVisibles()).toBe(false);
+      expect(panel.aplicados().tipo).toBe('producto');
+      expect(panel.totalFilas()).toBeGreaterThan(0);
+      expect(panel.busqueda()).toBe('gestión');
+      expect(panel.marcadas()).toEqual(['inv-5']);
+    });
+
     it('abrir los filtros cierra el detalle y viceversa', () => {
       panel.abrirDetalle('cad-1');
       panel.abrirFiltros();

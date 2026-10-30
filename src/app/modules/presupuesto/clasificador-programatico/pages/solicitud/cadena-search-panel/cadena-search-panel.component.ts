@@ -6,6 +6,7 @@ import { ButtonComponent } from '../../../../../../shared/ui/button/button.compo
 import { CheckboxComponent } from '../../../../../../shared/ui/checkbox/checkbox.component';
 import { RadioComponent, RadioOption } from '../../../../../../shared/ui/radio/radio.component';
 import { SidePanelComponent } from '../../../../../../shared/ui/side-panel/side-panel.component';
+import { TagComponent } from '../../../../../../shared/ui/tag/tag.component';
 import { TextFieldComponent } from '../../../../../../shared/ui/text-field/text-field.component';
 import {
   CadenaProgramatica,
@@ -74,7 +75,7 @@ const SIN_FILTROS: FiltrosCadena = { tipo: 'producto', valores: {} };
 @Component({
   selector: 'siaf-cadena-search-panel',
   standalone: true,
-  imports: [ButtonComponent, CheckboxComponent, FormTableSearchComponent, PaginationComponent, RadioComponent, SidePanelComponent, TextFieldComponent],
+  imports: [ButtonComponent, CheckboxComponent, FormTableSearchComponent, PaginationComponent, RadioComponent, SidePanelComponent, TagComponent, TextFieldComponent],
   template: `
     <siaf-side-panel
       [open]="open"
@@ -93,6 +94,18 @@ const SIN_FILTROS: FiltrosCadena = { tipo: 'producto', valores: {} };
       <div class="flex min-h-full">
         <div class="flex min-w-0 flex-1 flex-col gap-siaf-md" [class.pr-siaf-md]="!!detalle()">
           <siaf-form-table-search [value]="busqueda()" [showFilter]="true" [showMore]="false" (valueChange)="buscar($event)" (filter)="abrirFiltros()" />
+
+          @if (filtrosVisibles()) {
+            <div class="flex items-center gap-siaf-sm">
+              <span class="shrink-0 text-xs font-bold uppercase tracking-wide text-text">Filtros por</span>
+              <div class="flex min-w-0 flex-1 flex-wrap items-center gap-siaf-sm">
+                @for (chip of chips(); track chip) {
+                  <siaf-tag variant="input">{{ chip }}</siaf-tag>
+                }
+              </div>
+              <siaf-button variant="outline" size="sm" icon="delete" (click)="borrarFiltros()">Borrar filtros</siaf-button>
+            </div>
+          }
 
           <siaf-pagination
             navigation="Activate"
@@ -127,7 +140,7 @@ const SIN_FILTROS: FiltrosCadena = { tipo: 'producto', valores: {} };
                 @for (fila of filasPagina(); track fila.id) {
                   <tr
                     class="cursor-pointer border-b border-[var(--sys-color-divider-default)] text-[var(--sys-color-text-neutral-medium)] hover:bg-surface-muted"
-                    [class.bg-[var(--sys-color-bg-states-light-selected)]]="detalleId() === fila.id"
+                    [class.bg-[var(--sys-color-bg-states-light-selected)]]="detalleId() === fila.id || marcadas().includes(fila.id)"
                     (click)="abrirDetalle(fila.id)"
                   >
                     <td class="px-siaf-sm py-siaf-sm" (click)="$event.stopPropagation()">
@@ -234,6 +247,14 @@ export class CadenaSearchPanelComponent {
   readonly borrador = signal<FiltrosCadena>(SIN_FILTROS);
   readonly opcionesTipo = OPCIONES_TIPO;
 
+  /** La fila «Filtros por» aparece al pulsar Aplicar y se va con «Borrar filtros». */
+  readonly filtrosVisibles = signal(false);
+  readonly chips = computed(() => {
+    const { tipo, valores } = this.aplicados();
+    const etiquetaTipo = OPCIONES_TIPO.find((o) => o.value === tipo)?.label ?? '';
+    return [etiquetaTipo, ...CAMPOS_FILTRO[tipo].map((campo) => valores[campo.clave]).filter(Boolean)];
+  });
+
   readonly camposBorrador = computed(() => CAMPOS_FILTRO[this.borrador().tipo]);
 
   /** Opciones de cada desplegable: los valores distintos de las cadenas del tipo en edición, ordenados. */
@@ -313,8 +334,17 @@ export class CadenaSearchPanelComponent {
 
   aplicarFiltros(): void {
     this.aplicados.set(this.borrador());
+    this.filtrosVisibles.set(true);
     this.pagina.set(1);
     this.filtrosAbiertos.set(false);
+  }
+
+  /** Quita todos los filtros: vuelve al tipo por defecto con todas sus cadenas. El buscador y las marcas no cambian. */
+  borrarFiltros(): void {
+    this.aplicados.set(SIN_FILTROS);
+    this.borrador.set(SIN_FILTROS);
+    this.filtrosVisibles.set(false);
+    this.pagina.set(1);
   }
 
   cerrarDetalle(): void {
@@ -347,6 +377,7 @@ export class CadenaSearchPanelComponent {
     this.marcadas.set([]);
     this.detalleId.set(null);
     this.filtrosAbiertos.set(false);
+    this.filtrosVisibles.set(false);
     this.aplicados.set(SIN_FILTROS);
     this.borrador.set(SIN_FILTROS);
   }

@@ -11,6 +11,7 @@ import { PROCESS_ID, PROCESS_ROUTE, REQUEST_ROUTE } from './clasificador-program
 
 const NOMBRE_DOCUMENTO = 'Solicitud de clasificador programático';
 const TIPOS_ACCION = ['Creación', 'Modificación', 'Anulación'];
+const TIPOS_ACCION_CREAR = ['Creación', 'Modificación'];
 
 /**
  * Configuración de «Documentos y registros» del clasificador programático. Es una pantalla de ejemplo del
@@ -20,7 +21,7 @@ const TIPOS_ACCION = ['Creación', 'Modificación', 'Anulación'];
  * `modoConsulta` deja el botón «Crear documento» (con `createDocumentOptions`) y saca «Verificar»/«Aprobar» y el
  * filtrado de filas por rol — así se ve igual para Creador y Aprobador, como en el diseño. El popover «Crear
  * documento» ofrece un solo documento («Solicitud de clasificador programático») con los tipos de acción
- * Creación, Modificación y Anulación; lleva a la pantalla de solicitud (nodo de Figma 406:10759), que tampoco
+ * Creación y Modificación; lleva a la pantalla de solicitud (nodo de Figma 406:10759), que tampoco
  * graba en un backend real: sus registros viven en memoria del componente.
  */
 
@@ -74,8 +75,8 @@ const createDocumentOptions: DocumentsRecordsCreateProcessOption[] = [
     label: 'Clasificador programático',
     route: REQUEST_ROUTE,
     documents: [NOMBRE_DOCUMENTO],
-    documentOptions: [{ label: NOMBRE_DOCUMENTO, route: REQUEST_ROUTE, actionTypes: TIPOS_ACCION }],
-    actionTypes: TIPOS_ACCION,
+    documentOptions: [{ label: NOMBRE_DOCUMENTO, route: REQUEST_ROUTE, actionTypes: TIPOS_ACCION_CREAR }],
+    actionTypes: TIPOS_ACCION_CREAR,
   },
 ];
 

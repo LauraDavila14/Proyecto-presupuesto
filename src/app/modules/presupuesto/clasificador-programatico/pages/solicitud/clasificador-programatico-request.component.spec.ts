@@ -162,6 +162,12 @@ describe('ClasificadorProgramaticoRequestComponent · registro con PP', () => {
     expect(pagina.puedeAceptar()).toBe(true);
   });
 
+  it('volver a buscar suma las cadenas a las ya elegidas, sin repetir', () => {
+    pagina.elegirCadenas(CADENAS_PP.slice(0, 2));
+    pagina.elegirCadenas([CADENAS_PP[1], CADENAS_PP[3]]);
+    expect(pagina.cadenasElegidas().map((c) => c.id)).toEqual([CADENAS_PP[0].id, CADENAS_PP[1].id, CADENAS_PP[3].id]);
+  });
+
   it('no repite las cadenas que ya están en la tabla', () => {
     pagina.elegirCadenas(CADENAS_PP.slice(0, 2));
     pagina.confirmarRegistro();

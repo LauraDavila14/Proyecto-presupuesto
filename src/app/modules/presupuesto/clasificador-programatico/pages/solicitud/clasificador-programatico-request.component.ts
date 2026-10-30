@@ -273,13 +273,14 @@ export class ClasificadorProgramaticoRequestComponent {
   readonly cadenasBuscar = CADENAS_TODAS;
   readonly cadenaAbierta = signal(false);
   readonly cadenasElegidas = signal<CadenaProgramatica[]>([]);
-  readonly idsCadenasElegidas = computed(() => this.cadenasElegidas().map((c) => c.id));
   // Filas marcadas de la tabla de cadenas elegidas: con alguna, la lupa y Aceptar se desactivan y Borrar las quita.
   readonly cadenasMarcadas = signal<string[]>([]);
   readonly hayCadenasMarcadas = computed(() => this.cadenasMarcadas().length > 0);
 
+  /** Aceptar en el panel suma las cadenas marcadas a las ya elegidas (el panel abre sin marcas), sin repetir. */
   elegirCadenas(cadenas: CadenaProgramatica[]): void {
-    this.cadenasElegidas.set(cadenas);
+    const yaElegidas = new Set(this.cadenasElegidas().map((c) => c.id));
+    this.cadenasElegidas.update((actuales) => [...actuales, ...cadenas.filter((c) => !yaElegidas.has(c.id))]);
     this.cadenasMarcadas.set([]);
     this.cadenaAbierta.set(false);
   }

@@ -328,9 +328,6 @@ export class CadenaSearchPanelComponent {
     this.categoriaSig.set(valor);
   }
 
-  /** Ids de las cadenas ya elegidas: llegan marcadas cada vez que se abre el panel (enlazar antes que `open`). */
-  @Input() seleccionadas: string[] = [];
-
   @Input() set open(valor: boolean) {
     // Cada vez que se abre, empieza de cero: sin texto, en la primera página, sin marcas ni detalle.
     if (valor && !this.abierto) this.reiniciar();
@@ -482,7 +479,7 @@ export class CadenaSearchPanelComponent {
     this.busqueda.set('');
     this.pagina.set(1);
     this.filasPorPagina.set(25);
-    this.marcadas.set([...this.seleccionadas]);
+    this.marcadas.set([]);
     this.detalleId.set(null);
     this.filtrosAbiertos.set(false);
     this.filtrosVisibles.set(false);

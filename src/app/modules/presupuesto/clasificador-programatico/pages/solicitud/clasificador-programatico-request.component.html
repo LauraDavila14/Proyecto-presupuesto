@@ -372,7 +372,7 @@
     </div>
   </siaf-side-panel>
 
-  <siaf-cadena-search-panel [cadenas]="cadenasBuscar" [categoria]="categoria()" [seleccionadas]="idsCadenasElegidas()" [open]="cadenaAbierta()" (closed)="cadenaAbierta.set(false)" (confirmed)="elegirCadenas($event)" />
+  <siaf-cadena-search-panel [cadenas]="cadenasBuscar" [categoria]="categoria()" [open]="cadenaAbierta()" (closed)="cadenaAbierta.set(false)" (confirmed)="elegirCadenas($event)" />
 
   <siaf-upload-side-nav [open]="panelSustentoAbierto()" (closed)="panelSustentoAbierto.set(false)" (confirmed)="onSustentoConfirmado($event)" />
 

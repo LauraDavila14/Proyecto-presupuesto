@@ -127,11 +127,12 @@ describe('CadenaSearchPanelComponent', () => {
     });
   });
 
-  it('abre con las cadenas ya elegidas marcadas', () => {
+  it('abre sin ninguna fila marcada, aunque ya haya cadenas elegidas', () => {
+    panel.marcar('cad-2', true);
+    panel.marcar('cad-5', true);
     fixture.componentRef.setInput('open', false);
-    fixture.componentRef.setInput('seleccionadas', ['cad-2', 'cad-5']);
     fixture.componentRef.setInput('open', true);
-    expect(panel.marcadas()).toEqual(['cad-2', 'cad-5']);
+    expect(panel.marcadas()).toEqual([]);
   });
 
   describe('con AC', () => {

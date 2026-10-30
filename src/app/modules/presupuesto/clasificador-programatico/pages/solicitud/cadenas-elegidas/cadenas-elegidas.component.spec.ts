@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { CADENAS_PP } from '../../../models/cadenas-programaticas.mock';
+import { CADENAS_AC, CADENAS_PP } from '../../../models/cadenas-programaticas.mock';
 import { CadenasElegidasComponent } from './cadenas-elegidas.component';
 
 describe('CadenasElegidasComponent', () => {
@@ -20,6 +20,14 @@ describe('CadenasElegidasComponent', () => {
     const cabecera = (fixture.nativeElement as HTMLElement).querySelector('thead')!.textContent!;
     expect(cabecera).toContain('Programa');
     expect(cabecera).not.toContain('Categ');
+  });
+
+  it('las cadenas de AC no llevan la columna Programa', () => {
+    fixture.componentRef.setInput('cadenas', CADENAS_AC.slice(0, 2));
+    fixture.detectChanges();
+    const cabecera = (fixture.nativeElement as HTMLElement).querySelector('thead')!.textContent!;
+    expect(cabecera).not.toContain('Programa');
+    expect(cabecera).toContain('Pro / Inv');
   });
 
   it('busca entre las elegidas por código o nombre', () => {

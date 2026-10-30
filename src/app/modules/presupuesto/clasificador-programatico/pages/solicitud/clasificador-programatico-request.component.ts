@@ -25,7 +25,7 @@ import { SnackbarComponent, SnackbarVariant } from '../../../../../shared/ui/sna
 import { SummaryCardComponent, SummaryCardField } from '../../../../../shared/ui/summary-card/summary-card.component';
 import { TextFieldComponent } from '../../../../../shared/ui/text-field/text-field.component';
 import { PROCESS_ROUTE } from '../../config/clasificador-programatico.rutas';
-import { CADENAS_PP_TODAS, CadenaProgramatica, Concepto, codigoNombre } from '../../models/cadenas-programaticas.mock';
+import { CADENAS_TODAS, CadenaProgramatica, Concepto, codigoNombre } from '../../models/cadenas-programaticas.mock';
 import { CadenaSearchPanelComponent } from './cadena-search-panel/cadena-search-panel.component';
 import { CadenasElegidasComponent } from './cadenas-elegidas/cadenas-elegidas.component';
 import { RegistroDetalleComponent } from './registro-detalle/registro-detalle.component';
@@ -184,8 +184,8 @@ export class ClasificadorProgramaticoRequestComponent {
     this.registros().map((r) => ({
       id: r.id,
       categoria: r.categoriaPresupuestaria,
-      programa: r.estructura.programa?.['codigo'] ?? CODIGO_PROGRAMA_VACIO,
-      producto: (r.estructura.producto ?? r.estructura.proyecto)?.['codigo'] ?? CODIGO_PRODUCTO_VACIO,
+      programa: r.estructura.programa?.['codigo'] ?? (r.cadenaId ? '-' : CODIGO_PROGRAMA_VACIO),
+      producto: (r.estructura.producto ?? r.estructura.proyecto)?.['codigo'] ?? (r.cadenaId ? '-' : CODIGO_PRODUCTO_VACIO),
       actividad: r.estructura.actividad['codigo'],
       finalidad: '-',
       funcion: codigoFuncional(r.estructura.funcional['funcion']),
@@ -270,7 +270,7 @@ export class ClasificadorProgramaticoRequestComponent {
 
   // «Buscar cadena»: panel «Seleccionar cadena» (nodos de Figma 2009:315630 y 1865:311851), solo con PP. Aceptar lo
   // cierra y deja las cadenas marcadas en una tabla dentro del bloque (nodo de Figma 1769:174293).
-  readonly cadenasPp = CADENAS_PP_TODAS;
+  readonly cadenasBuscar = CADENAS_TODAS;
   readonly cadenaAbierta = signal(false);
   readonly cadenasElegidas = signal<CadenaProgramatica[]>([]);
   readonly idsCadenasElegidas = computed(() => this.cadenasElegidas().map((c) => c.id));
@@ -290,8 +290,13 @@ export class ClasificadorProgramaticoRequestComponent {
     this.cadenasMarcadas.set([]);
   }
 
+  /** PP y AC eligen su estructura con «Buscar cadena»; APNOP todavía no. */
+  usaCadenas(): boolean {
+    return this.categoria() === 'PP' || this.categoria() === 'AC';
+  }
+
   abrirCadenas(): void {
-    if (this.categoria() === 'PP' && !this.hayCadenasMarcadas()) this.cadenaAbierta.set(true);
+    if (this.usaCadenas() && !this.hayCadenasMarcadas()) this.cadenaAbierta.set(true);
   }
 
   /** «Estructura programática» y «Vigencia» aparecen cuando ya hay proceso y categoría. */
@@ -490,8 +495,8 @@ export class ClasificadorProgramaticoRequestComponent {
    */
   readonly puedeAceptar = computed(() => {
     if (!this.mostrarEstructura()) return false;
-    // PP: se activa con al menos una cadena elegida (Figma 1769:174293); agregar el registro queda para su diseño.
-    if (this.categoria() === 'PP') return this.cadenasElegidas().length > 0 && !this.hayCadenasMarcadas();
+    // PP y AC: se activa con al menos una cadena elegida (Figma 1769:174293).
+    if (this.usaCadenas()) return this.cadenasElegidas().length > 0 && !this.hayCadenasMarcadas();
     const sel = this.seleccion();
     if (this.esMaestro() && !this.funcionalManual()) return false;
     return !!sel.actividad && (!!sel.proyecto || sel.actividad['tipo'].startsWith('Actividad'));
@@ -702,7 +707,7 @@ export class ClasificadorProgramaticoRequestComponent {
 
   confirmarRegistro(): void {
     if (!this.puedeAceptar()) return;
-    if (this.categoria() === 'PP') {
+    if (this.usaCadenas()) {
       this.agregarCadenas();
       return;
     }
@@ -732,7 +737,7 @@ export class ClasificadorProgramaticoRequestComponent {
     this.mostrarAviso('record-done');
   }
 
-  /** PP: una fila por cada cadena elegida (Figma 1769:176878); las que ya están en la tabla no se repiten. */
+  /** PP y AC: una fila por cada cadena elegida (Figma 1769:176878); las que ya están en la tabla no se repiten. */
   private agregarCadenas(): void {
     const yaAgregadas = new Set(this.registros().map((r) => r.cadenaId));
     const nuevas = this.cadenasElegidas().filter((c) => !yaAgregadas.has(c.id));
@@ -749,8 +754,8 @@ export class ClasificadorProgramaticoRequestComponent {
           procesos: this.procesosMarcados(),
           categoriaPresupuestaria: c.categoria,
           estructura: {
-            programa: aItem(c.programa, `${c.id}-programa`),
-            producto: aItem(c.producto, `${c.id}-producto`),
+            ...(c.programa && { programa: aItem(c.programa, `${c.id}-programa`) }),
+            ...(c.producto && { producto: aItem(c.producto, `${c.id}-producto`) }),
             actividad: aItem(c.actividad, `${c.id}-actividad`),
             funcional: { id: `${c.id}-funcional`, funcion: codigoNombre(c.funcion), division: codigoNombre(c.division), grupo: codigoNombre(c.grupo) },
           },

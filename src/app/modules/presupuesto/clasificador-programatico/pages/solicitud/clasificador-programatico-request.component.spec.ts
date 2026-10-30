@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
-import { CADENAS_PP } from '../../models/cadenas-programaticas.mock';
+import { CADENAS_AC, CADENAS_PP } from '../../models/cadenas-programaticas.mock';
 import { ClasificadorProgramaticoRequestComponent } from './clasificador-programatico-request.component';
 
 describe('ClasificadorProgramaticoRequestComponent · registro con PP', () => {
@@ -109,6 +109,25 @@ describe('ClasificadorProgramaticoRequestComponent · registro con PP', () => {
       fixture.detectChanges();
       expect(papelera()).toBeNull();
     });
+  });
+
+  it('con AC también agrega una fila por cadena, con «-» en Programa e Inversión', () => {
+    pagina.cambiarCategoria('AC');
+    pagina.elegirCadenas(CADENAS_AC.slice(0, 2));
+    expect(pagina.puedeAceptar()).toBe(true);
+    pagina.confirmarRegistro();
+
+    expect(pagina.filasTabla().map(({ id, ...fila }) => fila)).toEqual([
+      { categoria: 'AC', programa: '-', producto: '-', actividad: '5000001', finalidad: '-', funcion: '02', division: '006', grupo: '0005', estado: 'Si', fechaDesde: '-' },
+      { categoria: 'AC', programa: '-', producto: '-', actividad: '5000002', finalidad: '-', funcion: '02', division: '006', grupo: '0007', estado: 'Si', fechaDesde: '-' },
+    ]);
+  });
+
+  it('APNOP todavía no usa «Buscar cadena»', () => {
+    pagina.cambiarCategoria('APNOP');
+    expect(pagina.usaCadenas()).toBe(false);
+    pagina.abrirCadenas();
+    expect(pagina.cadenaAbierta()).toBe(false);
   });
 
   it('no repite las cadenas que ya están en la tabla', () => {

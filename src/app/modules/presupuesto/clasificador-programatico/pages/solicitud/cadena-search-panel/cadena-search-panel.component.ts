@@ -23,7 +23,26 @@ interface CampoFiltro {
   valor: (cadena: CadenaProgramatica) => string;
 }
 
-const texto = (concepto: Concepto) => codigoNombre(concepto);
+/** Una columna de ESTRUCTURA PROGRAMÁTICA de la tabla. */
+interface ColumnaEstructura {
+  etiqueta: string;
+  valor: (cadena: CadenaProgramatica) => string;
+}
+
+interface CampoDetalle {
+  etiqueta: string;
+  valor: string;
+}
+
+/** Lo que cambia según la categoría y el tipo de cadena: columnas de la tabla, desplegables de los filtros y campos del detalle. */
+interface ConfigCadena {
+  columnas: ColumnaEstructura[];
+  filtros: CampoFiltro[];
+  detalle: (cadena: CadenaProgramatica) => CampoDetalle[];
+}
+
+const texto = (concepto: Concepto | undefined) => codigoNombre(concepto);
+const codigo = (concepto: Concepto | undefined) => concepto?.codigo ?? '-';
 
 const CAMPOS_FUNCIONALES: CampoFiltro[] = [
   { clave: 'funcion', etiqueta: 'Función', valor: (c) => texto(c.funcion) },
@@ -31,28 +50,108 @@ const CAMPOS_FUNCIONALES: CampoFiltro[] = [
   { clave: 'grupo', etiqueta: 'Grupo funcional', valor: (c) => texto(c.grupo) },
 ];
 
-/** Desplegables de cada tipo (nodos de Figma de los filtros): Programa, Producto o Inversión, actividad (código y nombre) y funcional. */
-const CAMPOS_FILTRO: Record<TipoCadena, CampoFiltro[]> = {
-  producto: [
-    { clave: 'programa', etiqueta: 'Programa', valor: (c) => texto(c.programa) },
-    { clave: 'producto', etiqueta: 'Producto', valor: (c) => texto(c.producto) },
-    { clave: 'actividad', etiqueta: 'Actividad', valor: (c) => c.actividad.codigo },
-    { clave: 'nombreActividad', etiqueta: 'Nombre de actividad', valor: (c) => c.actividad.nombre },
-    ...CAMPOS_FUNCIONALES,
-  ],
-  inversion: [
-    { clave: 'programa', etiqueta: 'Programa', valor: (c) => texto(c.programa) },
-    { clave: 'producto', etiqueta: 'Inversión', valor: (c) => texto(c.producto) },
-    { clave: 'actividad', etiqueta: 'AI / OBR', valor: (c) => c.actividad.codigo },
-    { clave: 'nombreActividad', etiqueta: 'Nombre de AI / OBR', valor: (c) => c.actividad.nombre },
-    ...CAMPOS_FUNCIONALES,
-  ],
+const CATEGORIA: ColumnaEstructura = { etiqueta: 'Categ. pres.', valor: (c) => c.categoria };
+
+const categoriaDetalle = (c: CadenaProgramatica): CampoDetalle => ({
+  etiqueta: 'Categoría presupuestaria',
+  valor: `${c.categoria} - ${NOMBRE_CATEGORIA[c.categoria] ?? ''}`,
+});
+
+const funcionalDetalle = (c: CadenaProgramatica): CampoDetalle[] => [
+  { etiqueta: 'Función', valor: texto(c.funcion) },
+  { etiqueta: 'División funcional', valor: texto(c.division) },
+  { etiqueta: 'Grupo funcional', valor: texto(c.grupo) },
+];
+
+/**
+ * Configuración por «categoría:tipo» (nodos de Figma del panel y de sus filtros, de PP y de AC). Los desplegables
+ * de Programa, Producto, Inversión y los campos funcionales muestran «código + nombre»; la actividad, su código y su
+ * nombre por separado.
+ */
+const CONFIG: Record<string, ConfigCadena> = {
+  'PP:producto': {
+    columnas: [
+      CATEGORIA,
+      { etiqueta: 'Programa', valor: (c) => codigo(c.programa) },
+      { etiqueta: 'Pro / Inv', valor: (c) => codigo(c.producto) },
+      { etiqueta: 'Act / AI / Obr', valor: (c) => texto(c.actividad) },
+    ],
+    filtros: [
+      { clave: 'programa', etiqueta: 'Programa', valor: (c) => texto(c.programa) },
+      { clave: 'producto', etiqueta: 'Producto', valor: (c) => texto(c.producto) },
+      { clave: 'actividad', etiqueta: 'Actividad', valor: (c) => c.actividad.codigo },
+      { clave: 'nombreActividad', etiqueta: 'Nombre de actividad', valor: (c) => c.actividad.nombre },
+      ...CAMPOS_FUNCIONALES,
+    ],
+    detalle: (c) => [
+      categoriaDetalle(c),
+      { etiqueta: 'Programa presupuestal', valor: texto(c.programa) },
+      { etiqueta: 'Producto', valor: texto(c.producto) },
+      { etiqueta: 'Actividad', valor: texto(c.actividad) },
+      ...funcionalDetalle(c),
+    ],
+  },
+  'PP:inversion': {
+    columnas: [
+      CATEGORIA,
+      { etiqueta: 'Programa', valor: (c) => codigo(c.programa) },
+      { etiqueta: 'Pro / Inv', valor: (c) => codigo(c.producto) },
+      { etiqueta: 'Act / AI / Obr', valor: (c) => texto(c.actividad) },
+    ],
+    filtros: [
+      { clave: 'programa', etiqueta: 'Programa', valor: (c) => texto(c.programa) },
+      { clave: 'producto', etiqueta: 'Inversión', valor: (c) => texto(c.producto) },
+      { clave: 'actividad', etiqueta: 'AI / OBR', valor: (c) => c.actividad.codigo },
+      { clave: 'nombreActividad', etiqueta: 'Nombre de AI / OBR', valor: (c) => c.actividad.nombre },
+      ...CAMPOS_FUNCIONALES,
+    ],
+    detalle: (c) => [
+      categoriaDetalle(c),
+      { etiqueta: 'Programa presupuestal', valor: texto(c.programa) },
+      { etiqueta: 'Inversión', valor: texto(c.producto) },
+      { etiqueta: 'AI / Obra', valor: texto(c.actividad) },
+      ...funcionalDetalle(c),
+    ],
+  },
+  'AC:actividad': {
+    columnas: [CATEGORIA, { etiqueta: 'Inversión', valor: (c) => codigo(c.producto) }, { etiqueta: 'Act / AI / Obr', valor: (c) => texto(c.actividad) }],
+    filtros: [
+      { clave: 'actividad', etiqueta: 'Actividad', valor: (c) => c.actividad.codigo },
+      { clave: 'nombreActividad', etiqueta: 'Nombre de actividad', valor: (c) => c.actividad.nombre },
+      ...CAMPOS_FUNCIONALES,
+    ],
+    detalle: (c) => [categoriaDetalle(c), { etiqueta: 'Actividad', valor: texto(c.actividad) }, ...funcionalDetalle(c)],
+  },
+  'AC:inversion': {
+    columnas: [CATEGORIA, { etiqueta: 'Inversión', valor: (c) => codigo(c.producto) }, { etiqueta: 'AI / OBR', valor: (c) => texto(c.actividad) }],
+    filtros: [
+      { clave: 'producto', etiqueta: 'Inversión', valor: (c) => texto(c.producto) },
+      { clave: 'actividad', etiqueta: 'AI / OBR', valor: (c) => c.actividad.codigo },
+      { clave: 'nombreActividad', etiqueta: 'Nombre de AI / OBR', valor: (c) => c.actividad.nombre },
+      ...CAMPOS_FUNCIONALES,
+    ],
+    detalle: (c) => [
+      categoriaDetalle(c),
+      { etiqueta: 'Inversión', valor: texto(c.producto) },
+      { etiqueta: 'AI / Obra', valor: texto(c.actividad) },
+      ...funcionalDetalle(c),
+    ],
+  },
 };
 
-const OPCIONES_TIPO: RadioOption[] = [
-  { label: 'Producto predeterminado', value: 'producto' },
-  { label: 'Inversión', value: 'inversion' },
-];
+const configDe = (categoria: string, tipo: TipoCadena): ConfigCadena => CONFIG[`${categoria}:${tipo}`] ?? CONFIG['PP:producto'];
+
+/** Tipos que ofrece cada categoría; el primero es el de por defecto. */
+const TIPOS_POR_CATEGORIA: Record<string, TipoCadena[]> = {
+  PP: ['producto', 'inversion'],
+  AC: ['actividad', 'inversion'],
+};
+
+const ETIQUETA_TIPO: Record<TipoCadena, string> = {
+  producto: 'Producto predeterminado',
+  actividad: 'Actividad predeterminada',
+  inversion: 'Inversión',
+};
 
 interface FiltrosCadena {
   tipo: TipoCadena;
@@ -60,16 +159,16 @@ interface FiltrosCadena {
   valores: Record<string, string>;
 }
 
-const SIN_FILTROS: FiltrosCadena = { tipo: 'producto', valores: {} };
-
 /**
- * Panel «Seleccionar cadena» del registro de clasificador (nodos de Figma 2009:315630 y 1865:311851): un
+ * Panel «Seleccionar cadena» del registro de clasificador (nodos de Figma 2009:315630 y 1865:311851, y sus capturas de AC): un
  * `siaf-side-panel` con el buscador, la tabla de cadenas programáticas (estructura programática y clasificador
  * funcional) y la paginación. Las casillas permiten marcar varias cadenas; al hacer clic en una fila se abre a la
  * derecha su detalle (código + nombre de cada nivel) y la flecha lo cierra.
  *
- * El ícono de filtros abre a la derecha el panel «Filtros» (tipo Producto predeterminado o Inversión y desplegables
- * con «código + nombre»); Aplicar filtra la tabla y, con Inversión, la cambia por las cadenas de inversión. Filtros y
+ * Con PP ofrece los tipos Producto predeterminado e Inversión; con AC, Actividad predeterminada e Inversión. Las
+ * columnas, los filtros y el detalle cambian según la categoría y el tipo (AC no lleva Programa).
+ *
+ * El ícono de filtros abre a la derecha el panel «Filtros» (tipo y desplegables con «código + nombre»); Aplicar filtra la tabla y, con Inversión, la cambia por las cadenas de inversión. Filtros y
  * detalle comparten ese lugar. Emite `confirmed` con las cadenas marcadas.
  */
 @Component({
@@ -123,14 +222,13 @@ const SIN_FILTROS: FiltrosCadena = { tipo: 'producto', valores: {} };
               <thead>
                 <tr class="bg-[var(--sys-color-bg-surfaces-surface-high)] text-center">
                   <th rowspan="2" class="w-12 border-b border-[var(--sys-color-divider-strong)] px-siaf-sm"></th>
-                  <th colspan="4" class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Estructura programática</th>
+                  <th [attr.colspan]="columnas().length" class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Estructura programática</th>
                   <th colspan="3" class="border-b border-l border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Clasificador funcional</th>
                 </tr>
                 <tr class="bg-[var(--sys-color-bg-surfaces-surface-high)] text-left">
-                  <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Categ. pres.</th>
-                  <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Programa</th>
-                  <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Pro / Inv</th>
-                  <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Act / AI / Obr</th>
+                  @for (col of columnas(); track col.etiqueta) {
+                    <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">{{ col.etiqueta }}</th>
+                  }
                   <th class="border-b border-l border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Función</th>
                   <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Div_F</th>
                   <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Grp_F</th>
@@ -146,17 +244,16 @@ const SIN_FILTROS: FiltrosCadena = { tipo: 'producto', valores: {} };
                     <td class="px-siaf-sm py-siaf-sm" (click)="$event.stopPropagation()">
                       <siaf-checkbox [checked]="marcadas().includes(fila.id)" (checkedChange)="marcar(fila.id, $event)" />
                     </td>
-                    <td class="px-siaf-md py-siaf-sm">{{ fila.categoria }}</td>
-                    <td class="px-siaf-md py-siaf-sm">{{ fila.programa.codigo }}</td>
-                    <td class="px-siaf-md py-siaf-sm">{{ fila.producto.codigo }}</td>
-                    <td class="min-w-[320px] px-siaf-md py-siaf-sm">{{ codigoNombre(fila.actividad) }}</td>
+                    @for (col of columnas(); track col.etiqueta; let ultima = $last) {
+                      <td class="px-siaf-md py-siaf-sm" [class.min-w-[320px]]="ultima">{{ col.valor(fila) }}</td>
+                    }
                     <td class="border-l border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm">{{ fila.funcion.codigo }}</td>
                     <td class="px-siaf-md py-siaf-sm">{{ fila.division.codigo }}</td>
                     <td class="px-siaf-md py-siaf-sm">{{ fila.grupo.codigo }}</td>
                   </tr>
                 } @empty {
                   <tr>
-                    <td colspan="8" class="px-siaf-md py-siaf-lg text-center text-text-muted">No se encontraron resultados.</td>
+                    <td [attr.colspan]="columnas().length + 4" class="px-siaf-md py-siaf-lg text-center text-text-muted">No se encontraron resultados.</td>
                   </tr>
                 }
               </tbody>
@@ -197,7 +294,7 @@ const SIN_FILTROS: FiltrosCadena = { tipo: 'producto', valores: {} };
       </div>
 
       <div sidePanelNav class="flex flex-col gap-siaf-md p-siaf-md">
-        <siaf-radio-group label="Tipo" name="cadena-filtro-tipo" [options]="opcionesTipo" [value]="borrador().tipo" (valueChange)="cambiarTipo($any($event))" />
+        <siaf-radio-group label="Tipo" name="cadena-filtro-tipo" [options]="opcionesTipo()" [value]="borrador().tipo" (valueChange)="cambiarTipo($any($event))" />
         @for (campo of camposBorrador(); track campo.clave) {
           <siaf-input
             type="select"
@@ -221,6 +318,13 @@ export class CadenaSearchPanelComponent {
     this.cadenasSig.set(valor);
   }
 
+  private readonly categoriaSig = signal('PP');
+
+  /** Categoría presupuestaria (`PP` o `AC`): enlazar antes que `open`. */
+  @Input() set categoria(valor: string) {
+    this.categoriaSig.set(valor);
+  }
+
   /** Ids de las cadenas ya elegidas: llegan marcadas cada vez que se abre el panel (enlazar antes que `open`). */
   @Input() seleccionadas: string[] = [];
 
@@ -236,8 +340,6 @@ export class CadenaSearchPanelComponent {
   @Output() closed = new EventEmitter<void>();
   @Output() confirmed = new EventEmitter<CadenaProgramatica[]>();
 
-  readonly codigoNombre = codigoNombre;
-
   readonly busqueda = signal('');
   readonly pagina = signal(1);
   readonly filasPorPagina = signal(25);
@@ -246,23 +348,29 @@ export class CadenaSearchPanelComponent {
 
   // Filtros: lo aplicado a la tabla y el borrador que se edita en el panel «Filtros» hasta pulsar Aplicar.
   readonly filtrosAbiertos = signal(false);
-  readonly aplicados = signal<FiltrosCadena>(SIN_FILTROS);
-  readonly borrador = signal<FiltrosCadena>(SIN_FILTROS);
-  readonly opcionesTipo = OPCIONES_TIPO;
+  readonly aplicados = signal<FiltrosCadena>({ tipo: 'producto', valores: {} });
+  readonly borrador = signal<FiltrosCadena>({ tipo: 'producto', valores: {} });
+
+  readonly opcionesTipo = computed<RadioOption[]>(() =>
+    (TIPOS_POR_CATEGORIA[this.categoriaSig()] ?? TIPOS_POR_CATEGORIA['PP']).map((tipo) => ({ value: tipo, label: ETIQUETA_TIPO[tipo] })),
+  );
+  /** Cadenas de la categoría elegida. */
+  private readonly cadenasCategoria = computed(() => this.cadenasSig().filter((c) => c.categoria === this.categoriaSig()));
+  /** Columnas de la tabla: las del tipo aplicado. */
+  readonly columnas = computed(() => configDe(this.categoriaSig(), this.aplicados().tipo).columnas);
 
   /** La fila «Filtros por» aparece al pulsar Aplicar y se va con «Borrar filtros». */
   readonly filtrosVisibles = signal(false);
   readonly chips = computed(() => {
     const { tipo, valores } = this.aplicados();
-    const etiquetaTipo = OPCIONES_TIPO.find((o) => o.value === tipo)?.label ?? '';
-    return [etiquetaTipo, ...CAMPOS_FILTRO[tipo].map((campo) => valores[campo.clave]).filter(Boolean)];
+    return [ETIQUETA_TIPO[tipo], ...configDe(this.categoriaSig(), tipo).filtros.map((campo) => valores[campo.clave]).filter(Boolean)];
   });
 
-  readonly camposBorrador = computed(() => CAMPOS_FILTRO[this.borrador().tipo]);
+  readonly camposBorrador = computed(() => configDe(this.categoriaSig(), this.borrador().tipo).filtros);
 
   /** Opciones de cada desplegable: los valores distintos de las cadenas del tipo en edición, ordenados. */
   readonly opcionesPorCampo = computed<Record<string, { value: string; label: string }[]>>(() => {
-    const delTipo = this.cadenasSig().filter((c) => c.tipo === this.borrador().tipo);
+    const delTipo = this.cadenasCategoria().filter((c) => c.tipo === this.borrador().tipo);
     return Object.fromEntries(
       this.camposBorrador().map((campo) => {
         const valores = [...new Set(delTipo.map((c) => campo.valor(c)))].sort((a, b) => a.localeCompare(b));
@@ -273,16 +381,14 @@ export class CadenaSearchPanelComponent {
 
   private readonly filtradas = computed(() => {
     const { tipo, valores } = this.aplicados();
-    const campos = CAMPOS_FILTRO[tipo];
-    const texto = this.busqueda().trim().toLowerCase();
-    return this.cadenasSig().filter(
+    const campos = configDe(this.categoriaSig(), tipo).filtros;
+    const buscado = this.busqueda().trim().toLowerCase();
+    return this.cadenasCategoria().filter(
       (c) =>
         c.tipo === tipo &&
         campos.every((campo) => !valores[campo.clave] || campo.valor(c) === valores[campo.clave]) &&
-        (!texto ||
-          [c.categoria, c.programa, c.producto, c.actividad].some((v) =>
-            (typeof v === 'string' ? v : `${v.codigo} ${v.nombre}`).toLowerCase().includes(texto),
-          )),
+        (!buscado ||
+          [c.categoria, texto(c.programa), texto(c.producto), texto(c.actividad)].some((v) => v.toLowerCase().includes(buscado))),
     );
   });
   readonly totalFilas = computed(() => this.filtradas().length);
@@ -344,8 +450,8 @@ export class CadenaSearchPanelComponent {
 
   /** Quita todos los filtros: vuelve al tipo por defecto con todas sus cadenas. El buscador y las marcas no cambian. */
   borrarFiltros(): void {
-    this.aplicados.set(SIN_FILTROS);
-    this.borrador.set(SIN_FILTROS);
+    this.aplicados.set(this.sinFiltros());
+    this.borrador.set(this.sinFiltros());
     this.filtrosVisibles.set(false);
     this.pagina.set(1);
   }
@@ -355,17 +461,13 @@ export class CadenaSearchPanelComponent {
   }
 
   /** Campos del detalle de una cadena: cada nivel como «código nombre». */
-  camposDetalle(cadena: CadenaProgramatica): { etiqueta: string; valor: string }[] {
-    const inversion = cadena.tipo === 'inversion';
-    return [
-      { etiqueta: 'Categoría presupuestaria', valor: `${cadena.categoria} - ${NOMBRE_CATEGORIA[cadena.categoria] ?? ''}` },
-      { etiqueta: 'Programa presupuestal', valor: codigoNombre(cadena.programa) },
-      { etiqueta: inversion ? 'Inversión' : 'Producto', valor: codigoNombre(cadena.producto) },
-      { etiqueta: inversion ? 'AI / Obra' : 'Actividad', valor: codigoNombre(cadena.actividad) },
-      { etiqueta: 'Función', valor: codigoNombre(cadena.funcion) },
-      { etiqueta: 'División funcional', valor: codigoNombre(cadena.division) },
-      { etiqueta: 'Grupo funcional', valor: codigoNombre(cadena.grupo) },
-    ];
+  camposDetalle(cadena: CadenaProgramatica): CampoDetalle[] {
+    return configDe(cadena.categoria, cadena.tipo).detalle(cadena);
+  }
+
+  /** Sin filtros: el primer tipo de la categoría (Producto o Actividad predeterminada) y ningún desplegable elegido. */
+  private sinFiltros(): FiltrosCadena {
+    return { tipo: (TIPOS_POR_CATEGORIA[this.categoriaSig()] ?? TIPOS_POR_CATEGORIA['PP'])[0], valores: {} };
   }
 
   aceptar(): void {
@@ -381,7 +483,7 @@ export class CadenaSearchPanelComponent {
     this.detalleId.set(null);
     this.filtrosAbiertos.set(false);
     this.filtrosVisibles.set(false);
-    this.aplicados.set(SIN_FILTROS);
-    this.borrador.set(SIN_FILTROS);
+    this.aplicados.set(this.sinFiltros());
+    this.borrador.set(this.sinFiltros());
   }
 }

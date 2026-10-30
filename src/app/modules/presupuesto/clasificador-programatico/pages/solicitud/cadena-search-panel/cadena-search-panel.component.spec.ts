@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { CADENAS_PP, CADENAS_PP_TODAS } from '../../../models/cadenas-programaticas.mock';
+import { CADENAS_AC, CADENAS_AC_INVERSION, CADENAS_PP, CADENAS_TODAS } from '../../../models/cadenas-programaticas.mock';
 import { CadenaSearchPanelComponent } from './cadena-search-panel.component';
 
 describe('CadenaSearchPanelComponent', () => {
@@ -11,7 +11,7 @@ describe('CadenaSearchPanelComponent', () => {
     TestBed.configureTestingModule({ imports: [CadenaSearchPanelComponent] });
     fixture = TestBed.createComponent(CadenaSearchPanelComponent);
     panel = fixture.componentInstance;
-    fixture.componentRef.setInput('cadenas', CADENAS_PP_TODAS);
+    fixture.componentRef.setInput('cadenas', CADENAS_TODAS);
     fixture.componentRef.setInput('open', true);
     fixture.detectChanges();
   });
@@ -132,6 +132,47 @@ describe('CadenaSearchPanelComponent', () => {
     fixture.componentRef.setInput('seleccionadas', ['cad-2', 'cad-5']);
     fixture.componentRef.setInput('open', true);
     expect(panel.marcadas()).toEqual(['cad-2', 'cad-5']);
+  });
+
+  describe('con AC', () => {
+    beforeEach(() => {
+      fixture.componentRef.setInput('open', false);
+      fixture.componentRef.setInput('categoria', 'AC');
+      fixture.componentRef.setInput('open', true);
+    });
+
+    it('ofrece solo las cadenas de actividad de AC, sin la columna Programa', () => {
+      expect(panel.totalFilas()).toBe(CADENAS_AC.length);
+      expect(panel.filasPagina().every((c) => c.categoria === 'AC' && c.tipo === 'actividad')).toBe(true);
+      expect(panel.columnas().map((c) => c.etiqueta)).toEqual(['Categ. pres.', 'Inversión', 'Act / AI / Obr']);
+      expect(panel.columnas()[1].valor(panel.filasPagina()[0])).toBe('-');
+    });
+
+    it('el detalle de una actividad no lleva Programa ni Producto', () => {
+      panel.abrirDetalle('ac-1');
+      expect(panel.camposDetalle(panel.detalle()!).map((c) => c.etiqueta)).toEqual([
+        'Categoría presupuestaria', 'Actividad', 'Función', 'División funcional', 'Grupo funcional',
+      ]);
+      expect(panel.camposDetalle(panel.detalle()!)[0].valor).toBe('AC - Acciones centrales');
+    });
+
+    it('los filtros ofrecen «Actividad predeterminada» e «Inversión» con sus desplegables', () => {
+      panel.abrirFiltros();
+      expect(panel.opcionesTipo().map((o) => o.label)).toEqual(['Actividad predeterminada', 'Inversión']);
+      expect(panel.camposBorrador().map((c) => c.etiqueta)).toEqual(['Actividad', 'Nombre de actividad', 'Función', 'División funcional', 'Grupo funcional']);
+      panel.cambiarTipo('inversion');
+      expect(panel.camposBorrador().map((c) => c.etiqueta)).toEqual(['Inversión', 'AI / OBR', 'Nombre de AI / OBR', 'Función', 'División funcional', 'Grupo funcional']);
+    });
+
+    it('con Inversión cambia a las cadenas de inversión de AC, con la columna AI / OBR', () => {
+      panel.abrirFiltros();
+      panel.cambiarTipo('inversion');
+      panel.aplicarFiltros();
+      expect(panel.totalFilas()).toBe(CADENAS_AC_INVERSION.length);
+      expect(panel.columnas().map((c) => c.etiqueta)).toEqual(['Categ. pres.', 'Inversión', 'AI / OBR']);
+      expect(panel.filasPagina()[0].producto?.codigo).toBe('2355382');
+      expect(panel.chips()).toEqual(['Inversión']);
+    });
   });
 
   it('empieza de cero cada vez que se abre', () => {

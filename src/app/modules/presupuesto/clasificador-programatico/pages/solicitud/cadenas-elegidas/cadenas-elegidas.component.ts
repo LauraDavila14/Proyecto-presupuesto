@@ -8,7 +8,7 @@ import { CadenaProgramatica, codigoNombre } from '../../../models/cadenas-progra
 
 /**
  * Cadenas elegidas en «Buscar cadena» del registro de clasificador (nodo de Figma 1769:174293): buscador, paginación
- * y tabla con la estructura programática (Programa, Pro / Inv, Act / AI / Obr) y el clasificador funcional de cada
+ * y tabla con la estructura programática (Programa, que AC no tiene, Pro / Inv, Act / AI / Obr) y el clasificador funcional de cada
  * cadena. Con filas marcadas, la barra superior (`siaf-table-controls`) suma «seleccionar todo» y la acción Borrar
  * (nodo de Figma de la acción de borrar). Las marcas viven en quien lo usa (`marcadas` / `marcadasChange`) y `borrar`
  * avisa que se quieren quitar las marcadas. El embudo del buscador es solo visual.
@@ -43,11 +43,13 @@ import { CadenaProgramatica, codigoNombre } from '../../../models/cadenas-progra
           <thead>
             <tr class="bg-[var(--sys-color-bg-surfaces-surface-high)] text-center">
               <th rowspan="2" class="w-12 border-b border-[var(--sys-color-divider-strong)] px-siaf-sm"></th>
-              <th colspan="3" class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Estructura programática</th>
+              <th [attr.colspan]="conPrograma() ? 3 : 2" class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Estructura programática</th>
               <th colspan="3" class="border-b border-l border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Clasificador funcional</th>
             </tr>
             <tr class="bg-[var(--sys-color-bg-surfaces-surface-high)] text-left">
-              <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Programa</th>
+              @if (conPrograma()) {
+                <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Programa</th>
+              }
               <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Pro / Inv</th>
               <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Act / AI / Obr</th>
               <th class="border-b border-l border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-xs font-bold uppercase text-text">Función</th>
@@ -61,8 +63,10 @@ import { CadenaProgramatica, codigoNombre } from '../../../models/cadenas-progra
                 <td class="px-siaf-sm py-siaf-sm">
                   <siaf-checkbox [checked]="marcadasSig().includes(fila.id)" (checkedChange)="marcar(fila.id, $event)" />
                 </td>
-                <td class="px-siaf-md py-siaf-sm">{{ fila.programa.codigo }}</td>
-                <td class="px-siaf-md py-siaf-sm">{{ fila.producto.codigo }}</td>
+                @if (conPrograma()) {
+                  <td class="px-siaf-md py-siaf-sm">{{ fila.programa?.codigo ?? '-' }}</td>
+                }
+                <td class="px-siaf-md py-siaf-sm">{{ fila.producto?.codigo ?? '-' }}</td>
                 <td class="min-w-[320px] px-siaf-md py-siaf-sm">{{ codigoNombre(fila.actividad) }}</td>
                 <td class="border-l border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm">{{ fila.funcion.codigo }}</td>
                 <td class="px-siaf-md py-siaf-sm">{{ fila.division.codigo }}</td>
@@ -70,7 +74,7 @@ import { CadenaProgramatica, codigoNombre } from '../../../models/cadenas-progra
               </tr>
             } @empty {
               <tr>
-                <td colspan="7" class="px-siaf-md py-siaf-lg text-center text-text-muted">No se encontraron resultados.</td>
+                <td [attr.colspan]="conPrograma() ? 7 : 6" class="px-siaf-md py-siaf-lg text-center text-text-muted">No se encontraron resultados.</td>
               </tr>
             }
           </tbody>
@@ -116,6 +120,9 @@ export class CadenasElegidasComponent {
 
   readonly codigoNombre = codigoNombre;
 
+  /** Las cadenas de AC no llevan Programa: sin él, la columna no se muestra. */
+  readonly conPrograma = computed(() => this.cadenasSig().some((c) => !!c.programa));
+
   readonly busqueda = signal('');
   readonly pagina = signal(1);
   readonly filasPorPagina = signal(10);
@@ -124,7 +131,7 @@ export class CadenasElegidasComponent {
     const texto = this.busqueda().trim().toLowerCase();
     if (!texto) return this.cadenasSig();
     return this.cadenasSig().filter((c) =>
-      [c.programa, c.producto, c.actividad].some((v) => `${v.codigo} ${v.nombre}`.toLowerCase().includes(texto)),
+      [c.programa, c.producto, c.actividad].some((v) => !!v && `${v.codigo} ${v.nombre}`.toLowerCase().includes(texto)),
     );
   });
   readonly totalFilas = computed(() => this.filtradas().length);

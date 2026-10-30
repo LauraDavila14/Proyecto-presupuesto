@@ -1,6 +1,6 @@
 /**
- * Cadenas programáticas de ejemplo para el panel «Seleccionar cadena» (nodos de Figma 2009:315630, 1865:311851 y los
- * filtros por tipo). No hay backend: son datos fijos del taller. Las primeras filas de cada tipo son las del diseño; el
+ * Cadenas programáticas de ejemplo para el panel «Seleccionar cadena» de PP y de AC (nodos de Figma 2009:315630, 1865:311851,
+ * los filtros por tipo y las capturas de AC). No hay backend: son datos fijos del taller. Las primeras filas de cada tipo son las del diseño; el
  * resto se arma con las mismas bases para llegar a un total que permita probar la paginación.
  */
 
@@ -9,16 +9,21 @@ export interface Concepto {
   nombre: string;
 }
 
-/** Tipo de la cadena: con producto predeterminado o de inversión (en esa el `producto` es la inversión y la actividad, la AI/Obra). */
-export type TipoCadena = 'producto' | 'inversion';
+/**
+ * Tipo de la cadena: `producto` (PP con producto predeterminado), `actividad` (AC con actividad predeterminada) o
+ * `inversion` (en esa el `producto` es la inversión y la actividad, la AI/Obra).
+ */
+export type TipoCadena = 'producto' | 'actividad' | 'inversion';
 
 export interface CadenaProgramatica {
   id: string;
   tipo: TipoCadena;
-  /** Código de la categoría presupuestaria (`PP`). */
+  /** Código de la categoría presupuestaria (`PP` o `AC`). */
   categoria: string;
-  programa: Concepto;
-  producto: Concepto;
+  /** Solo en PP: las cadenas de AC no llevan programa. */
+  programa?: Concepto;
+  /** Producto (PP) o inversión; en las cadenas de actividad de AC no hay. */
+  producto?: Concepto;
   actividad: Concepto;
   funcion: Concepto;
   division: Concepto;
@@ -229,5 +234,91 @@ const CADENAS_INVERSION_GENERADAS: CadenaProgramatica[] = Array.from({ length: T
 /** Todas las cadenas de PP: las de producto predeterminado y las de inversión. */
 export const CADENAS_PP_TODAS: CadenaProgramatica[] = [...CADENAS_PP, ...CADENAS_INVERSION_DISENO, ...CADENAS_INVERSION_GENERADAS];
 
+// ── AC ────────────────────────────────────────────────────────────────
+
+const FUNCION_AC: Concepto = { codigo: '02', nombre: 'Relaciones exteriores' };
+const DIVISION_AC: Concepto = { codigo: '006', nombre: 'Gestión' };
+const GRUPOS_AC: Concepto[] = [
+  { codigo: '0005', nombre: 'Planeamiento institucional' },
+  { codigo: '0007', nombre: 'Conducción superior' },
+  { codigo: '0008', nombre: 'Gestión administrativa' },
+  { codigo: '0011', nombre: 'Gestión de recursos humanos' },
+  { codigo: '0012', nombre: 'Control interno' },
+  { codigo: '0013', nombre: 'Defensa jurídica' },
+];
+
+const funcionalAc = (grupo: number) => ({ funcion: FUNCION_AC, division: DIVISION_AC, grupo: GRUPOS_AC[grupo % GRUPOS_AC.length] });
+
+/** Filas de actividad predeterminada del diseño de AC (el número es el grupo funcional que llevan). */
+const ACTIVIDADES_AC_DISENO: [string, string, number][] = [
+  ['5000001', 'Planeamiento y presupuesto', 0],
+  ['5000002', 'Conducción y orientación superior', 1],
+  ['5000003', 'Gestión administrativa', 2],
+  ['5000004', 'Asesoramiento técnico y jurídico', 2],
+  ['5000005', 'Gestión de recursos humanos', 3],
+  ['5000006', 'Acciones de control y auditoría', 4],
+  ['5000007', 'Defensa judicial del estado', 5],
+];
+
+const ACTIVIDADES_AC_EXTRA: string[] = [
+  'Gestión de la tecnología de información',
+  'Comunicación institucional',
+  'Gestión de la cooperación',
+  'Logística y abastecimiento',
+  'Gestión patrimonial',
+  'Tesorería y contabilidad',
+  'Archivo y gestión documental',
+  'Seguridad y mantenimiento institucional',
+];
+
+/** Cadenas de AC con actividad predeterminada. */
+export const CADENAS_AC: CadenaProgramatica[] = Array.from({ length: TOTAL_CADENAS }, (_, i) => {
+  const [codigo, nombre, grupo] = ACTIVIDADES_AC_DISENO[i] ?? [
+    String(5000001 + i),
+    ACTIVIDADES_AC_EXTRA[(i - ACTIVIDADES_AC_DISENO.length) % ACTIVIDADES_AC_EXTRA.length],
+    i,
+  ];
+  return { id: `ac-${i + 1}`, categoria: 'AC', tipo: 'actividad' as const, actividad: { codigo, nombre }, ...funcionalAc(grupo) };
+});
+
+const INVERSION_AC: Concepto = { codigo: '2355382', nombre: 'Mejoramiento del servicio de habitabilidad institucional' };
+const INVERSIONES_AC: Concepto[] = [
+  INVERSION_AC,
+  { codigo: '2360118', nombre: 'Ampliación de los servicios administrativos institucionales' },
+  { codigo: '2371450', nombre: 'Fortalecimiento de la gestión documentaria institucional' },
+];
+
+/** Filas de inversión del diseño de AC. */
+const AI_OBR_AC_DISENO: [string, string][] = [
+  ['0000420', 'Adquisición de inmueble para el servicio de habitabilidad institucional'],
+  ['0000424', 'Adecuación de edificio público - Etapa 1 para el servicio de habitabilidad institucional'],
+  ['0000425', 'Adecuación de edificio público - Etapa 2 para el servicio de habitabilidad institucional'],
+  ['0000100', 'Adquisición e instalación de equipos para el servicio de habitabilidad institucional'],
+  ['0000800', 'Adquisición e implementación de mobiliarios para el servicio de habitabilidad institucional'],
+  ['0001201', 'Talleres de capacitación para el servicio de habitabilidad institucional'],
+];
+
+const AI_OBR_AC_EXTRA: string[] = [
+  'Expediente técnico',
+  'Supervisión de obra',
+  'Gestión de proyecto',
+  'Liquidación de obra',
+  'Adquisición de equipamiento institucional',
+  'Capacitación del personal usuario',
+];
+
+/** Cadenas de AC de inversión: la inversión va en `producto` y la AI/Obra en `actividad`. */
+export const CADENAS_AC_INVERSION: CadenaProgramatica[] = Array.from({ length: TOTAL_CADENAS }, (_, i) => {
+  const [codigo, nombre] = AI_OBR_AC_DISENO[i] ?? [
+    String(1300 + i * 11).padStart(7, '0'),
+    AI_OBR_AC_EXTRA[(i - AI_OBR_AC_DISENO.length) % AI_OBR_AC_EXTRA.length],
+  ];
+  const inversion = i < AI_OBR_AC_DISENO.length ? INVERSION_AC : INVERSIONES_AC[i % INVERSIONES_AC.length];
+  return { id: `aci-${i + 1}`, categoria: 'AC', tipo: 'inversion' as const, producto: inversion, actividad: { codigo, nombre }, ...funcionalAc(0) };
+});
+
+/** Todas las cadenas que ofrece «Buscar cadena» (PP y AC). */
+export const CADENAS_TODAS: CadenaProgramatica[] = [...CADENAS_PP_TODAS, ...CADENAS_AC, ...CADENAS_AC_INVERSION];
+
 /** Texto «código nombre» con el que el detalle muestra cada nivel de la cadena. */
-export const codigoNombre = (c: Concepto): string => `${c.codigo} ${c.nombre}`;
+export const codigoNombre = (c: Concepto | undefined): string => (c ? `${c.codigo} ${c.nombre}` : '-');

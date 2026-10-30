@@ -239,6 +239,15 @@ export class ClasificadorProgramaticoRequestComponent {
     this.filasMarcadas.set(marcar ? this.filasTablaPagina().map((f) => f.id) : []);
   }
 
+  /** Quita de inmediato los registros marcados (solo antes de elaborar el documento); sus cadenas quedan libres para agregarse de nuevo. */
+  borrarRegistrosMarcados(): void {
+    const marcados = this.filasMarcadas();
+    this.registros.update((registros) => registros.filter((r) => !marcados.includes(r.id)));
+    this.filasMarcadas.set([]);
+    if (this.registros().length === 0) this.busquedaRegistros.set('');
+    this.paginaRegistros.update((p) => Math.min(p, this.totalPaginasRegistros()));
+  }
+
   marcarFila(id: string, marcar: boolean): void {
     this.filasMarcadas.update((m) => (marcar ? [...m.filter((x) => x !== id), id] : m.filter((x) => x !== id)));
   }

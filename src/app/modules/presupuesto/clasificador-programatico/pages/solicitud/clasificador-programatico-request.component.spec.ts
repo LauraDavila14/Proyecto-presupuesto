@@ -59,6 +59,58 @@ describe('ClasificadorProgramaticoRequestComponent · registro con PP', () => {
     expect(pagina.filasTabla().length).toBe(2);
   });
 
+  describe('borrar registros', () => {
+    beforeEach(() => {
+      pagina.elegirCadenas(CADENAS_PP.slice(0, 3));
+      pagina.confirmarRegistro();
+    });
+
+    it('quita los registros marcados y limpia las marcas', () => {
+      const [primero, , tercero] = pagina.filasTabla();
+      pagina.marcarFila(primero.id, true);
+      pagina.marcarFila(tercero.id, true);
+      pagina.borrarRegistrosMarcados();
+
+      expect(pagina.filasTabla().map((f) => f.actividad)).toEqual(['5002719']);
+      expect(pagina.filasMarcadas()).toEqual([]);
+      expect(pagina.saveDisabled()).toBe(false);
+    });
+
+    it('al borrar todos desactiva Grabar y vacía el buscador', () => {
+      pagina.buscarRegistros('0062');
+      pagina.marcarTodas(true);
+      pagina.borrarRegistrosMarcados();
+
+      expect(pagina.filasTabla()).toEqual([]);
+      expect(pagina.saveDisabled()).toBe(true);
+      expect(pagina.busquedaRegistros()).toBe('');
+    });
+
+    it('la cadena de un registro borrado se puede volver a agregar', () => {
+      pagina.marcarFila(pagina.filasTabla()[0].id, true);
+      pagina.borrarRegistrosMarcados();
+
+      pagina.abrirPanel();
+      pagina.marcarProceso('P', true);
+      pagina.cambiarCategoria('PP');
+      pagina.elegirCadenas([CADENAS_PP[0]]);
+      pagina.confirmarRegistro();
+
+      expect(pagina.filasTabla().map((f) => f.actividad)).toEqual(['5002719', '5006182', '5004339']);
+    });
+
+    it('la papelera no aparece con la solicitud Elaborada', () => {
+      const papelera = () => (fixture.nativeElement as HTMLElement).querySelector('siaf-table-controls button[aria-label="Borrar"]');
+      pagina.marcarFila(pagina.filasTabla()[0].id, true);
+      fixture.detectChanges();
+      expect(papelera()).not.toBeNull();
+
+      pagina.elaborado.set(true);
+      fixture.detectChanges();
+      expect(papelera()).toBeNull();
+    });
+  });
+
   it('no repite las cadenas que ya están en la tabla', () => {
     pagina.elegirCadenas(CADENAS_PP.slice(0, 2));
     pagina.confirmarRegistro();

@@ -81,6 +81,15 @@ type ModoActividad = 'ninguno' | 'predeterminada' | 'inversion' | 'apnop';
  * asigna el sistema al aceptarse la solicitud: solo lectura). «Aceptar» se habilita con los cuatro campos
  * elegidos y agrega una fila a la tabla.
  */
+// El usuario demo no trae código de unidad ejecutora: se usa el del diseño (nodo de Figma 1700:162888).
+const CODIGO_UNIDAD_EJECUTORA_DEMO = '111110008000';
+
+function formatearFechaApertura(fecha: Date): string {
+  const dos = (n: number) => String(n).padStart(2, '0');
+  const dia = `${dos(fecha.getDate())}/${dos(fecha.getMonth() + 1)}/${dos(fecha.getFullYear() % 100)}`;
+  return `${dia}  ${dos(fecha.getHours())}:${dos(fecha.getMinutes())}:${dos(fecha.getSeconds())}`;
+}
+
 @Component({
   selector: 'siaf-clasificador-programatico-request',
   standalone: true,
@@ -121,11 +130,15 @@ export class ClasificadorProgramaticoRequestComponent {
     { label: 'Clasificador programático' },
   ];
 
+  // Fecha y hora de apertura del documento, fijas (formato del diseño: año de 2 dígitos).
+  private readonly fechaApertura = formatearFechaApertura(new Date());
+
   readonly camposEntidad = computed<SolicitudeInfoField[]>(() => {
     const usuario = this.currentUser.user();
+    const unidad = (usuario.unidad ?? usuario.office).toUpperCase();
     return [
-      { label: 'Fecha', value: '' },
-      { label: 'Unidad ejecutora', value: (usuario.unidad ?? usuario.office).toUpperCase() },
+      { label: 'Fecha', value: this.fechaApertura },
+      { label: 'Unidad ejecutora', value: `${CODIGO_UNIDAD_EJECUTORA_DEMO} ${unidad}` },
     ];
   });
 

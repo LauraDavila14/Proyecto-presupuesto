@@ -203,6 +203,8 @@ describe('CadenaSearchPanelComponent', () => {
         '5003630 02 002 0002',
       ]);
       expect(panel.filasPagina()[1].actividad.nombre).toBe('Desarrollo de la enseñanza de post-grado');
+      expect(panel.filasPagina()[5].actividad.nombre).toContain('ámbito regional');
+      expect(panel.filasPagina()[6].actividad.codigo).toBe('5006412');
     });
 
     it('con Inversión muestra las cadenas de inversión de APNOP', () => {
@@ -211,6 +213,8 @@ describe('CadenaSearchPanelComponent', () => {
       panel.aplicarFiltros();
       expect(panel.totalFilas()).toBe(CADENAS_APNOP_INVERSION.length);
       expect(panel.filasPagina()[0].producto?.codigo).toBe('2355896');
+      expect(panel.filasPagina().slice(0, 7).map((c) => c.actividad.codigo)).toEqual(['0000158', '0001427', '0001875', '0000192', '0000898', '0009728', '0003531']);
+      expect(panel.filasPagina().slice(0, 7).every((c) => c.producto?.codigo === '2355896')).toBe(true);
     });
   });
 

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { CADENAS_AC, CADENAS_APNOP, CADENAS_APNOP_INVERSION, CADENAS_PP } from '../../../models/cadenas-programaticas.mock';
+import { CADENAS_AC, CADENAS_AC_INVERSION, CADENAS_APNOP, CADENAS_APNOP_INVERSION, CADENAS_PP } from '../../../models/cadenas-programaticas.mock';
 import { CadenasElegidasComponent } from './cadenas-elegidas.component';
 
 describe('CadenasElegidasComponent', () => {
@@ -35,6 +35,21 @@ describe('CadenasElegidasComponent', () => {
     expect((fixture.nativeElement as HTMLElement).querySelector('thead')!.textContent).toContain('Pro / Inv');
   });
 
+  it('mezcla cadenas de actividad e inversión de AC, con «-» en Inversión para las de actividad', () => {
+    fixture.componentRef.setInput('cadenas', [...CADENAS_AC.slice(0, 3), ...CADENAS_AC_INVERSION.slice(0, 2)]);
+    fixture.detectChanges();
+    const filas = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('tbody tr')).map((tr) =>
+      Array.from(tr.querySelectorAll('td')).slice(1).map((td) => td.textContent!.trim()),
+    );
+    expect(filas).toEqual([
+      ['-', '5000001 Planeamiento y presupuesto', '02', '006', '0005'],
+      ['-', '5000002 Conducción y orientación superior', '02', '006', '0007'],
+      ['-', '5000003 Gestión administrativa', '02', '006', '0008'],
+      ['2355382', '0000420 Adquisición de inmueble para el servicio de habitabilidad institucional', '03', '006', '0010'],
+      ['2355382', '0000424 Adecuación de edificio público - Etapa 1 para el servicio de habitabilidad institucional', '03', '006', '0010'],
+    ]);
+  });
+
   it('mezcla cadenas de actividad e inversión de APNOP, con «-» en Inversión para las de actividad', () => {
     fixture.componentRef.setInput('cadenas', [CADENAS_APNOP[0], CADENAS_APNOP_INVERSION[0], CADENAS_APNOP_INVERSION[1]]);
     fixture.detectChanges();
@@ -43,7 +58,7 @@ describe('CadenasElegidasComponent', () => {
     );
     expect(filas).toEqual([
       ['-', '5000643 Desarrollo de acciones de política exterior'],
-      ['2355896', '0000158 Saneamiento físico legal del terreno para el servicio del control fronterizo'],
+      ['2355896', '0000158 Saneamiento físico legal del terreno para el servicio de control fronterizo'],
       ['2355896', '0001427 Adquisición de terreno para el servicio de control fronterizo'],
     ]);
   });

@@ -326,6 +326,11 @@ export const CADENAS_AC_INVERSION: CadenaProgramatica[] = Array.from({ length: T
 
 // ── APNOP ─────────────────────────────────────────────────────────────
 
+const FUNCIONAL_APNOP_AMBIENTE = {
+  funcion: { codigo: '17', nombre: 'Ambiente' },
+  division: { codigo: '054', nombre: 'Desarrollo estratégico, conservación y aprovechamiento sostenible del patrimonio natural' },
+  grupo: { codigo: '0123', nombre: 'Gestión integrada de recursos naturales' },
+};
 const FUNCIONAL_APNOP_EDUCACION = {
   funcion: { codigo: '22', nombre: 'Educación' },
   division: { codigo: '048', nombre: 'Educación superior' },
@@ -351,7 +356,8 @@ const ACTIVIDADES_APNOP_DISENO: [string, string, FuncionalApnop][] = [
   ['5000991', 'Obligaciones previsionales', FUNCIONAL_APNOP_PREVISION],
   ['5001008', 'Organizar y ejecutar los procesos electorales', RELACIONES_EXTERIORES],
   ['5001123', 'Protocolo y ceremonial del estado', RELACIONES_EXTERIORES],
-  ['5003630', 'Desarrollo de acciones de política exterior, soberanía e integridad territorial en el ámbito internacional', RELACIONES_EXTERIORES],
+  ['5003630', 'Desarrollo de acciones de política exterior, soberanía e integridad territorial en el ámbito regional', RELACIONES_EXTERIORES],
+  ['5006412', 'Intervenciones extraordinarias del fenómeno el niño - FEN', FUNCIONAL_APNOP_AMBIENTE],
 ];
 
 /** Actividades de relleno de APNOP, con la función que les corresponde. */
@@ -367,7 +373,7 @@ const ACTIVIDADES_APNOP_EXTRA: [string, FuncionalApnop][] = [
 /** Cadenas de APNOP con actividad predeterminada; las primeras son las del diseño (5000643, 5000670…). */
 export const CADENAS_APNOP: CadenaProgramatica[] = Array.from({ length: TOTAL_CADENAS }, (_, i) => {
   const [codigo, nombre, funcional] = ACTIVIDADES_APNOP_DISENO[i] ?? [
-    String(5003631 + i - ACTIVIDADES_APNOP_DISENO.length),
+    String(5006413 + i - ACTIVIDADES_APNOP_DISENO.length),
     ...ACTIVIDADES_APNOP_EXTRA[(i - ACTIVIDADES_APNOP_DISENO.length) % ACTIVIDADES_APNOP_EXTRA.length],
   ];
   return { id: `apn-${i + 1}`, categoria: 'APNOP', tipo: 'actividad' as const, actividad: { codigo, nombre }, ...funcional };
@@ -379,10 +385,15 @@ const INVERSIONES_APNOP: Concepto[] = [
   { codigo: '2374832', nombre: 'Mejoramiento de la gestión de áreas naturales protegidas' },
 ];
 
-/** Filas de inversión del diseño de APNOP (todas con la inversión 2355896). */
+/** Filas de inversión del diseño de APNOP (todas con la inversión 2355896; el panel y sus filtros, Figma de APNOP). */
 const AI_OBR_APNOP_DISENO: [string, string][] = [
-  ['0000158', 'Saneamiento físico legal del terreno para el servicio del control fronterizo'],
+  ['0000158', 'Saneamiento físico legal del terreno para el servicio de control fronterizo'],
   ['0001427', 'Adquisición de terreno para el servicio de control fronterizo'],
+  ['0001875', 'Construcción de edificio público para el servicio de control fronterizo'],
+  ['0000192', 'Adquisición e instalación de equipos para el servicio del control fronterizo'],
+  ['0000898', 'Adquisición e implementación de mobiliarios para el servicio de control fronterizo'],
+  ['0009728', 'Capacitación al sector privado para el servicio de control fronterizo'],
+  ['0003531', 'Gestión de relaciones comunitarias para el servicio de control fronterizo'],
 ];
 
 const AI_OBR_APNOP: string[] = [
@@ -394,11 +405,7 @@ const AI_OBR_APNOP: string[] = [
   'Capacitación del personal usuario',
 ];
 
-const FUNCIONAL_APNOP_INVERSION = {
-  funcion: { codigo: '17', nombre: 'Ambiente' },
-  division: { codigo: '054', nombre: 'Desarrollo estratégico, conservación y aprovechamiento sostenible del patrimonio natural' },
-  grupo: { codigo: '0123', nombre: 'Gestión integrada de recursos naturales' },
-};
+const FUNCIONAL_APNOP_INVERSION = FUNCIONAL_APNOP_AMBIENTE;
 
 /** Cadenas de APNOP de inversión; las primeras son las del diseño (2355896 con 0000158 y 0001427). */
 export const CADENAS_APNOP_INVERSION: CadenaProgramatica[] = Array.from({ length: TOTAL_CADENAS }, (_, i) => {

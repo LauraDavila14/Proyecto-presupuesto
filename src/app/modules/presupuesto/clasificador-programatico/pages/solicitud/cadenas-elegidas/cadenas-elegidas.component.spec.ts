@@ -39,10 +39,45 @@ describe('CadenasElegidasComponent', () => {
     expect(tabla.filasPagina().length).toBe(25);
   });
 
-  it('al cambiar la lista quita las marcas de las cadenas que ya no están', () => {
-    tabla.marcar('cad-1', true);
-    tabla.marcar('cad-3', true);
-    fixture.componentRef.setInput('cadenas', CADENAS_PP.slice(2, 4));
-    expect(tabla.marcadas()).toEqual(['cad-3']);
+  it('marcar emite la lista de marcadas con la fila agregada o quitada', () => {
+    const emitidas: string[][] = [];
+    tabla.marcadasChange.subscribe((ids) => emitidas.push(ids));
+    fixture.componentRef.setInput('marcadas', ['cad-1']);
+    tabla.marcar('cad-2', true);
+    tabla.marcar('cad-1', false);
+    expect(emitidas).toEqual([['cad-1', 'cad-2'], []]);
+  });
+
+  it('«seleccionar todo» marca o desmarca solo las filas de la página visible', () => {
+    fixture.componentRef.setInput('cadenas', CADENAS_PP.slice(0, 25));
+    fixture.componentRef.setInput('marcadas', ['cad-20']);
+    const emitidas: string[][] = [];
+    tabla.marcadasChange.subscribe((ids) => emitidas.push(ids));
+    tabla.marcarPagina(true);
+    expect(emitidas[0]).toContain('cad-20');
+    expect(emitidas[0].length).toBe(11);
+    fixture.componentRef.setInput('marcadas', emitidas[0]);
+    tabla.marcarPagina(false);
+    expect(emitidas[1]).toEqual(['cad-20']);
+  });
+
+  it('la barra con Borrar solo aparece con filas marcadas y Borrar avisa', () => {
+    const barra = () => (fixture.nativeElement as HTMLElement).querySelector('siaf-table-controls input[type=checkbox]');
+    expect(barra()).toBeNull();
+    fixture.componentRef.setInput('marcadas', ['cad-1']);
+    fixture.detectChanges();
+    expect(barra()).not.toBeNull();
+    let avisos = 0;
+    tabla.borrar.subscribe(() => avisos++);
+    ((fixture.nativeElement as HTMLElement).querySelector('siaf-table-controls button[aria-label="Borrar"]') as HTMLButtonElement).click();
+    expect(avisos).toBe(1);
+  });
+
+  it('si la página en que estaba ya no existe, pasa a la última', () => {
+    fixture.componentRef.setInput('cadenas', CADENAS_PP.slice(0, 25));
+    tabla.cambiarPagina(2);
+    expect(tabla.pagina()).toBe(3);
+    fixture.componentRef.setInput('cadenas', CADENAS_PP.slice(0, 12));
+    expect(tabla.pagina()).toBe(2);
   });
 });

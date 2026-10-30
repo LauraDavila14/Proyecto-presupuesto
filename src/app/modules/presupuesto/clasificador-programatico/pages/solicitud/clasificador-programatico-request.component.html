@@ -70,10 +70,10 @@
             <div class="flex flex-col gap-siaf-lg">
               <div class="flex items-center justify-between gap-siaf-md">
                 <h3 class="m-0 text-sm font-bold uppercase text-text">Buscar cadena</h3>
-                <siaf-button variant="filled" icon="search" [iconOnly]="true" ariaLabel="Buscar cadena" (click)="abrirCadenas()" />
+                <siaf-button variant="filled" icon="search" [iconOnly]="true" ariaLabel="Buscar cadena" [disabled]="hayCadenasMarcadas()" (click)="abrirCadenas()" />
               </div>
               @if (cadenasElegidas().length > 0) {
-                <siaf-cadenas-elegidas [cadenas]="cadenasElegidas()" />
+                <siaf-cadenas-elegidas [cadenas]="cadenasElegidas()" [marcadas]="cadenasMarcadas()" (marcadasChange)="cadenasMarcadas.set($event)" (borrar)="borrarCadenasMarcadas()" />
               } @else {
                 <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
                   <p class="m-0 text-sm text-[var(--sys-color-text-neutral-medium)]">No se ha seleccionado ninguna cadena predeterminada. Haga clic en el botón para realizar una selección.</p>

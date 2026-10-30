@@ -1,30 +1,39 @@
-import { ChangeDetectionStrategy, Component, Input, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, computed, signal } from '@angular/core';
 
 import { FormTableSearchComponent } from '../../../../../../shared/components/form-table-search/form-table-search.component';
 import { PaginationComponent } from '../../../../../../shared/components/pagination/pagination.component';
+import { TableControlsComponent } from '../../../../../../shared/components/table-controls/table-controls.component';
 import { CheckboxComponent } from '../../../../../../shared/ui/checkbox/checkbox.component';
 import { CadenaProgramatica, codigoNombre } from '../../../models/cadenas-programaticas.mock';
 
 /**
  * Cadenas elegidas en «Buscar cadena» del registro de clasificador (nodo de Figma 1769:174293): buscador, paginación
  * y tabla con la estructura programática (Programa, Pro / Inv, Act / AI / Obr) y el clasificador funcional de cada
- * cadena. Las casillas se pueden marcar, sin acción por ahora. El embudo del buscador es solo visual.
+ * cadena. Con filas marcadas, la barra superior (`siaf-table-controls`) suma «seleccionar todo» y la acción Borrar
+ * (nodo de Figma de la acción de borrar). Las marcas viven en quien lo usa (`marcadas` / `marcadasChange`) y `borrar`
+ * avisa que se quieren quitar las marcadas. El embudo del buscador es solo visual.
  */
 @Component({
   selector: 'siaf-cadenas-elegidas',
   standalone: true,
-  imports: [CheckboxComponent, FormTableSearchComponent, PaginationComponent],
+  imports: [CheckboxComponent, FormTableSearchComponent, PaginationComponent, TableControlsComponent],
   template: `
     <div class="flex flex-col gap-siaf-md">
       <siaf-form-table-search [value]="busqueda()" [showFilter]="true" [showMore]="false" (valueChange)="buscar($event)" />
 
-      <siaf-pagination
-        navigation="Activate"
-        position="Top"
+      <siaf-table-controls
+        [showSelection]="marcadasSig().length > 0"
+        [checked]="todasMarcadas()"
+        [indeterminate]="algunaMarcada()"
+        [selectedCount]="marcadasSig().length"
+        [showDeleteAction]="true"
+        deleteLabel="Borrar"
         [page]="pagina()"
         [pageSize]="filasPorPagina()"
         [totalItems]="totalFilas()"
         [totalPages]="totalPaginas()"
+        (selectionChange)="marcarPagina($event)"
+        (delete)="borrar.emit()"
         (previous)="cambiarPagina(-1)"
         (next)="cambiarPagina(1)"
       />
@@ -48,9 +57,9 @@ import { CadenaProgramatica, codigoNombre } from '../../../models/cadenas-progra
           </thead>
           <tbody>
             @for (fila of filasPagina(); track fila.id) {
-              <tr class="border-b border-[var(--sys-color-divider-default)] text-[var(--sys-color-text-neutral-medium)]" [class.bg-[var(--sys-color-bg-states-light-selected)]]="marcadas().includes(fila.id)">
+              <tr class="border-b border-[var(--sys-color-divider-default)] text-[var(--sys-color-text-neutral-medium)]" [class.bg-[var(--sys-color-bg-states-light-selected)]]="marcadasSig().includes(fila.id)">
                 <td class="px-siaf-sm py-siaf-sm">
-                  <siaf-checkbox [checked]="marcadas().includes(fila.id)" (checkedChange)="marcar(fila.id, $event)" />
+                  <siaf-checkbox [checked]="marcadasSig().includes(fila.id)" (checkedChange)="marcar(fila.id, $event)" />
                 </td>
                 <td class="px-siaf-md py-siaf-sm">{{ fila.programa.codigo }}</td>
                 <td class="px-siaf-md py-siaf-sm">{{ fila.producto.codigo }}</td>
@@ -88,19 +97,28 @@ import { CadenaProgramatica, codigoNombre } from '../../../models/cadenas-progra
 export class CadenasElegidasComponent {
   private readonly cadenasSig = signal<CadenaProgramatica[]>([]);
 
-  /** Cadenas elegidas; al cambiar la lista vuelve a la primera página y se quitan las marcas de las que ya no están. */
+  readonly marcadasSig = signal<string[]>([]);
+
+  /** Cadenas elegidas; si la página en que estaba ya no existe, pasa a la última. */
   @Input() set cadenas(valor: CadenaProgramatica[]) {
     this.cadenasSig.set(valor);
-    this.pagina.set(1);
-    this.marcadas.update((marcadas) => marcadas.filter((id) => valor.some((c) => c.id === id)));
+    this.pagina.update((p) => Math.min(p, this.totalPaginas()));
   }
+
+  /** Ids de las filas marcadas. */
+  @Input() set marcadas(valor: string[]) {
+    this.marcadasSig.set(valor);
+  }
+
+  @Output() marcadasChange = new EventEmitter<string[]>();
+  /** Se pulsó Borrar: quien lo usa quita las cadenas marcadas. */
+  @Output() borrar = new EventEmitter<void>();
 
   readonly codigoNombre = codigoNombre;
 
   readonly busqueda = signal('');
   readonly pagina = signal(1);
   readonly filasPorPagina = signal(10);
-  readonly marcadas = signal<string[]>([]);
 
   private readonly filtradas = computed(() => {
     const texto = this.busqueda().trim().toLowerCase();
@@ -130,7 +148,18 @@ export class CadenasElegidasComponent {
     this.pagina.set(1);
   }
 
+  readonly todasMarcadas = computed(() => this.filasPagina().length > 0 && this.filasPagina().every((f) => this.marcadasSig().includes(f.id)));
+  readonly algunaMarcada = computed(() => this.marcadasSig().length > 0 && !this.todasMarcadas());
+
   marcar(id: string, marcada: boolean): void {
-    this.marcadas.update((actuales) => (marcada ? [...actuales.filter((m) => m !== id), id] : actuales.filter((m) => m !== id)));
+    const actuales = this.marcadasSig().filter((m) => m !== id);
+    this.marcadasChange.emit(marcada ? [...actuales, id] : actuales);
+  }
+
+  /** «Seleccionar todo» marca o desmarca solo las filas de la página visible. */
+  marcarPagina(marcar: boolean): void {
+    const pagina = this.filasPagina().map((f) => f.id);
+    const resto = this.marcadasSig().filter((m) => !pagina.includes(m));
+    this.marcadasChange.emit(marcar ? [...resto, ...pagina] : resto);
   }
 }

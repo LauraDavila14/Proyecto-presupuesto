@@ -250,14 +250,24 @@ export class ClasificadorProgramaticoRequestComponent {
   readonly cadenaAbierta = signal(false);
   readonly cadenasElegidas = signal<CadenaProgramatica[]>([]);
   readonly idsCadenasElegidas = computed(() => this.cadenasElegidas().map((c) => c.id));
+  // Filas marcadas de la tabla de cadenas elegidas: con alguna, la lupa y Aceptar se desactivan y Borrar las quita.
+  readonly cadenasMarcadas = signal<string[]>([]);
+  readonly hayCadenasMarcadas = computed(() => this.cadenasMarcadas().length > 0);
 
   elegirCadenas(cadenas: CadenaProgramatica[]): void {
     this.cadenasElegidas.set(cadenas);
+    this.cadenasMarcadas.set([]);
     this.cadenaAbierta.set(false);
   }
 
+  borrarCadenasMarcadas(): void {
+    const marcadas = this.cadenasMarcadas();
+    this.cadenasElegidas.update((cadenas) => cadenas.filter((c) => !marcadas.includes(c.id)));
+    this.cadenasMarcadas.set([]);
+  }
+
   abrirCadenas(): void {
-    if (this.categoria() === 'PP') this.cadenaAbierta.set(true);
+    if (this.categoria() === 'PP' && !this.hayCadenasMarcadas()) this.cadenaAbierta.set(true);
   }
 
   /** «Estructura programática» y «Vigencia» aparecen cuando ya hay proceso y categoría. */
@@ -457,7 +467,7 @@ export class ClasificadorProgramaticoRequestComponent {
   readonly puedeAceptar = computed(() => {
     if (!this.mostrarEstructura()) return false;
     // PP: se activa con al menos una cadena elegida (Figma 1769:174293); agregar el registro queda para su diseño.
-    if (this.categoria() === 'PP') return this.cadenasElegidas().length > 0;
+    if (this.categoria() === 'PP') return this.cadenasElegidas().length > 0 && !this.hayCadenasMarcadas();
     const sel = this.seleccion();
     if (this.esMaestro() && !this.funcionalManual()) return false;
     return !!sel.actividad && (!!sel.proyecto || sel.actividad['tipo'].startsWith('Actividad'));
@@ -482,6 +492,7 @@ export class ClasificadorProgramaticoRequestComponent {
     this.categoria.set(categoria);
     this.criterio.set('buscar');
     this.cadenasElegidas.set([]);
+    this.cadenasMarcadas.set([]);
     this.seleccion.set(this.seleccionVacia());
     this.reiniciarMaestro();
   }
@@ -513,6 +524,7 @@ export class ClasificadorProgramaticoRequestComponent {
     this.categoria.set('');
     this.criterio.set('buscar');
     this.cadenasElegidas.set([]);
+    this.cadenasMarcadas.set([]);
     this.seleccion.set(this.seleccionVacia());
     this.reiniciarMaestro();
     this.agregando.set(true);

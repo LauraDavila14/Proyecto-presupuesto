@@ -28,6 +28,7 @@ import { PROCESS_ROUTE } from '../../config/clasificador-programatico.rutas';
 import { CADENAS_PP_TODAS, CadenaProgramatica, Concepto, codigoNombre } from '../../models/cadenas-programaticas.mock';
 import { CadenaSearchPanelComponent } from './cadena-search-panel/cadena-search-panel.component';
 import { CadenasElegidasComponent } from './cadenas-elegidas/cadenas-elegidas.component';
+import { RegistroDetalleComponent } from './registro-detalle/registro-detalle.component';
 import {
   CAMPO_FUNCIONAL,
   CAMPOS_ESTRUCTURA,
@@ -107,6 +108,7 @@ function formatearFechaApertura(fecha: Date): string {
     PaginationComponent,
     CadenaSearchPanelComponent,
     CadenasElegidasComponent,
+    RegistroDetalleComponent,
     RadioComponent,
     SidePanelComponent,
     SnackbarComponent,
@@ -206,6 +208,18 @@ export class ClasificadorProgramaticoRequestComponent {
   });
   readonly todasMarcadas = computed(() => this.filasTablaPagina().length > 0 && this.filasTablaPagina().every((f) => this.filasMarcadas().includes(f.id)));
   readonly algunaMarcada = computed(() => this.filasMarcadas().length > 0 && !this.todasMarcadas());
+
+  // Detalle de un registro (Figma «Detalle de registro de clasificador»): reemplaza la solicitud sin salir de la página,
+  // así los registros agregados siguen en memoria al volver.
+  readonly registroDetalle = signal<RegistroClasificador | null>(null);
+
+  abrirDetalleRegistro(id: string): void {
+    this.registroDetalle.set(this.registros().find((r) => r.id === id) ?? null);
+  }
+
+  cerrarDetalleRegistro(): void {
+    this.registroDetalle.set(null);
+  }
 
   buscarRegistros(texto: string): void {
     this.busquedaRegistros.set(texto);
@@ -722,6 +736,7 @@ export class ClasificadorProgramaticoRequestComponent {
         return {
           id: `reg-${this.correlativo}`,
           cadenaId: c.id,
+          tipoCadena: c.tipo,
           procesos: this.procesosMarcados(),
           categoriaPresupuestaria: c.categoria,
           estructura: {

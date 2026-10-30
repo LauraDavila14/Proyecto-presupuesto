@@ -28,6 +28,8 @@ export interface CadenaProgramatica {
 /** Nombre completo de cada categoría, como se ve en el detalle de la cadena. */
 export const NOMBRE_CATEGORIA: Record<string, string> = {
   PP: 'Programas presupuestales',
+  AC: 'Acciones centrales',
+  APNOP: 'Asignaciones presupuestarias que no resultan en productos',
 };
 
 const RELACIONES_EXTERIORES = {

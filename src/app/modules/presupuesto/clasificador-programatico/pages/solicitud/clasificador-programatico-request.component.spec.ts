@@ -43,6 +43,22 @@ describe('ClasificadorProgramaticoRequestComponent · registro con PP', () => {
     expect(pagina.saveDisabled()).toBe(false);
   });
 
+  it('abre el detalle de un registro y la flecha vuelve a la solicitud con los registros intactos', () => {
+    pagina.elegirCadenas(CADENAS_PP.slice(0, 2));
+    pagina.confirmarRegistro();
+    const id = pagina.filasTabla()[1].id;
+
+    pagina.abrirDetalleRegistro(id);
+    expect(pagina.registroDetalle()?.cadenaId).toBe(CADENAS_PP[1].id);
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('siaf-registro-detalle')).not.toBeNull();
+
+    pagina.cerrarDetalleRegistro();
+    fixture.detectChanges();
+    expect(pagina.registroDetalle()).toBeNull();
+    expect(pagina.filasTabla().length).toBe(2);
+  });
+
   it('no repite las cadenas que ya están en la tabla', () => {
     pagina.elegirCadenas(CADENAS_PP.slice(0, 2));
     pagina.confirmarRegistro();

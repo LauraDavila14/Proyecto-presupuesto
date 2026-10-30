@@ -1,4 +1,7 @@
 <div class="min-h-[calc(100vh-56px)] bg-[var(--sys-color-bg-surfaces-surface-lowest)] text-text">
+  @if (registroDetalle(); as registro) {
+    <siaf-registro-detalle [breadcrumbs]="breadcrumbs" [registro]="registro" (returned)="cerrarDetalleRegistro()" />
+  } @else {
   <siaf-solicitude-page-layout
     [breadcrumbs]="breadcrumbs"
     role="creator"
@@ -164,8 +167,8 @@
               </thead>
               <tbody>
                 @for (fila of filasTablaPagina(); track fila.id) {
-                  <tr>
-                    <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-sm py-siaf-sm">
+                  <tr class="cursor-pointer hover:bg-surface-muted" (click)="abrirDetalleRegistro(fila.id)">
+                    <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-sm py-siaf-sm" (click)="$event.stopPropagation()">
                       <siaf-checkbox [checked]="filasMarcadas().includes(fila.id)" (checkedChange)="marcarFila(fila.id, $event)" />
                     </td>
                     <td class="border-b border-[var(--sys-color-divider-default)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ fila.categoria }}</td>
@@ -212,6 +215,7 @@
       </section>
     }
   </siaf-solicitude-page-layout>
+  }
 
   <siaf-request-approval-modals
     [saveOpen]="modalGrabar()"

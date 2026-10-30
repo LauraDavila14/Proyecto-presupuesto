@@ -25,7 +25,7 @@ import { SnackbarComponent, SnackbarVariant } from '../../../../../shared/ui/sna
 import { SummaryCardComponent, SummaryCardField } from '../../../../../shared/ui/summary-card/summary-card.component';
 import { TextFieldComponent } from '../../../../../shared/ui/text-field/text-field.component';
 import { PROCESS_ROUTE } from '../../config/clasificador-programatico.rutas';
-import { CADENAS_PP } from '../../models/cadenas-programaticas.mock';
+import { CADENAS_PP_TODAS } from '../../models/cadenas-programaticas.mock';
 import { CadenaSearchPanelComponent } from './cadena-search-panel/cadena-search-panel.component';
 import {
   CAMPO_FUNCIONAL,
@@ -244,7 +244,7 @@ export class ClasificadorProgramaticoRequestComponent {
 
   // «Buscar cadena»: panel «Seleccionar cadena» (nodos de Figma 2009:315630 y 1865:311851), solo con PP. Aceptar lo
   // cierra; mostrar la cadena elegida en el formulario queda para su diseño.
-  readonly cadenasPp = CADENAS_PP;
+  readonly cadenasPp = CADENAS_PP_TODAS;
   readonly cadenaAbierta = signal(false);
 
   abrirCadenas(): void {

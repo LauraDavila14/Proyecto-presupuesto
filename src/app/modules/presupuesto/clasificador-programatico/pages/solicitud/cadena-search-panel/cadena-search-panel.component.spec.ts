@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { CADENAS_AC, CADENAS_AC_INVERSION, CADENAS_PP, CADENAS_TODAS } from '../../../models/cadenas-programaticas.mock';
+import { CADENAS_AC, CADENAS_AC_INVERSION, CADENAS_APNOP, CADENAS_APNOP_INVERSION, CADENAS_PP, CADENAS_TODAS } from '../../../models/cadenas-programaticas.mock';
 import { CadenaSearchPanelComponent } from './cadena-search-panel.component';
 
 describe('CadenaSearchPanelComponent', () => {
@@ -172,6 +172,31 @@ describe('CadenaSearchPanelComponent', () => {
       expect(panel.columnas().map((c) => c.etiqueta)).toEqual(['Categ. pres.', 'Inversión', 'AI / OBR']);
       expect(panel.filasPagina()[0].producto?.codigo).toBe('2355382');
       expect(panel.chips()).toEqual(['Inversión']);
+    });
+  });
+
+  describe('con APNOP', () => {
+    beforeEach(() => {
+      fixture.componentRef.setInput('open', false);
+      fixture.componentRef.setInput('categoria', 'APNOP');
+      fixture.componentRef.setInput('open', true);
+    });
+
+    it('usa las columnas, los tipos y el detalle de AC con sus propias cadenas', () => {
+      expect(panel.totalFilas()).toBe(CADENAS_APNOP.length);
+      expect(panel.filasPagina()[0].actividad.codigo).toBe('5000643');
+      expect(panel.columnas().map((c) => c.etiqueta)).toEqual(['Categ. pres.', 'Inversión', 'Act / AI / Obr']);
+      expect(panel.opcionesTipo().map((o) => o.label)).toEqual(['Actividad predeterminada', 'Inversión']);
+      panel.abrirDetalle('apn-1');
+      expect(panel.camposDetalle(panel.detalle()!)[0].valor).toBe('APNOP - Asignaciones presupuestarias que no resultan en productos');
+    });
+
+    it('con Inversión muestra las cadenas de inversión de APNOP', () => {
+      panel.abrirFiltros();
+      panel.cambiarTipo('inversion');
+      panel.aplicarFiltros();
+      expect(panel.totalFilas()).toBe(CADENAS_APNOP_INVERSION.length);
+      expect(panel.filasPagina()[0].producto?.codigo).toBe('2355896');
     });
   });
 

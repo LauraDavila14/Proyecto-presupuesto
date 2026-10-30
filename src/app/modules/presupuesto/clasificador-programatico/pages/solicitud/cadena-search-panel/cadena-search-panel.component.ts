@@ -139,12 +139,15 @@ const CONFIG: Record<string, ConfigCadena> = {
   },
 };
 
-const configDe = (categoria: string, tipo: TipoCadena): ConfigCadena => CONFIG[`${categoria}:${tipo}`] ?? CONFIG['PP:producto'];
+/** APNOP no tiene diseño propio: usa las mismas columnas, filtros y detalle que AC. */
+const configDe = (categoria: string, tipo: TipoCadena): ConfigCadena =>
+  CONFIG[`${categoria === 'APNOP' ? 'AC' : categoria}:${tipo}`] ?? CONFIG['PP:producto'];
 
 /** Tipos que ofrece cada categoría; el primero es el de por defecto. */
 const TIPOS_POR_CATEGORIA: Record<string, TipoCadena[]> = {
   PP: ['producto', 'inversion'],
   AC: ['actividad', 'inversion'],
+  APNOP: ['actividad', 'inversion'],
 };
 
 const ETIQUETA_TIPO: Record<TipoCadena, string> = {
@@ -165,8 +168,8 @@ interface FiltrosCadena {
  * funcional) y la paginación. Las casillas permiten marcar varias cadenas; al hacer clic en una fila se abre a la
  * derecha su detalle (código + nombre de cada nivel) y la flecha lo cierra.
  *
- * Con PP ofrece los tipos Producto predeterminado e Inversión; con AC, Actividad predeterminada e Inversión. Las
- * columnas, los filtros y el detalle cambian según la categoría y el tipo (AC no lleva Programa).
+ * Con PP ofrece los tipos Producto predeterminado e Inversión; con AC y APNOP, Actividad predeterminada e Inversión. Las
+ * columnas, los filtros y el detalle cambian según la categoría y el tipo (AC y APNOP no llevan Programa).
  *
  * El ícono de filtros abre a la derecha el panel «Filtros» (tipo y desplegables con «código + nombre»); Aplicar filtra la tabla y, con Inversión, la cambia por las cadenas de inversión. Filtros y
  * detalle comparten ese lugar. Emite `confirmed` con las cadenas marcadas.
@@ -320,7 +323,7 @@ export class CadenaSearchPanelComponent {
 
   private readonly categoriaSig = signal('PP');
 
-  /** Categoría presupuestaria (`PP` o `AC`): enlazar antes que `open`. */
+  /** Categoría presupuestaria (`PP`, `AC` o `APNOP`): enlazar antes que `open`. */
   @Input() set categoria(valor: string) {
     this.categoriaSig.set(valor);
   }

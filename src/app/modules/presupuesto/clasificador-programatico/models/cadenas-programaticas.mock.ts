@@ -1,6 +1,6 @@
 /**
- * Cadenas programáticas de ejemplo para el panel «Seleccionar cadena» de PP y de AC (nodos de Figma 2009:315630, 1865:311851,
- * los filtros por tipo y las capturas de AC). No hay backend: son datos fijos del taller. Las primeras filas de cada tipo son las del diseño; el
+ * Cadenas programáticas de ejemplo para el panel «Seleccionar cadena» de PP, AC y APNOP (nodos de Figma 2009:315630,
+ * 1865:311851, los filtros por tipo y las capturas de AC y de la tabla de registros). No hay backend: son datos fijos del taller. Las primeras filas de cada tipo son las del diseño; el
  * resto se arma con las mismas bases para llegar a un total que permita probar la paginación.
  */
 
@@ -249,6 +249,13 @@ const GRUPOS_AC: Concepto[] = [
 
 const funcionalAc = (grupo: number) => ({ funcion: FUNCION_AC, division: DIVISION_AC, grupo: GRUPOS_AC[grupo % GRUPOS_AC.length] });
 
+/** Funcional de las cadenas de inversión de AC (03 / 006 / 0010, como en la tabla de registros del diseño). */
+const FUNCIONAL_AC_INVERSION = {
+  funcion: { codigo: '03', nombre: 'Planeamiento, gestión y reserva de contingencia' },
+  division: DIVISION_AC,
+  grupo: { codigo: '0010', nombre: 'Gestión institucional' },
+};
+
 /** Filas de actividad predeterminada del diseño de AC (el número es el grupo funcional que llevan). */
 const ACTIVIDADES_AC_DISENO: [string, string, number][] = [
   ['5000001', 'Planeamiento y presupuesto', 0],
@@ -314,11 +321,84 @@ export const CADENAS_AC_INVERSION: CadenaProgramatica[] = Array.from({ length: T
     AI_OBR_AC_EXTRA[(i - AI_OBR_AC_DISENO.length) % AI_OBR_AC_EXTRA.length],
   ];
   const inversion = i < AI_OBR_AC_DISENO.length ? INVERSION_AC : INVERSIONES_AC[i % INVERSIONES_AC.length];
-  return { id: `aci-${i + 1}`, categoria: 'AC', tipo: 'inversion' as const, producto: inversion, actividad: { codigo, nombre }, ...funcionalAc(0) };
+  return { id: `aci-${i + 1}`, categoria: 'AC', tipo: 'inversion' as const, producto: inversion, actividad: { codigo, nombre }, ...FUNCIONAL_AC_INVERSION };
 });
 
-/** Todas las cadenas que ofrece «Buscar cadena» (PP y AC). */
-export const CADENAS_TODAS: CadenaProgramatica[] = [...CADENAS_PP_TODAS, ...CADENAS_AC, ...CADENAS_AC_INVERSION];
+// ── APNOP ─────────────────────────────────────────────────────────────
+
+const FUNCIONALES_APNOP = [
+  RELACIONES_EXTERIORES,
+  {
+    funcion: { codigo: '24', nombre: 'Deuda pública' },
+    division: { codigo: '056', nombre: 'Deuda pública' },
+    grupo: { codigo: '0129', nombre: 'Servicio de la deuda' },
+  },
+  {
+    funcion: { codigo: '22', nombre: 'Previsión social' },
+    division: { codigo: '051', nombre: 'Previsión social' },
+    grupo: { codigo: '0116', nombre: 'Sistema de pensiones' },
+  },
+];
+
+const ACTIVIDADES_APNOP: string[] = [
+  'Aportes a organismos internacionales',
+  'Pago de pensiones y obligaciones previsionales',
+  'Pago de sentencias judiciales',
+  'Transferencias a gobiernos locales',
+  'Servicio de la deuda pública',
+  'Reserva de contingencia',
+  'Pago de cuotas a organismos internacionales',
+  'Devoluciones de ingresos',
+];
+
+/** Cadenas de APNOP con actividad predeterminada; la primera es la de la tabla de registros del diseño (5000643). */
+export const CADENAS_APNOP: CadenaProgramatica[] = Array.from({ length: TOTAL_CADENAS }, (_, i) => ({
+  id: `apn-${i + 1}`,
+  categoria: 'APNOP',
+  tipo: 'actividad' as const,
+  actividad: { codigo: String(5000643 + i), nombre: ACTIVIDADES_APNOP[i % ACTIVIDADES_APNOP.length] },
+  ...FUNCIONALES_APNOP[i % FUNCIONALES_APNOP.length],
+}));
+
+const INVERSIONES_APNOP: Concepto[] = [
+  { codigo: '2355896', nombre: 'Recuperación de servicios ambientales en áreas naturales' },
+  { codigo: '2361204', nombre: 'Instalación de servicios de gestión de residuos sólidos' },
+  { codigo: '2374832', nombre: 'Mejoramiento de la gestión de áreas naturales protegidas' },
+];
+
+const AI_OBR_APNOP: string[] = [
+  'Elaboración de expediente técnico para la recuperación de servicios ambientales',
+  'Supervisión de obra',
+  'Gestión de proyecto',
+  'Liquidación de obra',
+  'Adquisición de equipamiento para el servicio',
+  'Capacitación del personal usuario',
+];
+
+const FUNCIONAL_APNOP_INVERSION = {
+  funcion: { codigo: '17', nombre: 'Ambiente' },
+  division: { codigo: '054', nombre: 'Desarrollo estratégico, conservación y aprovechamiento sostenible del patrimonio natural' },
+  grupo: { codigo: '0123', nombre: 'Gestión integrada de recursos naturales' },
+};
+
+/** Cadenas de APNOP de inversión; la primera es la de la tabla de registros del diseño (2355896 / 0000158). */
+export const CADENAS_APNOP_INVERSION: CadenaProgramatica[] = Array.from({ length: TOTAL_CADENAS }, (_, i) => ({
+  id: `apni-${i + 1}`,
+  categoria: 'APNOP',
+  tipo: 'inversion' as const,
+  producto: INVERSIONES_APNOP[i % INVERSIONES_APNOP.length],
+  actividad: { codigo: String(158 + i * 9).padStart(7, '0'), nombre: AI_OBR_APNOP[i % AI_OBR_APNOP.length] },
+  ...FUNCIONAL_APNOP_INVERSION,
+}));
+
+/** Todas las cadenas que ofrece «Buscar cadena» (PP, AC y APNOP). */
+export const CADENAS_TODAS: CadenaProgramatica[] = [
+  ...CADENAS_PP_TODAS,
+  ...CADENAS_AC,
+  ...CADENAS_AC_INVERSION,
+  ...CADENAS_APNOP,
+  ...CADENAS_APNOP_INVERSION,
+];
 
 /** Texto «código nombre» con el que el detalle muestra cada nivel de la cadena. */
 export const codigoNombre = (c: Concepto | undefined): string => (c ? `${c.codigo} ${c.nombre}` : '-');

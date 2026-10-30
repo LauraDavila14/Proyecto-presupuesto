@@ -268,7 +268,7 @@ export class ClasificadorProgramaticoRequestComponent {
   ];
   readonly criterio = signal('buscar');
 
-  // «Buscar cadena»: panel «Seleccionar cadena» (nodos de Figma 2009:315630 y 1865:311851), solo con PP. Aceptar lo
+  // «Buscar cadena»: panel «Seleccionar cadena» (nodos de Figma 2009:315630 y 1865:311851), con PP, AC y APNOP. Aceptar lo
   // cierra y deja las cadenas marcadas en una tabla dentro del bloque (nodo de Figma 1769:174293).
   readonly cadenasBuscar = CADENAS_TODAS;
   readonly cadenaAbierta = signal(false);
@@ -290,9 +290,9 @@ export class ClasificadorProgramaticoRequestComponent {
     this.cadenasMarcadas.set([]);
   }
 
-  /** PP y AC eligen su estructura con «Buscar cadena»; APNOP todavía no. */
+  /** PP, AC y APNOP eligen su estructura con «Buscar cadena». */
   usaCadenas(): boolean {
-    return this.categoria() === 'PP' || this.categoria() === 'AC';
+    return this.categoria() === 'PP' || this.categoria() === 'AC' || this.categoria() === 'APNOP';
   }
 
   abrirCadenas(): void {
@@ -495,7 +495,7 @@ export class ClasificadorProgramaticoRequestComponent {
    */
   readonly puedeAceptar = computed(() => {
     if (!this.mostrarEstructura()) return false;
-    // PP y AC: se activa con al menos una cadena elegida (Figma 1769:174293).
+    // PP, AC y APNOP: se activa con al menos una cadena elegida (Figma 1769:174293).
     if (this.usaCadenas()) return this.cadenasElegidas().length > 0 && !this.hayCadenasMarcadas();
     const sel = this.seleccion();
     if (this.esMaestro() && !this.funcionalManual()) return false;
@@ -737,7 +737,7 @@ export class ClasificadorProgramaticoRequestComponent {
     this.mostrarAviso('record-done');
   }
 
-  /** PP y AC: una fila por cada cadena elegida (Figma 1769:176878); las que ya están en la tabla no se repiten. */
+  /** PP, AC y APNOP: una fila por cada cadena elegida (Figma 1769:176878); las que ya están en la tabla no se repiten. */
   private agregarCadenas(): void {
     const yaAgregadas = new Set(this.registros().map((r) => r.cadenaId));
     const nuevas = this.cadenasElegidas().filter((c) => !yaAgregadas.has(c.id));

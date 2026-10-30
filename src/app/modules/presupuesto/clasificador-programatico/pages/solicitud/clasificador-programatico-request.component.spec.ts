@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
-import { CADENAS_AC, CADENAS_PP } from '../../models/cadenas-programaticas.mock';
+import { CADENAS_AC, CADENAS_AC_INVERSION, CADENAS_APNOP, CADENAS_APNOP_INVERSION, CADENAS_PP, CADENAS_PP_TODAS } from '../../models/cadenas-programaticas.mock';
 import { ClasificadorProgramaticoRequestComponent } from './clasificador-programatico-request.component';
 
 describe('ClasificadorProgramaticoRequestComponent · registro con PP', () => {
@@ -123,11 +123,43 @@ describe('ClasificadorProgramaticoRequestComponent · registro con PP', () => {
     ]);
   });
 
-  it('APNOP todavía no usa «Buscar cadena»', () => {
+  it('la tabla mezcla registros de PP, AC y APNOP, en el orden en que se agregan', () => {
+    const agregar = (categoria: string, cadenas: typeof CADENAS_PP) => {
+      pagina.abrirPanel();
+      pagina.marcarProceso('P', true);
+      pagina.cambiarCategoria(categoria);
+      expect(pagina.usaCadenas()).toBe(true);
+      pagina.elegirCadenas(cadenas);
+      pagina.confirmarRegistro();
+    };
+    const inversionPp = CADENAS_PP_TODAS.filter((c) => c.tipo === 'inversion').slice(0, 2);
+
+    agregar('PP', CADENAS_PP.slice(0, 2));
+    agregar('PP', inversionPp);
+    agregar('AC', CADENAS_AC.slice(0, 2));
+    agregar('AC', CADENAS_AC_INVERSION.slice(0, 2));
+    agregar('APNOP', CADENAS_APNOP.slice(0, 1));
+    agregar('APNOP', CADENAS_APNOP_INVERSION.slice(0, 1));
+
+    expect(pagina.filasTabla().map((f) => [f.categoria, f.programa, f.producto, f.actividad, f.funcion, f.division, f.grupo].join(' '))).toEqual([
+      'PP 0062 3000144 5004339 02 002 0002',
+      'PP 0062 3000260 5002719 02 002 0002',
+      'PP 0133 2732524 0000420 02 002 0002',
+      'PP 0133 2732524 0000426 02 002 0002',
+      'AC - - 5000001 02 006 0005',
+      'AC - - 5000002 02 006 0007',
+      'AC - 2355382 0000420 03 006 0010',
+      'AC - 2355382 0000424 03 006 0010',
+      'APNOP - - 5000643 02 002 0002',
+      'APNOP - 2355896 0000158 17 054 0123',
+    ]);
+  });
+
+  it('con APNOP, Aceptar se activa con una cadena elegida', () => {
     pagina.cambiarCategoria('APNOP');
-    expect(pagina.usaCadenas()).toBe(false);
-    pagina.abrirCadenas();
-    expect(pagina.cadenaAbierta()).toBe(false);
+    expect(pagina.puedeAceptar()).toBe(false);
+    pagina.elegirCadenas(CADENAS_APNOP.slice(0, 1));
+    expect(pagina.puedeAceptar()).toBe(true);
   });
 
   it('no repite las cadenas que ya están en la tabla', () => {

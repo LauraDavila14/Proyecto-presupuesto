@@ -127,6 +127,13 @@ describe('CadenaSearchPanelComponent', () => {
     });
   });
 
+  it('abre con las cadenas ya elegidas marcadas', () => {
+    fixture.componentRef.setInput('open', false);
+    fixture.componentRef.setInput('seleccionadas', ['cad-2', 'cad-5']);
+    fixture.componentRef.setInput('open', true);
+    expect(panel.marcadas()).toEqual(['cad-2', 'cad-5']);
+  });
+
   it('empieza de cero cada vez que se abre', () => {
     panel.buscar('0133');
     panel.marcar('cad-4', true);

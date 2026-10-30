@@ -25,8 +25,9 @@ import { SnackbarComponent, SnackbarVariant } from '../../../../../shared/ui/sna
 import { SummaryCardComponent, SummaryCardField } from '../../../../../shared/ui/summary-card/summary-card.component';
 import { TextFieldComponent } from '../../../../../shared/ui/text-field/text-field.component';
 import { PROCESS_ROUTE } from '../../config/clasificador-programatico.rutas';
-import { CADENAS_PP_TODAS } from '../../models/cadenas-programaticas.mock';
+import { CADENAS_PP_TODAS, CadenaProgramatica } from '../../models/cadenas-programaticas.mock';
 import { CadenaSearchPanelComponent } from './cadena-search-panel/cadena-search-panel.component';
+import { CadenasElegidasComponent } from './cadenas-elegidas/cadenas-elegidas.component';
 import {
   CAMPO_FUNCIONAL,
   CAMPOS_ESTRUCTURA,
@@ -105,6 +106,7 @@ function formatearFechaApertura(fecha: Date): string {
     FormTableSearchComponent,
     PaginationComponent,
     CadenaSearchPanelComponent,
+    CadenasElegidasComponent,
     RadioComponent,
     SidePanelComponent,
     SnackbarComponent,
@@ -243,9 +245,16 @@ export class ClasificadorProgramaticoRequestComponent {
   readonly criterio = signal('buscar');
 
   // «Buscar cadena»: panel «Seleccionar cadena» (nodos de Figma 2009:315630 y 1865:311851), solo con PP. Aceptar lo
-  // cierra; mostrar la cadena elegida en el formulario queda para su diseño.
+  // cierra y deja las cadenas marcadas en una tabla dentro del bloque (nodo de Figma 1769:174293).
   readonly cadenasPp = CADENAS_PP_TODAS;
   readonly cadenaAbierta = signal(false);
+  readonly cadenasElegidas = signal<CadenaProgramatica[]>([]);
+  readonly idsCadenasElegidas = computed(() => this.cadenasElegidas().map((c) => c.id));
+
+  elegirCadenas(cadenas: CadenaProgramatica[]): void {
+    this.cadenasElegidas.set(cadenas);
+    this.cadenaAbierta.set(false);
+  }
 
   abrirCadenas(): void {
     if (this.categoria() === 'PP') this.cadenaAbierta.set(true);
@@ -442,13 +451,14 @@ export class ClasificadorProgramaticoRequestComponent {
   ];
 
   /**
-   * PP pide todos sus campos. AC y APNOP aceptan una actividad predeterminada sola (sin proyecto, Figma 1315:115224 y
-   * captura de la solicitud con la actividad elegida) o un proyecto con su acción de inversión u obra.
+   * PP pide al menos una cadena elegida. AC y APNOP aceptan una actividad predeterminada sola (sin proyecto, Figma
+   * 1315:115224 y captura de la solicitud con la actividad elegida) o un proyecto con su acción de inversión u obra.
    */
   readonly puedeAceptar = computed(() => {
     if (!this.mostrarEstructura()) return false;
+    // PP: se activa con al menos una cadena elegida (Figma 1769:174293); agregar el registro queda para su diseño.
+    if (this.categoria() === 'PP') return this.cadenasElegidas().length > 0;
     const sel = this.seleccion();
-    if (this.categoria() === 'PP') return this.camposEstructura().every((c) => !!sel[c.campo]);
     if (this.esMaestro() && !this.funcionalManual()) return false;
     return !!sel.actividad && (!!sel.proyecto || sel.actividad['tipo'].startsWith('Actividad'));
   });
@@ -471,6 +481,7 @@ export class ClasificadorProgramaticoRequestComponent {
     if (categoria === this.categoria()) return;
     this.categoria.set(categoria);
     this.criterio.set('buscar');
+    this.cadenasElegidas.set([]);
     this.seleccion.set(this.seleccionVacia());
     this.reiniciarMaestro();
   }
@@ -501,6 +512,7 @@ export class ClasificadorProgramaticoRequestComponent {
     this.procesosMarcados.set([]);
     this.categoria.set('');
     this.criterio.set('buscar');
+    this.cadenasElegidas.set([]);
     this.seleccion.set(this.seleccionVacia());
     this.reiniciarMaestro();
     this.agregando.set(true);
@@ -654,6 +666,8 @@ export class ClasificadorProgramaticoRequestComponent {
 
   confirmarRegistro(): void {
     if (!this.puedeAceptar()) return;
+    // Con PP, el registro con las cadenas elegidas todavía no se agrega (falta su diseño).
+    if (this.categoria() === 'PP') return;
 
     const sel = this.seleccion();
     this.correlativo += 1;

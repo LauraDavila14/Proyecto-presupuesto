@@ -72,9 +72,13 @@
                 <h3 class="m-0 text-sm font-bold uppercase text-text">Buscar cadena</h3>
                 <siaf-button variant="filled" icon="search" [iconOnly]="true" ariaLabel="Buscar cadena" (click)="abrirCadenas()" />
               </div>
-              <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
-                <p class="m-0 text-sm text-[var(--sys-color-text-neutral-medium)]">No se ha seleccionado ninguna cadena predeterminada. Haga clic en el botón para realizar una selección.</p>
-              </div>
+              @if (cadenasElegidas().length > 0) {
+                <siaf-cadenas-elegidas [cadenas]="cadenasElegidas()" />
+              } @else {
+                <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
+                  <p class="m-0 text-sm text-[var(--sys-color-text-neutral-medium)]">No se ha seleccionado ninguna cadena predeterminada. Haga clic en el botón para realizar una selección.</p>
+                </div>
+              }
             </div>
 
             <div class="flex flex-col gap-siaf-sm">
@@ -359,7 +363,7 @@
     </div>
   </siaf-side-panel>
 
-  <siaf-cadena-search-panel [open]="cadenaAbierta()" [cadenas]="cadenasPp" (closed)="cadenaAbierta.set(false)" (confirmed)="cadenaAbierta.set(false)" />
+  <siaf-cadena-search-panel [cadenas]="cadenasPp" [seleccionadas]="idsCadenasElegidas()" [open]="cadenaAbierta()" (closed)="cadenaAbierta.set(false)" (confirmed)="elegirCadenas($event)" />
 
   <siaf-upload-side-nav [open]="panelSustentoAbierto()" (closed)="panelSustentoAbierto.set(false)" (confirmed)="onSustentoConfirmado($event)" />
 

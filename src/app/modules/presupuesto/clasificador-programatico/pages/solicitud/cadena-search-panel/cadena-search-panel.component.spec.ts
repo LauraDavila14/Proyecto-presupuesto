@@ -192,6 +192,19 @@ describe('CadenaSearchPanelComponent', () => {
       expect(panel.camposDetalle(panel.detalle()!)[0].valor).toBe('APNOP - Asignaciones presupuestarias que no resultan en productos');
     });
 
+    it('las primeras filas son las del diseño, con su clasificador funcional', () => {
+      const filas = panel.filasPagina().slice(0, 6).map((c) => [c.actividad.codigo, c.funcion.codigo, c.division.codigo, c.grupo.codigo].join(' '));
+      expect(filas).toEqual([
+        '5000643 02 002 0002',
+        '5000670 22 048 0110',
+        '5000991 24 052 0116',
+        '5001008 02 002 0002',
+        '5001123 02 002 0002',
+        '5003630 02 002 0002',
+      ]);
+      expect(panel.filasPagina()[1].actividad.nombre).toBe('Desarrollo de la enseñanza de post-grado');
+    });
+
     it('con Inversión muestra las cadenas de inversión de APNOP', () => {
       panel.abrirFiltros();
       panel.cambiarTipo('inversion');

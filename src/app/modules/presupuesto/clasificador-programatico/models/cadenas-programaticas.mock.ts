@@ -326,39 +326,52 @@ export const CADENAS_AC_INVERSION: CadenaProgramatica[] = Array.from({ length: T
 
 // ── APNOP ─────────────────────────────────────────────────────────────
 
-const FUNCIONALES_APNOP = [
-  RELACIONES_EXTERIORES,
-  {
-    funcion: { codigo: '24', nombre: 'Deuda pública' },
-    division: { codigo: '056', nombre: 'Deuda pública' },
-    grupo: { codigo: '0129', nombre: 'Servicio de la deuda' },
-  },
-  {
-    funcion: { codigo: '22', nombre: 'Previsión social' },
-    division: { codigo: '051', nombre: 'Previsión social' },
-    grupo: { codigo: '0116', nombre: 'Sistema de pensiones' },
-  },
+const FUNCIONAL_APNOP_EDUCACION = {
+  funcion: { codigo: '22', nombre: 'Educación' },
+  division: { codigo: '048', nombre: 'Educación superior' },
+  grupo: { codigo: '0110', nombre: 'Educación superior de posgrado' },
+};
+const FUNCIONAL_APNOP_PREVISION = {
+  funcion: { codigo: '24', nombre: 'Previsión social' },
+  division: { codigo: '052', nombre: 'Previsión social' },
+  grupo: { codigo: '0116', nombre: 'Sistema de pensiones' },
+};
+const FUNCIONAL_APNOP_DEUDA = {
+  funcion: { codigo: '25', nombre: 'Deuda pública' },
+  division: { codigo: '057', nombre: 'Deuda pública' },
+  grupo: { codigo: '0129', nombre: 'Servicio de la deuda' },
+};
+
+type FuncionalApnop = typeof RELACIONES_EXTERIORES;
+
+/** Filas de actividad predeterminada del diseño de APNOP. */
+const ACTIVIDADES_APNOP_DISENO: [string, string, FuncionalApnop][] = [
+  ['5000643', 'Desarrollo de acciones de política exterior', RELACIONES_EXTERIORES],
+  ['5000670', 'Desarrollo de la enseñanza de post-grado', FUNCIONAL_APNOP_EDUCACION],
+  ['5000991', 'Obligaciones previsionales', FUNCIONAL_APNOP_PREVISION],
+  ['5001008', 'Organizar y ejecutar los procesos electorales', RELACIONES_EXTERIORES],
+  ['5001123', 'Protocolo y ceremonial del estado', RELACIONES_EXTERIORES],
+  ['5003630', 'Desarrollo de acciones de política exterior, soberanía e integridad territorial en el ámbito internacional', RELACIONES_EXTERIORES],
 ];
 
-const ACTIVIDADES_APNOP: string[] = [
-  'Aportes a organismos internacionales',
-  'Pago de pensiones y obligaciones previsionales',
-  'Pago de sentencias judiciales',
-  'Transferencias a gobiernos locales',
-  'Servicio de la deuda pública',
-  'Reserva de contingencia',
-  'Pago de cuotas a organismos internacionales',
-  'Devoluciones de ingresos',
+/** Actividades de relleno de APNOP, con la función que les corresponde. */
+const ACTIVIDADES_APNOP_EXTRA: [string, FuncionalApnop][] = [
+  ['Aportes a organismos internacionales', RELACIONES_EXTERIORES],
+  ['Pago de cuotas a organismos internacionales', RELACIONES_EXTERIORES],
+  ['Pago de pensiones y obligaciones previsionales', FUNCIONAL_APNOP_PREVISION],
+  ['Becas de posgrado en el exterior', FUNCIONAL_APNOP_EDUCACION],
+  ['Servicio de la deuda pública', FUNCIONAL_APNOP_DEUDA],
+  ['Protocolo y relaciones institucionales', RELACIONES_EXTERIORES],
 ];
 
-/** Cadenas de APNOP con actividad predeterminada; la primera es la de la tabla de registros del diseño (5000643). */
-export const CADENAS_APNOP: CadenaProgramatica[] = Array.from({ length: TOTAL_CADENAS }, (_, i) => ({
-  id: `apn-${i + 1}`,
-  categoria: 'APNOP',
-  tipo: 'actividad' as const,
-  actividad: { codigo: String(5000643 + i), nombre: ACTIVIDADES_APNOP[i % ACTIVIDADES_APNOP.length] },
-  ...FUNCIONALES_APNOP[i % FUNCIONALES_APNOP.length],
-}));
+/** Cadenas de APNOP con actividad predeterminada; las primeras son las del diseño (5000643, 5000670…). */
+export const CADENAS_APNOP: CadenaProgramatica[] = Array.from({ length: TOTAL_CADENAS }, (_, i) => {
+  const [codigo, nombre, funcional] = ACTIVIDADES_APNOP_DISENO[i] ?? [
+    String(5003631 + i - ACTIVIDADES_APNOP_DISENO.length),
+    ...ACTIVIDADES_APNOP_EXTRA[(i - ACTIVIDADES_APNOP_DISENO.length) % ACTIVIDADES_APNOP_EXTRA.length],
+  ];
+  return { id: `apn-${i + 1}`, categoria: 'APNOP', tipo: 'actividad' as const, actividad: { codigo, nombre }, ...funcional };
+});
 
 const INVERSIONES_APNOP: Concepto[] = [
   { codigo: '2355896', nombre: 'Recuperación de servicios ambientales en áreas naturales' },

@@ -209,6 +209,8 @@ export interface RegistroClasificador {
   procesos: string[];
   categoriaPresupuestaria: string;
   estructura: Partial<Record<CampoEstructura, ItemEstructura>> & { actividad: ItemEstructura; funcional: ItemEstructura };
+  /** Con PP, id de la cadena de «Buscar cadena» de la que sale el registro (una fila por cadena). */
+  cadenaId?: string;
   /** Solo con una actividad Maestro (APNOP): «Sustento del registro». */
   sustento?: { comentario: string; archivo: string };
 }

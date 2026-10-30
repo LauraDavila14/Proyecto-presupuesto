@@ -25,7 +25,7 @@ import { SnackbarComponent, SnackbarVariant } from '../../../../../shared/ui/sna
 import { SummaryCardComponent, SummaryCardField } from '../../../../../shared/ui/summary-card/summary-card.component';
 import { TextFieldComponent } from '../../../../../shared/ui/text-field/text-field.component';
 import { PROCESS_ROUTE } from '../../config/clasificador-programatico.rutas';
-import { CADENAS_PP_TODAS, CadenaProgramatica } from '../../models/cadenas-programaticas.mock';
+import { CADENAS_PP_TODAS, CadenaProgramatica, Concepto, codigoNombre } from '../../models/cadenas-programaticas.mock';
 import { CadenaSearchPanelComponent } from './cadena-search-panel/cadena-search-panel.component';
 import { CadenasElegidasComponent } from './cadenas-elegidas/cadenas-elegidas.component';
 import {
@@ -185,10 +185,11 @@ export class ClasificadorProgramaticoRequestComponent {
       programa: r.estructura.programa?.['codigo'] ?? CODIGO_PROGRAMA_VACIO,
       producto: (r.estructura.producto ?? r.estructura.proyecto)?.['codigo'] ?? CODIGO_PRODUCTO_VACIO,
       actividad: r.estructura.actividad['codigo'],
+      finalidad: '-',
       funcion: codigoFuncional(r.estructura.funcional['funcion']),
       division: codigoFuncional(r.estructura.funcional['division']),
       grupo: codigoFuncional(r.estructura.funcional['grupo']),
-      estado: 'SI',
+      estado: 'Si',
       fechaDesde: '-',
     })),
   );
@@ -678,8 +679,10 @@ export class ClasificadorProgramaticoRequestComponent {
 
   confirmarRegistro(): void {
     if (!this.puedeAceptar()) return;
-    // Con PP, el registro con las cadenas elegidas todavía no se agrega (falta su diseño).
-    if (this.categoria() === 'PP') return;
+    if (this.categoria() === 'PP') {
+      this.agregarCadenas();
+      return;
+    }
 
     const sel = this.seleccion();
     this.correlativo += 1;
@@ -704,6 +707,37 @@ export class ClasificadorProgramaticoRequestComponent {
 
     this.agregando.set(false);
     this.mostrarAviso('record-done');
+  }
+
+  /** PP: una fila por cada cadena elegida (Figma 1769:176878); las que ya están en la tabla no se repiten. */
+  private agregarCadenas(): void {
+    const yaAgregadas = new Set(this.registros().map((r) => r.cadenaId));
+    const nuevas = this.cadenasElegidas().filter((c) => !yaAgregadas.has(c.id));
+    const aItem = (concepto: Concepto, id: string) => ({ id, codigo: concepto.codigo, nombre: concepto.nombre });
+
+    this.registros.update((registros) => [
+      ...registros,
+      ...nuevas.map((c) => {
+        this.correlativo += 1;
+        return {
+          id: `reg-${this.correlativo}`,
+          cadenaId: c.id,
+          procesos: this.procesosMarcados(),
+          categoriaPresupuestaria: c.categoria,
+          estructura: {
+            programa: aItem(c.programa, `${c.id}-programa`),
+            producto: aItem(c.producto, `${c.id}-producto`),
+            actividad: aItem(c.actividad, `${c.id}-actividad`),
+            funcional: { id: `${c.id}-funcional`, funcion: codigoNombre(c.funcion), division: codigoNombre(c.division), grupo: codigoNombre(c.grupo) },
+          },
+        };
+      }),
+    ]);
+
+    this.cadenasElegidas.set([]);
+    this.cadenasMarcadas.set([]);
+    this.agregando.set(false);
+    if (nuevas.length > 0) this.mostrarAviso('record-done');
   }
 
   grabar(): void {

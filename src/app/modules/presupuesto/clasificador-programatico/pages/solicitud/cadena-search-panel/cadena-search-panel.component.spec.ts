@@ -169,9 +169,9 @@ describe('CadenaSearchPanelComponent', () => {
     it('los filtros ofrecen «Actividad predeterminada» e «Inversión» con sus desplegables', () => {
       panel.abrirFiltros();
       expect(panel.opcionesTipo().map((o) => o.label)).toEqual(['Actividad predeterminada', 'Inversión']);
-      expect(panel.camposBorrador().map((c) => c.etiqueta)).toEqual(['Actividad', 'Nombre de actividad', 'Función', 'División funcional', 'Grupo funcional']);
+      expect(panel.camposBorrador().map((c) => c.etiqueta)).toEqual(['Actividad', 'Función', 'División funcional', 'Grupo funcional']);
       panel.cambiarTipo('inversion');
-      expect(panel.camposBorrador().map((c) => c.etiqueta)).toEqual(['Inversión', 'AI / OBR', 'Nombre de AI / OBR', 'Función', 'División funcional', 'Grupo funcional']);
+      expect(panel.camposBorrador().map((c) => c.etiqueta)).toEqual(['Inversión', 'AI / OBR', 'Función', 'División funcional', 'Grupo funcional']);
     });
 
     it('con Inversión cambia a las cadenas de inversión de AC, con la columna AI / OBR', () => {

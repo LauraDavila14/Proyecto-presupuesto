@@ -113,8 +113,7 @@ const CONFIG: Record<string, ConfigCadena> = {
   'AC:actividad': {
     columnas: [CATEGORIA, { etiqueta: 'Inversión', valor: (c) => codigo(c.producto) }, { etiqueta: 'Act / AI / Obr', valor: (c) => texto(c.actividad) }],
     filtros: [
-      { clave: 'actividad', etiqueta: 'Actividad', valor: (c) => c.actividad.codigo },
-      { clave: 'nombreActividad', etiqueta: 'Nombre de actividad', valor: (c) => c.actividad.nombre },
+      { clave: 'actividad', etiqueta: 'Actividad', valor: (c) => texto(c.actividad) },
       ...CAMPOS_FUNCIONALES,
     ],
     detalle: (c) => [categoriaDetalle(c), { etiqueta: 'Actividad', valor: texto(c.actividad) }, ...funcionalDetalle(c)],
@@ -123,8 +122,7 @@ const CONFIG: Record<string, ConfigCadena> = {
     columnas: [CATEGORIA, { etiqueta: 'Inversión', valor: (c) => codigo(c.producto) }, { etiqueta: 'AI / OBR', valor: (c) => texto(c.actividad) }],
     filtros: [
       { clave: 'producto', etiqueta: 'Inversión', valor: (c) => texto(c.producto) },
-      { clave: 'actividad', etiqueta: 'AI / OBR', valor: (c) => c.actividad.codigo },
-      { clave: 'nombreActividad', etiqueta: 'Nombre de AI / OBR', valor: (c) => c.actividad.nombre },
+      { clave: 'actividad', etiqueta: 'AI / OBR', valor: (c) => texto(c.actividad) },
       ...CAMPOS_FUNCIONALES,
     ],
     detalle: (c) => [

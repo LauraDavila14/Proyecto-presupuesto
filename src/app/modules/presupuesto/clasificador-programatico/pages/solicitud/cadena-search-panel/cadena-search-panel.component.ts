@@ -65,8 +65,7 @@ const funcionalDetalle = (c: CadenaProgramatica): CampoDetalle[] => [
 
 /**
  * Configuración por «categoría:tipo» (nodos de Figma del panel y de sus filtros, de PP y de AC). Los desplegables
- * de Programa, Producto, Inversión y los campos funcionales muestran «código + nombre»; la actividad, su código y su
- * nombre por separado.
+ * de cada filtro muestran «código + nombre» y son de selección múltiple.
  */
 const CONFIG: Record<string, ConfigCadena> = {
   'PP:producto': {
@@ -79,8 +78,7 @@ const CONFIG: Record<string, ConfigCadena> = {
     filtros: [
       { clave: 'programa', etiqueta: 'Programa', valor: (c) => texto(c.programa) },
       { clave: 'producto', etiqueta: 'Producto', valor: (c) => texto(c.producto) },
-      { clave: 'actividad', etiqueta: 'Actividad', valor: (c) => c.actividad.codigo },
-      { clave: 'nombreActividad', etiqueta: 'Nombre de actividad', valor: (c) => c.actividad.nombre },
+      { clave: 'actividad', etiqueta: 'Actividad', valor: (c) => texto(c.actividad) },
       ...CAMPOS_FUNCIONALES,
     ],
     detalle: (c) => [
@@ -158,8 +156,8 @@ const ETIQUETA_TIPO: Record<TipoCadena, string> = {
 
 interface FiltrosCadena {
   tipo: TipoCadena;
-  /** Valor elegido por `clave` de campo; vacío = sin filtrar. */
-  valores: Record<string, string>;
+  /** Valores elegidos por `clave` de campo; vacío o ausente = sin filtrar. */
+  valores: Record<string, string[]>;
 }
 
 /**
@@ -300,10 +298,11 @@ interface FiltrosCadena {
         <siaf-radio-group label="Tipo" name="cadena-filtro-tipo" [options]="opcionesTipo()" [value]="borrador().tipo" (valueChange)="cambiarTipo($any($event))" />
         @for (campo of camposBorrador(); track campo.clave) {
           <siaf-input
-            type="select"
+            type="select-multiple"
+            selectAllLabel="Seleccionar todo"
             [label]="campo.etiqueta"
             [options]="opcionesPorCampo()[campo.clave]"
-            [value]="borrador().valores[campo.clave] ?? ''"
+            [value]="borrador().valores[campo.clave] ?? []"
             (valueChange)="cambiarValor(campo.clave, $any($event))"
           />
         }
@@ -363,7 +362,7 @@ export class CadenaSearchPanelComponent {
   readonly filtrosVisibles = signal(false);
   readonly chips = computed(() => {
     const { tipo, valores } = this.aplicados();
-    return [ETIQUETA_TIPO[tipo], ...configDe(this.categoriaSig(), tipo).filtros.map((campo) => valores[campo.clave]).filter(Boolean)];
+    return [ETIQUETA_TIPO[tipo], ...configDe(this.categoriaSig(), tipo).filtros.flatMap((campo) => valores[campo.clave] ?? [])];
   });
 
   readonly camposBorrador = computed(() => configDe(this.categoriaSig(), this.borrador().tipo).filtros);
@@ -386,7 +385,7 @@ export class CadenaSearchPanelComponent {
     return this.cadenasCategoria().filter(
       (c) =>
         c.tipo === tipo &&
-        campos.every((campo) => !valores[campo.clave] || campo.valor(c) === valores[campo.clave]) &&
+        campos.every((campo) => !valores[campo.clave]?.length || valores[campo.clave].includes(campo.valor(c))) &&
         (!buscado ||
           [c.categoria, texto(c.programa), texto(c.producto), texto(c.actividad)].some((v) => v.toLowerCase().includes(buscado))),
     );
@@ -437,7 +436,7 @@ export class CadenaSearchPanelComponent {
     if (tipo !== this.borrador().tipo) this.borrador.set({ tipo, valores: {} });
   }
 
-  cambiarValor(clave: string, valor: string): void {
+  cambiarValor(clave: string, valor: string[]): void {
     this.borrador.update((b) => ({ ...b, valores: { ...b.valores, [clave]: valor } }));
   }
 

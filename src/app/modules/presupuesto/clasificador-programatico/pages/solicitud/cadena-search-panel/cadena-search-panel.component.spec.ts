@@ -66,20 +66,20 @@ describe('CadenaSearchPanelComponent', () => {
     it('ofrece los desplegables del tipo con «código + nombre» en Programa', () => {
       panel.abrirFiltros();
       expect(panel.camposBorrador().map((c) => c.etiqueta)).toEqual([
-        'Programa', 'Producto', 'Actividad', 'Nombre de actividad', 'Función', 'División funcional', 'Grupo funcional',
+        'Programa', 'Producto', 'Actividad', 'Función', 'División funcional', 'Grupo funcional',
       ]);
       expect(panel.opcionesPorCampo()['programa'].map((o) => o.label)).toContain('0062 Optimización de la política de protección y atención a las comunidades peruanas en el exterior');
-      expect(panel.opcionesPorCampo()['actividad'][0].label).toMatch(/^\d{7}$/);
+      expect(panel.opcionesPorCampo()['actividad'][0].label).toMatch(/^\d{7} \S/);
     });
 
     it('Aplicar filtra la tabla; Cancelar descarta el borrador', () => {
       panel.abrirFiltros();
-      panel.cambiarValor('funcion', '02 Relaciones exteriores');
+      panel.cambiarValor('funcion', ['02 Relaciones exteriores']);
       panel.cerrarFiltros();
       expect(panel.totalFilas()).toBe(CADENAS_PP.length);
 
       panel.abrirFiltros();
-      panel.cambiarValor('funcion', '02 Relaciones exteriores');
+      panel.cambiarValor('funcion', ['02 Relaciones exteriores']);
       panel.aplicarFiltros();
       expect(panel.filtrosAbiertos()).toBe(false);
       expect(panel.totalFilas()).toBe(6);
@@ -87,7 +87,7 @@ describe('CadenaSearchPanelComponent', () => {
 
     it('con Inversión cambia las filas y los desplegables, y reinicia lo elegido', () => {
       panel.abrirFiltros();
-      panel.cambiarValor('funcion', '02 Relaciones exteriores');
+      panel.cambiarValor('funcion', ['02 Relaciones exteriores']);
       panel.cambiarTipo('inversion');
       expect(panel.borrador().valores).toEqual({});
       expect(panel.camposBorrador().map((c) => c.etiqueta)).toEqual([
@@ -98,11 +98,19 @@ describe('CadenaSearchPanelComponent', () => {
       expect(panel.filasPagina()[0].actividad.codigo).toBe('0000420');
     });
 
+    it('los desplegables son de selección múltiple: filtra por cualquiera de los valores y cada uno es un chip', () => {
+      panel.abrirFiltros();
+      panel.cambiarValor('producto', [CADENAS_PP[0], CADENAS_PP[3]].map((c) => `${c.producto!.codigo} ${c.producto!.nombre}`));
+      panel.aplicarFiltros();
+      expect(panel.filasPagina().every((c) => ['3000144', '3000710'].includes(c.producto!.codigo))).toBe(true);
+      expect(panel.chips().length).toBe(3);
+    });
+
     it('tras Aplicar muestra las etiquetas de los filtros y «Borrar filtros» los quita', () => {
       expect(panel.filtrosVisibles()).toBe(false);
       panel.abrirFiltros();
       panel.cambiarTipo('inversion');
-      panel.cambiarValor('actividad', '0000011');
+      panel.cambiarValor('actividad', ['0000011']);
       panel.aplicarFiltros();
       expect(panel.filtrosVisibles()).toBe(true);
       expect(panel.chips()).toEqual(['Inversión', '0000011']);

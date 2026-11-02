@@ -119,7 +119,7 @@ const CONFIG: Record<string, ConfigCadena> = {
     detalle: (c) => [categoriaDetalle(c), { etiqueta: 'Actividad', valor: texto(c.actividad) }, ...funcionalDetalle(c)],
   },
   'AC:inversion': {
-    columnas: [CATEGORIA, { etiqueta: 'Inversión', valor: (c) => codigo(c.producto) }, { etiqueta: 'AI / OBR', valor: (c) => texto(c.actividad) }],
+    columnas: [CATEGORIA, { etiqueta: 'Inversión', valor: (c) => codigo(c.producto) }, { etiqueta: 'Act / AI / Obr', valor: (c) => texto(c.actividad) }],
     filtros: [
       { clave: 'producto', etiqueta: 'Inversión', valor: (c) => texto(c.producto) },
       { clave: 'actividad', etiqueta: 'AI / OBR', valor: (c) => texto(c.actividad) },

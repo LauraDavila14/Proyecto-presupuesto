@@ -179,7 +179,7 @@ describe('CadenaSearchPanelComponent', () => {
       panel.cambiarTipo('inversion');
       panel.aplicarFiltros();
       expect(panel.totalFilas()).toBe(CADENAS_AC_INVERSION.length);
-      expect(panel.columnas().map((c) => c.etiqueta)).toEqual(['Categ. pres.', 'Inversión', 'AI / OBR']);
+      expect(panel.columnas().map((c) => c.etiqueta)).toEqual(['Categ. pres.', 'Inversión', 'Act / AI / Obr']);
       expect(panel.filasPagina()[0].producto?.codigo).toBe('2355382');
       expect(panel.chips()).toEqual(['Inversión']);
     });

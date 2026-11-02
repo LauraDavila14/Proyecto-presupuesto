@@ -65,7 +65,7 @@ const funcionalDetalle = (c: CadenaProgramatica): CampoDetalle[] => [
 
 /**
  * Configuración por «categoría:tipo» (nodos de Figma del panel y de sus filtros, de PP y de AC). Los desplegables
- * de cada filtro muestran «código + nombre» y son de selección múltiple.
+ * de cada filtro muestran «código + nombre» y son de selección múltiple, con lo elegido como chips con X dentro del campo.
  */
 const CONFIG: Record<string, ConfigCadena> = {
   'PP:producto': {
@@ -299,7 +299,6 @@ interface FiltrosCadena {
         @for (campo of camposBorrador(); track campo.clave) {
           <siaf-input
             type="select-multiple"
-            selectAllLabel="Seleccionar todo"
             [label]="campo.etiqueta"
             [options]="opcionesPorCampo()[campo.clave]"
             [value]="borrador().valores[campo.clave] ?? []"

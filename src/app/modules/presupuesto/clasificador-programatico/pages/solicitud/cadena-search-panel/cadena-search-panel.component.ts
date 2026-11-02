@@ -99,8 +99,7 @@ const CONFIG: Record<string, ConfigCadena> = {
     filtros: [
       { clave: 'programa', etiqueta: 'Programa', valor: (c) => texto(c.programa) },
       { clave: 'producto', etiqueta: 'Inversión', valor: (c) => texto(c.producto) },
-      { clave: 'actividad', etiqueta: 'AI / OBR', valor: (c) => c.actividad.codigo },
-      { clave: 'nombreActividad', etiqueta: 'Nombre de AI / OBR', valor: (c) => c.actividad.nombre },
+      { clave: 'actividad', etiqueta: 'AI / OBR', valor: (c) => texto(c.actividad) },
       ...CAMPOS_FUNCIONALES,
     ],
     detalle: (c) => [

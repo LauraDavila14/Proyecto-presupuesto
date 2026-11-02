@@ -91,11 +91,12 @@ describe('CadenaSearchPanelComponent', () => {
       panel.cambiarTipo('inversion');
       expect(panel.borrador().valores).toEqual({});
       expect(panel.camposBorrador().map((c) => c.etiqueta)).toEqual([
-        'Programa', 'Inversión', 'AI / OBR', 'Nombre de AI / OBR', 'Función', 'División funcional', 'Grupo funcional',
+        'Programa', 'Inversión', 'AI / OBR', 'Función', 'División funcional', 'Grupo funcional',
       ]);
       panel.aplicarFiltros();
       expect(panel.filasPagina().every((c) => c.tipo === 'inversion')).toBe(true);
       expect(panel.filasPagina()[0].actividad.codigo).toBe('0000420');
+      expect(panel.opcionesPorCampo()['actividad'][0].label).toMatch(/^\d{7} \S/);
     });
 
     it('los desplegables son de selección múltiple: filtra por cualquiera de los valores y cada uno es un chip', () => {

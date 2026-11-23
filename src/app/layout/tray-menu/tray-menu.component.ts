@@ -109,10 +109,11 @@ export class TrayMenuComponent {
     const unread = this.notifications.unreadCount();
     const isAprobador = role === 'approver';
 
-    // Las verificadas son los Recibidos del aprobador y los Enviados del creador; aún no hay respuestas del aprobador.
+    // Las verificadas son los Recibidos del aprobador y los Enviados del creador; las respuestas, al revés.
     const verificadas = this.solicitudes.verificadasCount();
-    const recibidos = isAprobador ? verificadas : 0;
-    const enviados = isAprobador ? 0 : verificadas;
+    const respuestas = this.solicitudes.respuestasCount();
+    const recibidos = isAprobador ? verificadas : respuestas;
+    const enviados = isAprobador ? respuestas : verificadas;
 
     const borradores = isAprobador ? 0 : this.solicitudes.borradoresCount();
     const papelera   = isAprobador ? 0 : this.solicitudes.papeleraCount();

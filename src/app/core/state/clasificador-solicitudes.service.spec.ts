@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { CLAVE_SOLICITUDES_CLASIFICADOR, ClasificadorSolicitudesService, SolicitudClasificador } from './clasificador-solicitudes.service';
+import { CLAVE_SOLICITUDES_CLASIFICADOR, ClasificadorSolicitudesService, SOLICITUDES_CLASIFICADOR_DE_EJEMPLO, SolicitudClasificador } from './clasificador-solicitudes.service';
 
 const solicitud = (id: string, numero: string): SolicitudClasificador => ({
   id,
@@ -17,8 +17,17 @@ describe('ClasificadorSolicitudesService', () => {
   let servicio: ClasificadorSolicitudesService;
 
   beforeEach(() => {
-    localStorage.removeItem(CLAVE_SOLICITUDES_CLASIFICADOR);
+    localStorage.setItem(CLAVE_SOLICITUDES_CLASIFICADOR, '[]');
     servicio = TestBed.inject(ClasificadorSolicitudesService);
+  });
+
+  it('sin nada guardado arranca con una solicitud de ejemplo por sección de la Bandeja', () => {
+    localStorage.removeItem(CLAVE_SOLICITUDES_CLASIFICADOR);
+    TestBed.resetTestingModule();
+    const conEjemplos = TestBed.inject(ClasificadorSolicitudesService);
+    expect(conEjemplos.solicitudes()).toEqual(SOLICITUDES_CLASIFICADOR_DE_EJEMPLO);
+    expect([conEjemplos.borradoresCount(), conEjemplos.verificadasCount(), conEjemplos.respuestasCount(), conEjemplos.papeleraCount()]).toEqual([1, 1, 1, 1]);
+    expect(conEjemplos.siguienteNumero()).toBe('0005');
   });
 
   it('empieza vacío y el primer correlativo es 0001', () => {

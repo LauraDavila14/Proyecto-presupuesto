@@ -1,11 +1,17 @@
 import { Injectable, computed, signal } from '@angular/core';
 
-import { ESTADO } from '../models/documento.model';
+import { ESTADO, ESTADOS_RESPUESTA_APROBADOR } from '../models/documento.model';
 
 /** Clave de `localStorage` donde se guardan las solicitudes del clasificador programático. */
 export const CLAVE_SOLICITUDES_CLASIFICADOR = 'taller-siaf-rp:clasificador-solicitudes';
 
-export type EstadoSolicitudClasificador = typeof ESTADO.ELABORADO | typeof ESTADO.VERIFICADO | typeof ESTADO.ELIMINADO;
+export type EstadoSolicitudClasificador =
+  | typeof ESTADO.ELABORADO
+  | typeof ESTADO.VERIFICADO
+  | typeof ESTADO.ELIMINADO
+  | typeof ESTADO.APROBADO
+  | typeof ESTADO.OBSERVADO
+  | typeof ESTADO.RECHAZADO;
 
 /** Solicitud de clasificador programático: lo que las bandejas necesitan saber de ella. */
 export interface SolicitudClasificador {
@@ -21,10 +27,34 @@ export interface SolicitudClasificador {
   entidad: string;
 }
 
+const ejemplo = (numero: string, estado: EstadoSolicitudClasificador, tipoAccion = 'Creación'): SolicitudClasificador => ({
+  id: `clf-ejemplo-${numero}`,
+  numero,
+  tipoDocumento: 'Solicitud de clasificador programático',
+  tipoAccion,
+  estado,
+  fecha: '15/06/2026',
+  entidadCodigo: '0001',
+  entidad: 'Ministerio de Economía y Finanzas',
+});
+
+/**
+ * Solicitudes de ejemplo con las que arranca el navegador (una por sección de la Bandeja): Borradores, Enviados del
+ * creador y Recibidos del aprobador, Recibidos del creador y Enviados del aprobador, y Papelera.
+ */
+export const SOLICITUDES_CLASIFICADOR_DE_EJEMPLO: SolicitudClasificador[] = [
+  ejemplo('0004', ESTADO.ELIMINADO, 'Modificación'),
+  ejemplo('0003', ESTADO.APROBADO),
+  ejemplo('0002', ESTADO.VERIFICADO),
+  ejemplo('0001', ESTADO.ELABORADO),
+];
+
+/** Lo guardado en el navegador; si no hay nada guardado todavía, los ejemplos. */
 function leer(): SolicitudClasificador[] {
   try {
     const crudo = localStorage.getItem(CLAVE_SOLICITUDES_CLASIFICADOR);
-    const datos: unknown = crudo ? JSON.parse(crudo) : [];
+    if (crudo === null) return SOLICITUDES_CLASIFICADOR_DE_EJEMPLO;
+    const datos: unknown = JSON.parse(crudo);
     return Array.isArray(datos) ? (datos as SolicitudClasificador[]) : [];
   } catch {
     return [];
@@ -34,7 +64,8 @@ function leer(): SolicitudClasificador[] {
 /**
  * Solicitudes del clasificador programático, guardadas en el navegador (no hay backend para este proceso): «Grabar» la
  * deja Elaborada (Borradores del creador), «Verificar y enviar» la pasa a Verificada (Enviados del creador y Recibidos
- * del aprobador) y «Eliminar» la manda a la Papelera. Expone también los contadores del menú de la Bandeja.
+ * del aprobador) y «Eliminar» la manda a la Papelera. Arranca con una solicitud de ejemplo por sección. Expone también
+ * los contadores del menú de la Bandeja.
  */
 @Injectable({ providedIn: 'root' })
 export class ClasificadorSolicitudesService {
@@ -50,6 +81,8 @@ export class ClasificadorSolicitudesService {
   /** Verificadas: son los Enviados del creador y los Recibidos del aprobador. */
   readonly verificadasCount = this.contar(ESTADO.VERIFICADO);
   readonly papeleraCount = this.contar(ESTADO.ELIMINADO);
+  /** Con la respuesta del aprobador (Aprobado, Observado, Rechazado): Recibidos del creador y Enviados del aprobador. */
+  readonly respuestasCount = computed(() => this.lista().filter((s) => ESTADOS_RESPUESTA_APROBADOR.includes(s.estado)).length);
 
   /** Siguiente correlativo: sigue al mayor ya usado, aunque esa solicitud esté en la Papelera. */
   siguienteNumero(): string {

@@ -10,7 +10,7 @@ describe('ClasificadorProgramaticoRequestComponent · registro con PP', () => {
   let pagina: ClasificadorProgramaticoRequestComponent;
 
   beforeEach(() => {
-    localStorage.removeItem(CLAVE_SOLICITUDES_CLASIFICADOR);
+    localStorage.setItem(CLAVE_SOLICITUDES_CLASIFICADOR, '[]');
     TestBed.configureTestingModule({
       imports: [ClasificadorProgramaticoRequestComponent],
       providers: [provideRouter([])],

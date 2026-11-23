@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, Input, inject, signal } from '@angu
 
 import { CurrentUserService } from '../../../core/auth/current-user.service';
 import { PermissionService } from '../../../core/auth/permission.service';
+import { ClasificadorSolicitudesService } from '../../../core/state/clasificador-solicitudes.service';
 import { SolicitudesStateService } from '../../../core/state/solicitudes-state.service';
 import { MobileNavigationMenuComponent } from '../../../layout/mobile-navigation-menu/mobile-navigation-menu.component';
 import { NavbarComponent } from '../../../layout/navbar/navbar.component';
@@ -225,7 +226,7 @@ export class EjemplosArmazonSesionComponent {
   @Input({ required: true }) selector!: string;
 
   constructor() {
-    sembrarSesionDeMuestra(inject(CurrentUserService), inject(PermissionService), inject(SolicitudesStateService));
+    sembrarSesionDeMuestra(inject(CurrentUserService), inject(PermissionService), inject(SolicitudesStateService), inject(ClasificadorSolicitudesService));
   }
 
   readonly notificaciones = signal(false);

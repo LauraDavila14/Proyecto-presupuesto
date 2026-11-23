@@ -14391,7 +14391,7 @@ export const MANIFIESTO_UI_KIT: readonly FichaComponente[] = [
     "capa": "layout",
     "importacion": "@siaf/layout/tray-documents-view/tray-documents-view.component",
     "archivo": "src/app/layout/tray-documents-view/tray-documents-view.component.ts",
-    "descripcion": "Vista de la Bandeja de Documentos: la grilla de una sección (`title` = Recibidos, Enviados,\nBorradores o Papelera) con buscador, filtros de Estado y Tipo de acción, filtros personalizados y favoritos.\n\nLas filas salen del facade de solicitudes (carga la bandeja de creador o de aprobador según el rol) y se\nrecortan con `SECTION_STATES`, que define qué estados ve cada sección; sin filtro de estado explícito\nordena \"pendientes primero\". El buscador es `siaf-records-search-toolbar`, la misma barra de Documentos y registros,\ncon los menús Campos y Favorito y el botón Más opciones proyectados: solo aplica con Enter o la lupa.",
+    "descripcion": "Vista de la Bandeja de Documentos: la grilla de una sección (`title` = Recibidos, Enviados,\nBorradores o Papelera) con buscador, filtros de Documento y Tipo de acción, filtros personalizados y favoritos.\n\nLas filas salen de las solicitudes del clasificador programático (`ClasificadorSolicitudesService`) y se\nrecortan con `SECTION_STATES`, que define qué estados ve cada sección, y se\nordenan \"pendientes primero\". El buscador es `siaf-records-search-toolbar`, la misma barra de Documentos y registros,\ncon los menús Campos y Favorito y el botón Más opciones proyectados: solo aplica con Enter o la lupa.",
     "usaSesion": true,
     "proyectaContenido": false,
     "entradas": [
@@ -14580,7 +14580,7 @@ export const MANIFIESTO_UI_KIT: readonly FichaComponente[] = [
     "capa": "layout",
     "importacion": "@siaf/layout/tray-menu/tray-menu.component",
     "archivo": "src/app/layout/tray-menu/tray-menu.component.ts",
-    "descripcion": "Menú de la Bandeja de Documentos: lista Recibidos, Enviados, Borradores, Notificaciones y Papelera\ncon su contador, y emite en `selected` la sección elegida.\n\nLos contadores son un `computed` que depende del rol: `SolicitudesStateService` para las bandejas\n(el aprobador no tiene Borradores ni Papelera) y `NotificationsStateService.unreadCount()` —la misma\nfuente por socket que la campana del navbar— para Notificaciones. Se muestran a dos dígitos, tope '99+'.",
+    "descripcion": "Menú de la Bandeja de Documentos: lista Recibidos, Enviados, Borradores, Notificaciones y Papelera\ncon su contador, y emite en `selected` la sección elegida.\n\nLos contadores son un `computed` que depende del rol: `ClasificadorSolicitudesService` para las bandejas\n(el aprobador no tiene Borradores ni Papelera) y `NotificationsStateService.unreadCount()` —la misma\nfuente por socket que la campana del navbar— para Notificaciones. Se muestran a dos dígitos, tope '99+'.",
     "usaSesion": true,
     "proyectaContenido": false,
     "entradas": [

@@ -25,6 +25,7 @@ import { PermissionService } from '../../../core/auth/permission.service';
 import { ESTADO } from '../../../core/models/documento.model';
 import { NotificationsStateService } from '../../../core/realtime/notifications-state.service';
 import { SolicitudesFacadeService } from '../../../core/state/solicitudes-facade.service';
+import { ClasificadorSolicitudesService, SolicitudClasificador } from '../../../core/state/clasificador-solicitudes.service';
 import { SolicitudDemo, SolicitudesStateService } from '../../../core/state/solicitudes-state.service';
 import { DocumentHistoryRow } from '../../../shared/components/document-history-panel/document-history-panel.component';
 import { DocumentsRecordsColumn, DocumentsRecordsConfig } from '../../../shared/types/documents-records.types';
@@ -306,9 +307,27 @@ export const PROVEEDORES_BANDEJA_DE_MUESTRA: Provider[] = [
   PermissionService,
 ];
 
+/** Solicitudes de clasificador de muestra de la bandeja: dos Elaboradas (Borradores del creador). */
+export const CLASIFICADOR_DE_MUESTRA: SolicitudClasificador[] = ['0002', '0001'].map((numero) => ({
+  id: `clf-muestra-${numero}`,
+  numero,
+  tipoDocumento: 'Solicitud de clasificador programático',
+  tipoAccion: 'Creación',
+  estado: 'Elaborado',
+  fecha: '15/06/2026',
+  entidadCodigo: '0001',
+  entidad: 'Ministerio de Economía y Finanzas',
+}));
+
 /** Siembra las instancias reales de usuario, rol y bandeja que dan los proveedores de muestra. */
-export function sembrarSesionDeMuestra(usuario: CurrentUserService, permisos?: PermissionService, bandeja?: SolicitudesStateService): void {
+export function sembrarSesionDeMuestra(
+  usuario: CurrentUserService,
+  permisos?: PermissionService,
+  bandeja?: SolicitudesStateService,
+  clasificador?: ClasificadorSolicitudesService,
+): void {
   usuario.setUser(USUARIO_DE_MUESTRA);
   permisos?.setRole('creator');
   bandeja?.loadAll(BANDEJA_DE_MUESTRA);
+  clasificador?.cargarDeMuestra(CLASIFICADOR_DE_MUESTRA);
 }

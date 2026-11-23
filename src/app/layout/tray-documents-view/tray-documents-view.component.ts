@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnChanges, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnChanges, inject } from '@angular/core';
 
 import { CustomFilterApplyEvent, CustomFilterComponent, FilterRow } from '../../shared/components/custom-filter/custom-filter.component';
 import { FilterPillComponent } from '../../shared/components/filter-pill/filter-pill.component';
@@ -8,8 +8,7 @@ import { IconDropdownMenuComponent, IconDropdownMenuItem } from '../../shared/ui
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 import { RecordsSearchToolbarComponent } from '../../shared/components/records-search-toolbar/records-search-toolbar.component';
 import { TableControlsComponent } from '../../shared/components/table-controls/table-controls.component';
-import { SolicitudesStateService, SolicitudDemo } from '../../core/state/solicitudes-state.service';
-import { SolicitudesFacadeService } from '../../core/state/solicitudes-facade.service';
+import { ClasificadorSolicitudesService, SolicitudClasificador } from '../../core/state/clasificador-solicitudes.service';
 import { PermissionService } from '../../core/auth/permission.service';
 import { TooltipDirective } from '../../shared/ui/tooltip/tooltip.directive';
 import { ESTADO, ESTADOS_RESPUESTA_APROBADOR } from '../../core/models/documento.model';
@@ -38,11 +37,11 @@ type AppliedCustomFilter = {
 
 /**
  * Vista de la Bandeja de Documentos: la grilla de una sección (`title` = Recibidos, Enviados,
- * Borradores o Papelera) con buscador, filtros de Estado y Tipo de acción, filtros personalizados y favoritos.
+ * Borradores o Papelera) con buscador, filtros de Documento y Tipo de acción, filtros personalizados y favoritos.
  *
- * Las filas salen del facade de solicitudes (carga la bandeja de creador o de aprobador según el rol) y se
- * recortan con `SECTION_STATES`, que define qué estados ve cada sección; sin filtro de estado explícito
- * ordena "pendientes primero". El buscador es `siaf-records-search-toolbar`, la misma barra de Documentos y registros,
+ * Las filas salen de las solicitudes del clasificador programático (`ClasificadorSolicitudesService`) y se
+ * recortan con `SECTION_STATES`, que define qué estados ve cada sección, y se
+ * ordenan "pendientes primero". El buscador es `siaf-records-search-toolbar`, la misma barra de Documentos y registros,
  * con los menús Campos y Favorito y el botón Más opciones proyectados: solo aplica con Enter o la lupa.
  *
  * @usar
@@ -127,7 +126,7 @@ type AppliedCustomFilter = {
             </siaf-records-search-toolbar>
 
             <div class="flex min-h-8 flex-wrap items-center gap-siaf-xs">
-              <siaf-filter-pill label="Estado" [options]="statusFilterOptions" [selectedValue]="selectedStatusFilter" (selectedValueChange)="onStatusFilterChange($event)" />
+              <siaf-filter-pill label="Documento" [options]="documentFilterOptions" [selectedValue]="selectedDocumentFilter" (selectedValueChange)="onDocumentFilterChange($event)" />
               <siaf-filter-pill label="Tipo de acción" [options]="actionTypeFilterOptions" [selectedValue]="selectedActionTypeFilter" (selectedValueChange)="onActionTypeFilterChange($event)" />
 
               @for (filter of appliedCustomFilters; track filter.id) {
@@ -233,15 +232,14 @@ type AppliedCustomFilter = {
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TrayDocumentsViewComponent implements OnInit, OnChanges {
-  private readonly solicitudesState = inject(SolicitudesStateService);
-  private readonly solicitudesFacade = inject(SolicitudesFacadeService);
+export class TrayDocumentsViewComponent implements OnChanges {
+  private readonly clasificador = inject(ClasificadorSolicitudesService);
   private readonly permissionService = inject(PermissionService);
 
   @Input() title = 'Borradores';
 
   customFilterOpen = false;
-  selectedStatusFilter = '';
+  selectedDocumentFilter = '';
   selectedActionTypeFilter = '';
   searchTerm = '';
   appliedCustomFilters: AppliedCustomFilter[] = [];
@@ -282,7 +280,7 @@ export class TrayDocumentsViewComponent implements OnInit, OnChanges {
     { label: ESTADO.RECHAZADO, value: ESTADO.RECHAZADO },
     { label: 'Creacion', value: 'Creacion' },
     { label: 'Solicitud de notificacion', value: 'Solicitud de notificacion' },
-    { label: 'Sistema Nacional de Contabilidad', value: 'Sistema Nacional de Contabilidad' },
+    { label: 'Presupuesto', value: 'Presupuesto' },
     { label: '1. Institucional', value: '1. Institucional' }
   ];
 
@@ -315,13 +313,9 @@ export class TrayDocumentsViewComponent implements OnInit, OnChanges {
     },
   };
 
-  get statusFilterOptions(): TrayDocumentStatus[] {
-    const role = this.permissionService.currentRole();
-    const roleKey = role === 'approver' ? 'approver' : 'creator';
-    return this.SECTION_STATES[roleKey][this.title] ?? [];
-  }
+  readonly documentFilterOptions = ['Solicitud de clasificador programático'];
 
-  readonly actionTypeFilterOptions = ['Creacion'];
+  readonly actionTypeFilterOptions = ['Creación', 'Modificación'];
 
   /** Pendientes primero: Observado/Rechazado arriba en Recibidos del creador; Verificado arriba para el aprobador. */
   private readonly STATUS_PRIORITY_BY_ROLE: Record<string, Record<string, number>> = {
@@ -335,22 +329,18 @@ export class TrayDocumentsViewComponent implements OnInit, OnChanges {
     const filtered = this.rowsForCurrentTray.filter((row) => {
       const normalizedSearch = this.normalize(this.searchTerm);
       const matchesSearch = !normalizedSearch || this.normalize(Object.values(row).join(' ')).includes(normalizedSearch);
-      const matchesStatus = !this.selectedStatusFilter || row.status === this.selectedStatusFilter;
+      const matchesDocument = !this.selectedDocumentFilter || row.document === this.selectedDocumentFilter;
       const matchesActionType = !this.selectedActionTypeFilter || row.actionType === this.selectedActionTypeFilter;
       const matchesCustomFilters = this.appliedCustomFilters.every((filter) => this.matchesCustomFilter(row, filter));
 
-      return matchesSearch && matchesStatus && matchesActionType && matchesCustomFilters;
+      return matchesSearch && matchesDocument && matchesActionType && matchesCustomFilters;
     });
 
-    // Pendientes primero según el rol (cuando no hay filtro de estado explícito)
-    if (!this.selectedStatusFilter) {
-      const role = this.permissionService.currentRole();
-      const priority = this.STATUS_PRIORITY_BY_ROLE[role] ?? {};
-      const fallback = 99;
-      return [...filtered].sort((a, b) => (priority[a.status] ?? fallback) - (priority[b.status] ?? fallback));
-    }
-
-    return filtered;
+    // Pendientes primero según el rol
+    const role = this.permissionService.currentRole();
+    const priority = this.STATUS_PRIORITY_BY_ROLE[role] ?? {};
+    const fallback = 99;
+    return [...filtered].sort((a, b) => (priority[a.status] ?? fallback) - (priority[b.status] ?? fallback));
   }
 
   get totalPages(): number {
@@ -362,33 +352,18 @@ export class TrayDocumentsViewComponent implements OnInit, OnChanges {
     return this.filteredRows.slice(start, start + this.rowsPerPage);
   }
 
-  ngOnInit(): void {
-    this.cargarBandeja();
-  }
-
   ngOnChanges(): void {
     // Resetea filtros activos al cambiar de sección (Recibidos → Enviados, etc.)
-    this.selectedStatusFilter = '';
+    this.selectedDocumentFilter = '';
     this.selectedActionTypeFilter = '';
     this.searchTerm = '';
     this.page = 1;
   }
 
-  private cargarBandeja(): void {
-    const role = this.permissionService.currentRole();
-    if (role === 'approver') {
-      this.solicitudesFacade.cargarBandejaAprobador();
-    } else {
-      this.solicitudesFacade.cargarBandejaCreador();
-    }
-  }
-
   get rowsForCurrentTray(): TrayDocumentRow[] {
     const role = this.permissionService.currentRole();
     const roleKey = role === 'approver' ? 'approver' : 'creator';
-    const solicitudes = role === 'approver'
-      ? this.solicitudesState.bandejaAprobador()
-      : this.solicitudesState.bandejaCreador();
+    const solicitudes = this.clasificador.solicitudes();
 
     const allowedStates = this.SECTION_STATES[roleKey][this.title];
     const filtered = allowedStates
@@ -398,15 +373,15 @@ export class TrayDocumentsViewComponent implements OnInit, OnChanges {
     return filtered.map(s => this.mapSolicitudToRow(s));
   }
 
-  private mapSolicitudToRow(s: SolicitudDemo): TrayDocumentRow {
+  private mapSolicitudToRow(s: SolicitudClasificador): TrayDocumentRow {
     return {
       document: s.tipoDocumento,
-      number: s.numero || '-',
+      number: s.numero,
       actionType: s.tipoAccion,
       status: s.estado as TrayDocumentStatus,
-      system: 'Sistema Nacional de Contabilidad',
+      system: 'Presupuesto',
       date: s.fecha,
-      institutionalScope: s.cuentas[0]?.institutionalScopes || '-',
+      institutionalScope: s.entidadCodigo,
       entity: s.entidad,
     };
   }
@@ -430,8 +405,8 @@ export class TrayDocumentsViewComponent implements OnInit, OnChanges {
   }
 
   /** `siaf-filter-pill` emite el estado elegido, o '' al quitar el filtro. */
-  onStatusFilterChange(status: string): void {
-    this.selectedStatusFilter = status;
+  onDocumentFilterChange(documento: string): void {
+    this.selectedDocumentFilter = documento;
     this.page = 1;
   }
 

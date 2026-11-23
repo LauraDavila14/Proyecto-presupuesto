@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { CurrentUserService } from '../../../../../core/auth/current-user.service';
+import { ClasificadorSolicitudesService } from '../../../../../core/state/clasificador-solicitudes.service';
 import { BreadcrumbItem } from '../../../../../shared/components/breadcrumb/breadcrumb.component';
 import { TableControlsComponent } from '../../../../../shared/components/table-controls/table-controls.component';
 import { FormTableSearchComponent } from '../../../../../shared/components/form-table-search/form-table-search.component';
@@ -75,9 +76,9 @@ type ModoActividad = 'ninguno' | 'predeterminada' | 'inversion' | 'apnop';
 
 /**
  * Solicitud de clasificador programático, tipo de acción «Creación» (nodo de Figma 1096:123152): pantalla de
- * ejemplo del taller. Los registros que agrega el usuario viven en memoria de este componente — no hay solicitud
- * real, backend simulado ni persistencia: «Grabar» solo confirma con un aviso y «Verificar y enviar» queda
- * deshabilitado, porque no hay un flujo de aprobación detrás.
+ * ejemplo del taller. Los registros que agrega el usuario viven en memoria de este componente. «Grabar» deja la
+ * solicitud Elaborada (Borradores de la Bandeja), «Verificar y enviar» la pasa a Verificada (Enviados del creador y
+ * Recibidos del aprobador) y «Eliminar» la manda a la Papelera, todo vía `ClasificadorSolicitudesService`.
  *
  * Al pulsar (+) en «Registro de clasificador» se abre el panel con «Proceso» (Programación y/o Gestión) y el
  * desplegable «Categoría presupuestaria» (PP, AC, APNOP). Con un proceso y una categoría elegidos aparecen
@@ -127,6 +128,8 @@ function formatearFechaApertura(fecha: Date): string {
 })
 export class ClasificadorProgramaticoRequestComponent {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly solicitudes = inject(ClasificadorSolicitudesService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly currentUser = inject(CurrentUserService);
 
@@ -157,7 +160,7 @@ export class ClasificadorProgramaticoRequestComponent {
 
   // ── Estado del documento (nodo de Figma 1232:139248) ───────────────
   // Nuevo → «Grabar» (modal) → Elaborado (solo lectura: Eliminar, Editar, Verificar y enviar). «Editar» vuelve a
-  // la edición con los registros. No hay backend: el N°, «Elaborado por» y la fecha viven en memoria.
+  // la edición con los registros. El N°, «Elaborado por» y la fecha viven en memoria; la solicitud se guarda en el navegador (`ClasificadorSolicitudesService`) para las bandejas.
   readonly elaborado = signal(false);
   readonly enEdicion = signal(false);
   readonly numeroDocumento = signal('');
@@ -170,7 +173,8 @@ export class ClasificadorProgramaticoRequestComponent {
   readonly modalGrabar = signal(false);
   readonly modalVerificar = signal(false);
   readonly modalEliminar = signal(false);
-  private numeroSiguiente = 1;
+  /** Id de la solicitud guardada en las bandejas; vacío hasta el primer «Grabar». */
+  private solicitudId = '';
 
   // ── Tabla de registros (nodo de Figma 1096:122648) ────────────────
   readonly busquedaRegistros = signal('');
@@ -777,11 +781,22 @@ export class ClasificadorProgramaticoRequestComponent {
 
   onConfirmarGrabar(): void {
     this.modalGrabar.set(false);
-    if (!this.elaborado()) {
-      this.numeroDocumento.set(String(this.numeroSiguiente++).padStart(4, '0'));
+    if (!this.solicitudId) {
+      this.solicitudId = `clf-${Date.now()}`;
+      this.numeroDocumento.set(this.solicitudes.siguienteNumero());
       this.elaboradoPor.set(this.currentUser.name);
     }
     this.fechaElaboracion.set(this.fechaYHoraActual());
+    this.solicitudes.guardar({
+      id: this.solicitudId,
+      numero: this.numeroDocumento(),
+      tipoDocumento: this.heading,
+      tipoAccion: this.route.snapshot.queryParamMap.get('actionType') === 'modificacion' ? 'Modificación' : 'Creación',
+      estado: 'Elaborado',
+      fecha: this.fechaElaboracion().slice(0, 10),
+      entidadCodigo: '0001',
+      entidad: 'Ministerio de Economía y Finanzas',
+    });
     this.agregando.set(false);
     this.enEdicion.set(false);
     this.elaborado.set(true);
@@ -795,12 +810,14 @@ export class ClasificadorProgramaticoRequestComponent {
 
   onConfirmarVerificar(): void {
     this.modalVerificar.set(false);
+    this.solicitudes.cambiarEstado(this.solicitudId, 'Verificado');
     this.mostrarAviso('creation-verified');
     this.regresar();
   }
 
   onConfirmarEliminar(): void {
     this.modalEliminar.set(false);
+    this.solicitudes.cambiarEstado(this.solicitudId, 'Eliminado');
     this.mostrarAviso('creation-deleted');
     this.regresar();
   }

@@ -9,6 +9,7 @@ import { AuthApiService } from '../../core/api/auth-api.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { CurrentUserService } from '../../core/auth/current-user.service';
 import { PermissionService } from '../../core/auth/permission.service';
+import { ClasificadorSolicitudesService } from '../../core/state/clasificador-solicitudes.service';
 import { SolicitudesStateService } from '../../core/state/solicitudes-state.service';
 import { PROVEEDORES_SHELL_DE_MUESTRA, sembrarSesionDeMuestra } from '../../features/ui-kit/ejemplos/datos-de-muestra';
 import { ShellNavigationService } from '../shell/shell-navigation.service';
@@ -35,7 +36,7 @@ describe('VirtualDeskComponent', () => {
         provideHttpClientTesting(),
       ],
     }).compileComponents();
-    sembrarSesionDeMuestra(TestBed.inject(CurrentUserService), TestBed.inject(PermissionService), TestBed.inject(SolicitudesStateService));
+    sembrarSesionDeMuestra(TestBed.inject(CurrentUserService), TestBed.inject(PermissionService), TestBed.inject(SolicitudesStateService), TestBed.inject(ClasificadorSolicitudesService));
     fixture = TestBed.createComponent(VirtualDeskComponent);
     fixture.detectChanges();
   });

@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, comput
 import { BadgeComponent } from '../../shared/ui/badge/badge.component';
 import { IconComponent } from '../../shared/ui/icon/icon.component';
 import { NotificationsStateService } from '../../core/realtime/notifications-state.service';
-import { SolicitudesStateService } from '../../core/state/solicitudes-state.service';
+import { ClasificadorSolicitudesService } from '../../core/state/clasificador-solicitudes.service';
 import { PermissionService } from '../../core/auth/permission.service';
 
 type TrayItem = {
@@ -17,7 +17,7 @@ type TrayItem = {
  * Menú de la Bandeja de Documentos: lista Recibidos, Enviados, Borradores, Notificaciones y Papelera
  * con su contador, y emite en `selected` la sección elegida.
  *
- * Los contadores son un `computed` que depende del rol: `SolicitudesStateService` para las bandejas
+ * Los contadores son un `computed` que depende del rol: `ClasificadorSolicitudesService` para las bandejas
  * (el aprobador no tiene Borradores ni Papelera) y `NotificationsStateService.unreadCount()` —la misma
  * fuente por socket que la campana del navbar— para Notificaciones. Se muestran a dos dígitos, tope '99+'.
  *
@@ -94,7 +94,7 @@ type TrayItem = {
 })
 export class TrayMenuComponent {
   private readonly notifications = inject(NotificationsStateService);
-  private readonly solicitudesState = inject(SolicitudesStateService);
+  private readonly solicitudes = inject(ClasificadorSolicitudesService);
   private readonly permissionService = inject(PermissionService);
 
   @Input() selectedItem = 'Borradores';
@@ -109,16 +109,13 @@ export class TrayMenuComponent {
     const unread = this.notifications.unreadCount();
     const isAprobador = role === 'approver';
 
-    const recibidos = isAprobador
-      ? this.solicitudesState.aprobadorRecibidosCount()
-      : this.solicitudesState.creadorRecibidosCount();
+    // Las verificadas son los Recibidos del aprobador y los Enviados del creador; aún no hay respuestas del aprobador.
+    const verificadas = this.solicitudes.verificadasCount();
+    const recibidos = isAprobador ? verificadas : 0;
+    const enviados = isAprobador ? 0 : verificadas;
 
-    const enviados = isAprobador
-      ? this.solicitudesState.aprobadorEnviadosCount()
-      : this.solicitudesState.creadorEnviadosCount();
-
-    const borradores = isAprobador ? 0 : this.solicitudesState.creadorBorradoresCount();
-    const papelera   = isAprobador ? 0 : this.solicitudesState.creadorPapeleraCount();
+    const borradores = isAprobador ? 0 : this.solicitudes.borradoresCount();
+    const papelera   = isAprobador ? 0 : this.solicitudes.papeleraCount();
 
     const base: TrayItem[] = [
       { label: 'Recibidos',      icon: 'description',   count: this.fmt(recibidos) },

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
+import { CLAVE_SOLICITUDES_CLASIFICADOR, ClasificadorSolicitudesService } from '../../../../../core/state/clasificador-solicitudes.service';
 import { CADENAS_AC, CADENAS_AC_INVERSION, CADENAS_APNOP, CADENAS_APNOP_INVERSION, CADENAS_PP, CADENAS_PP_TODAS } from '../../models/cadenas-programaticas.mock';
 import { ClasificadorProgramaticoRequestComponent } from './clasificador-programatico-request.component';
 
@@ -9,6 +10,7 @@ describe('ClasificadorProgramaticoRequestComponent · registro con PP', () => {
   let pagina: ClasificadorProgramaticoRequestComponent;
 
   beforeEach(() => {
+    localStorage.removeItem(CLAVE_SOLICITUDES_CLASIFICADOR);
     TestBed.configureTestingModule({
       imports: [ClasificadorProgramaticoRequestComponent],
       providers: [provideRouter([])],
@@ -57,6 +59,41 @@ describe('ClasificadorProgramaticoRequestComponent · registro con PP', () => {
     fixture.detectChanges();
     expect(pagina.registroDetalle()).toBeNull();
     expect(pagina.filasTabla().length).toBe(2);
+  });
+
+  describe('bandejas', () => {
+    let solicitudes: ClasificadorSolicitudesService;
+
+    beforeEach(() => {
+      solicitudes = TestBed.inject(ClasificadorSolicitudesService);
+      spyOn(pagina, 'regresar');
+      pagina.elegirCadenas(CADENAS_PP.slice(0, 1));
+      pagina.confirmarRegistro();
+    });
+
+    it('Grabar deja la solicitud Elaborada, con número 0001 y Creación', () => {
+      pagina.onConfirmarGrabar();
+      expect(solicitudes.solicitudes().map((s) => [s.numero, s.tipoAccion, s.estado])).toEqual([['0001', 'Creación', 'Elaborado']]);
+      expect(solicitudes.borradoresCount()).toBe(1);
+    });
+
+    it('Editar y volver a grabar actualiza la misma solicitud, sin otro número', () => {
+      pagina.onConfirmarGrabar();
+      pagina.editar();
+      pagina.onConfirmarGrabar();
+      expect(solicitudes.solicitudes().length).toBe(1);
+      expect(pagina.numeroDocumento()).toBe('0001');
+    });
+
+    it('Verificar y enviar la pasa a Verificada y Eliminar, a la Papelera', () => {
+      pagina.onConfirmarGrabar();
+      pagina.onConfirmarVerificar();
+      expect(solicitudes.verificadasCount()).toBe(1);
+      expect(solicitudes.borradoresCount()).toBe(0);
+
+      pagina.onConfirmarEliminar();
+      expect(solicitudes.papeleraCount()).toBe(1);
+    });
   });
 
   describe('borrar registros', () => {

@@ -327,11 +327,17 @@ type DocumentsRecordsRoleMode = 'creator' | 'approver' | 'readOnly';
                   (next)="onNextPage()"
                 />
               } @else {
-                <siaf-table-controls [showSelection]="false"
+                <siaf-table-controls
+                  selectAllLabel="Seleccionar registros"
+                  [showSelection]="!!effectiveConfig.recordSelectable"
+                  [checked]="allVisibleRecordsSelected"
+                  [indeterminate]="someVisibleRecordsSelected"
+                  [disabled]="paginatedRows.length === 0"
                   [page]="page"
                   [pageSize]="rowsPerPage"
                   [totalItems]="totalItemsPaginador"
                   [totalPages]="totalPages"
+                  (selectionChange)="toggleVisibleRecords($event)"
                   (previous)="onPreviousPage()"
                   (next)="onNextPage()"
                 />
@@ -350,6 +356,7 @@ type DocumentsRecordsRoleMode = 'creator' | 'approver' | 'readOnly';
                   [rows]="paginatedRows"
                   [minWidthClass]="activeTab === 'documents' ? effectiveConfig.documentTableMinWidthClass : effectiveConfig.recordTableMinWidthClass"
                   [recordTrackKey]="effectiveConfig.recordTrackKey"
+                  [selectable]="activeTab === 'records' && !!effectiveConfig.recordSelectable"
                   [documentRoute]="documentRoute"
                   [selectionDisabled]="selectionDisabled"
                   (selectionChanged)="toggleRowSelection($event)"
@@ -670,6 +677,14 @@ export class DocumentsRecordsPageComponent implements OnChanges {
     return rows.some((row) => row.selected) && !this.allVisibleElaboradoDocumentsSelected;
   }
 
+  get allVisibleRecordsSelected(): boolean {
+    return this.paginatedRows.length > 0 && this.paginatedRows.every((row) => row.selected);
+  }
+
+  get someVisibleRecordsSelected(): boolean {
+    return this.paginatedRows.some((row) => row.selected) && !this.allVisibleRecordsSelected;
+  }
+
   get activeColumnOptions(): DocumentsRecordsColumn[] {
     return this.activeTab === 'documents' ? this.effectiveConfig.documentColumns : this.effectiveConfig.recordColumns;
   }
@@ -828,6 +843,11 @@ export class DocumentsRecordsPageComponent implements OnChanges {
     }
 
     change.row.selected = change.selected;
+  }
+
+  /** «Seleccionar todo» de Registros: marca o desmarca las filas de la página visible. */
+  toggleVisibleRecords(selected: boolean): void {
+    this.paginatedRows.forEach((row) => (row.selected = selected));
   }
 
   toggleVisibleElaboradoDocuments(selected: boolean): void {

@@ -68,22 +68,35 @@ export type DocumentsRecordsSelectionChange = {
     <div class="siaf-table-scroll min-w-0">
       <table class="w-full border-collapse text-left text-sm" [ngClass]="minWidthClass">
         <thead>
+          @if (grupos.length > 0) {
+            <tr class="bg-surface-high text-[10px] font-bold uppercase text-text">
+              @if (conCasillas) {
+                <th class="w-10 rounded-tl-siaf-sm px-siaf-sm py-siaf-sm" rowspan="2"></th>
+              }
+              @for (grupo of grupos; track $index; let primero = $first) {
+                <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-center" [class.border-l]="!primero" [attr.colspan]="grupo.columnas">{{ grupo.etiqueta }}</th>
+              }
+              <th class="sticky right-0 w-14 border-l border-[var(--sys-color-divider-strong)] bg-surface-high px-siaf-sm py-siaf-sm" rowspan="2"></th>
+            </tr>
+          }
           <tr class="bg-surface-high text-[10px] font-bold uppercase text-text">
-            @if (activeTab === 'documents') {
+            @if (conCasillas && grupos.length === 0) {
               <th class="w-10 rounded-l-siaf-sm px-siaf-sm py-siaf-sm"></th>
             }
-            @for (column of columns; track column.key) {
+            @for (column of columns; track column.key; let i = $index) {
               <!-- MFD RF-01: al superponer el mouse se muestra el texto completo de la columna -->
-              <th class="truncate px-siaf-md py-siaf-sm" siafTooltip [ngClass]="[column.widthClass || 'w-[180px]', column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : 'text-left']">{{ column.label }}</th>
+              <th class="truncate px-siaf-md py-siaf-sm" siafTooltip [class.border-l]="iniciaGrupo(i)" [class.border-[var(--sys-color-divider-strong)]]="iniciaGrupo(i)" [ngClass]="[column.widthClass || 'w-[180px]', column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : 'text-left']">{{ column.label }}</th>
             }
-            <th class="sticky right-0 w-14 rounded-r-siaf-sm border-l border-[var(--sys-color-divider-strong)] bg-surface-high px-siaf-sm py-siaf-sm"></th>
+            @if (grupos.length === 0) {
+              <th class="sticky right-0 w-14 rounded-r-siaf-sm border-l border-[var(--sys-color-divider-strong)] bg-surface-high px-siaf-sm py-siaf-sm"></th>
+            }
           </tr>
         </thead>
         <tbody>
           @for (row of rows; track rowTrackValue(row, $index)) {
             <tr class="border-b border-[var(--sys-color-divider-default)] bg-surface hover:bg-[var(--sys-color-bg-states-light-hover)]" [class.h-12]="activeTab === 'records'">
-              @if (activeTab === 'documents') {
-                <td class="h-[58px] px-siaf-sm py-siaf-xs">
+              @if (conCasillas) {
+                <td class="px-siaf-sm py-siaf-xs" [class.h-[58px]]="activeTab === 'documents'">
                   <input
                     class="size-4 disabled:cursor-not-allowed"
                     type="checkbox"
@@ -93,8 +106,8 @@ export type DocumentsRecordsSelectionChange = {
                   />
                 </td>
               }
-              @for (column of columns; track column.key) {
-                <td class="px-siaf-md py-siaf-sm" [ngClass]="[column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : 'text-left', column.kind === 'document-link' ? 'max-w-[440px]' : '']">
+              @for (column of columns; track column.key; let i = $index) {
+                <td class="px-siaf-md py-siaf-sm" [class.border-l]="iniciaGrupo(i)" [class.border-[var(--sys-color-divider-default)]]="iniciaGrupo(i)" [ngClass]="[column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : 'text-left', column.kind === 'document-link' ? 'max-w-[440px]' : '']">
                   @if (column.kind === 'document-link') {
                     <span class="flex min-w-0 items-center gap-siaf-xs">
                       <a class="min-w-0 flex-1 truncate text-sm leading-normal text-text hover:text-brand-primary" siafTooltip [routerLink]="documentRoute(row)" (click)="onDocumentClick(row)">{{ row[column.key] }}</a>
@@ -129,6 +142,8 @@ export class DocumentsRecordsTableComponent {
 
   @Input() activeTab: DocumentsRecordsTab = 'documents';
   @Input() columns: DocumentsRecordsColumn[] = [];
+  /** Casillas de selección en Registros (en Documentos siempre están). */
+  @Input() selectable = false;
   @Input() rows: DocumentsRecordsRow[] = [];
   @Input() minWidthClass = '';
   @Input() recordTrackKey = '';
@@ -137,6 +152,28 @@ export class DocumentsRecordsTableComponent {
 
   @Output() selectionChanged = new EventEmitter<DocumentsRecordsSelectionChange>();
   @Output() historyOpened = new EventEmitter<DocumentsRecordsRow>();
+
+  get conCasillas(): boolean {
+    return this.activeTab === 'documents' || this.selectable;
+  }
+
+  /** Bloques de la cabecera agrupada: columnas seguidas con el mismo `grupo`; vacío si ninguna lo declara. */
+  get grupos(): { etiqueta: string; columnas: number }[] {
+    if (!this.columns.some((c) => c.grupo)) return [];
+    const bloques: { etiqueta: string; columnas: number }[] = [];
+    for (const column of this.columns) {
+      const etiqueta = column.grupo ?? '';
+      const ultimo = bloques[bloques.length - 1];
+      if (ultimo && ultimo.etiqueta === etiqueta) ultimo.columnas++;
+      else bloques.push({ etiqueta, columnas: 1 });
+    }
+    return bloques;
+  }
+
+  /** Primera columna de un bloque que no es el primero: lleva el divisor vertical. */
+  iniciaGrupo(indice: number): boolean {
+    return indice > 0 && !!this.columns[indice].grupo && this.columns[indice].grupo !== this.columns[indice - 1].grupo;
+  }
 
   rowTrackValue(row: DocumentsRecordsRow, index: number): string | number {
     const key = this.activeTab === 'documents' ? 'number' : this.recordTrackKey;

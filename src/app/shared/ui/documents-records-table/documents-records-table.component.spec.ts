@@ -88,3 +88,46 @@ describe('DocumentsRecordsTableComponent — tooltip de textos truncados', () =>
     expect(tooltipVisible()).toBeNull();
   }));
 });
+
+describe('DocumentsRecordsTableComponent — cabecera agrupada y casillas en Registros', () => {
+  let fixture: ComponentFixture<DocumentsRecordsTableComponent>;
+
+  const columnas: DocumentsRecordsColumn[] = [
+    { key: 'a', label: 'A', visibility: 'visible', group: 'default', grupo: 'Estructura' },
+    { key: 'b', label: 'B', visibility: 'visible', group: 'default', grupo: 'Estructura' },
+    { key: 'c', label: 'C', visibility: 'visible', group: 'default', grupo: 'Funcional' },
+  ];
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [DocumentsRecordsTableComponent],
+      providers: [provideRouter([]), provideHttpClient()]
+    }).compileComponents();
+    fixture = TestBed.createComponent(DocumentsRecordsTableComponent);
+    fixture.componentRef.setInput('activeTab', 'records');
+    fixture.componentRef.setInput('columns', columnas);
+    fixture.componentRef.setInput('rows', [{ recordId: '1', a: '1', b: '2', c: '3' }]);
+    fixture.componentRef.setInput('recordTrackKey', 'recordId');
+  });
+
+  it('con columnas con `grupo` pinta una fila de bloques con el colspan de cada uno', () => {
+    fixture.detectChanges();
+    const bloques = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('thead tr:first-child th')).filter((th) => th.hasAttribute('colspan'));
+    expect(bloques.map((th) => [th.textContent!.trim(), th.getAttribute('colspan')])).toEqual([['Estructura', '2'], ['Funcional', '1']]);
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('thead tr').length).toBe(2);
+  });
+
+  it('sin `grupo` mantiene una sola fila de cabecera', () => {
+    fixture.componentRef.setInput('columns', columnas.map(({ grupo, ...c }) => c));
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('thead tr').length).toBe(1);
+  });
+
+  it('las casillas de Registros solo aparecen con `selectable`', () => {
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('tbody input[type=checkbox]')).toBeNull();
+    fixture.componentRef.setInput('selectable', true);
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('tbody input[type=checkbox]')).not.toBeNull();
+  });
+});

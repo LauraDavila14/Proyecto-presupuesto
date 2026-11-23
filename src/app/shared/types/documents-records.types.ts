@@ -37,6 +37,12 @@ export type DocumentsRecordsColumn = {
   widthClass?: string;
   align?: 'left' | 'right' | 'center';
   kind?: 'text' | 'document-link' | 'flow-status' | 'record-status';
+  /**
+   * Bloque de la cabecera agrupada al que pertenece la columna (p. ej. «Estructura programática»). Si alguna columna
+   * lo declara, la tabla pinta dos filas de cabecera: el bloque (varias columnas seguidas con el mismo valor) y, debajo,
+   * cada columna.
+   */
+  grupo?: string;
 };
 
 export type DocumentsRecordsFilterOption = {
@@ -86,6 +92,8 @@ export type DocumentsRecordsConfig = {
   recordTableMinWidthClass: string;
   recordTrackKey: string;
   recordHistoryDocumentLabel: string;
+  /** Pestaña Registros con una casilla por fila y «seleccionar todo» (solo marcan; sin acción asociada). */
+  recordSelectable?: boolean;
   /** Variante del panel "Historial del registro" de la pestaña Registros:
    *  'cuenta' (default, plan de cuentas) o 'asiento' (asiento de ajuste). */
   recordHistoryKind?: 'cuenta' | 'asiento' | 'documento';

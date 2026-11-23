@@ -5005,6 +5005,13 @@ export const MANIFIESTO_UI_KIT: readonly FichaComponente[] = [
         "descripcion": null
       },
       {
+        "nombre": "selectable",
+        "tipo": "boolean",
+        "porDefecto": "false",
+        "requerida": false,
+        "descripcion": "Casillas de selección en Registros (en Documentos siempre están)."
+      },
+      {
         "nombre": "selectionDisabled",
         "tipo": "(row: DocumentsRecordsRow) => boolean",
         "porDefecto": "() => false",
@@ -5116,7 +5123,8 @@ export const MANIFIESTO_UI_KIT: readonly FichaComponente[] = [
         "token": "--sys-radius-sm",
         "via": [
           "rounded-l-siaf-sm",
-          "rounded-r-siaf-sm"
+          "rounded-r-siaf-sm",
+          "rounded-tl-siaf-sm"
         ]
       }
     ],

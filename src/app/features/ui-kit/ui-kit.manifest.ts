@@ -857,7 +857,7 @@ export const MANIFIESTO_UI_KIT: readonly FichaComponente[] = [
     "capa": "ui",
     "importacion": "@siaf/ui/alert/alert.component",
     "archivo": "src/app/shared/ui/alert/alert.component.ts",
-    "descripcion": "Mensaje de feedback en línea, con tono (neutral/info/éxito/advertencia/error), ícono y cierre opcional.\nEl título, el ícono y la × se apagan por separado (`title` vacío, `leadingIcon`, `showClose`); con varias líneas\nde texto, el ícono y la × quedan arriba, a la altura del título.\n\nUsarlo para avisos fijos dentro de una pantalla o formulario. Para confirmaciones de acciones de\nsolicitud (aprobar, observar, rechazar) el canónico es `siaf-request-approval-modals` con su snackbar.",
+    "descripcion": "Mensaje de feedback en línea, con tono (neutral/info/éxito/advertencia/error), ícono y cierre opcional.\nEl título, el ícono y la × se apagan por separado (`title` vacío, `leadingIcon`, `showClose`); `icon` cambia el ícono\ndel tono por otro (un reloj en el aviso de plazo). Con texto en negrita se proyecta como contenido; con varias líneas\nde texto, el ícono y la × quedan arriba, a la altura del título.\n\nUsarlo para avisos fijos dentro de una pantalla o formulario. Para confirmaciones de acciones de\nsolicitud (aprobar, observar, rechazar) el canónico es `siaf-request-approval-modals` con su snackbar.",
     "usaSesion": false,
     "proyectaContenido": true,
     "entradas": [
@@ -867,6 +867,13 @@ export const MANIFIESTO_UI_KIT: readonly FichaComponente[] = [
         "porDefecto": "''",
         "requerida": false,
         "descripcion": null
+      },
+      {
+        "nombre": "icon",
+        "tipo": "string",
+        "porDefecto": "''",
+        "requerida": false,
+        "descripcion": "Nombre del ícono Material que reemplaza al del tono (p. ej. `schedule` para un plazo). Vacío: el del tono."
       },
       {
         "nombre": "leadingIcon",

@@ -9,6 +9,7 @@ import { FormTableSearchComponent } from '../../../../../shared/components/form-
 import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
 import { SolicitudeInfoCardComponent, SolicitudeInfoField } from '../../../../../shared/components/solicitude-info-card/solicitude-info-card.component';
 import { SolicitudePageLayoutComponent } from '../../../../../shared/components/solicitude-page-layout/solicitude-page-layout.component';
+import { AlertComponent } from '../../../../../shared/ui/alert/alert.component';
 import { ButtonComponent } from '../../../../../shared/ui/button/button.component';
 import { CheckboxComponent } from '../../../../../shared/ui/checkbox/checkbox.component';
 import { DateTimePickerComponent } from '../../../../../shared/ui/date-time-picker/date-time-picker.component';
@@ -99,6 +100,7 @@ function formatearFechaApertura(fecha: Date): string {
   selector: 'siaf-clasificador-programatico-request',
   standalone: true,
   imports: [
+    AlertComponent,
     ButtonComponent,
     CheckboxComponent,
     DocumentSummaryCardComponent,

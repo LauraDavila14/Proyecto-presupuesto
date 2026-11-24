@@ -6,7 +6,8 @@ export type AlertTone = 'neutral' | 'info' | 'success' | 'warning' | 'error';
 
 /**
  * Mensaje de feedback en línea, con tono (neutral/info/éxito/advertencia/error), ícono y cierre opcional.
- * El título, el ícono y la × se apagan por separado (`title` vacío, `leadingIcon`, `showClose`); con varias líneas
+ * El título, el ícono y la × se apagan por separado (`title` vacío, `leadingIcon`, `showClose`); `icon` cambia el ícono
+ * del tono por otro (un reloj en el aviso de plazo). Con texto en negrita se proyecta como contenido; con varias líneas
  * de texto, el ícono y la × quedan arriba, a la altura del título.
  *
  * Usarlo para avisos fijos dentro de una pantalla o formulario. Para confirmaciones de acciones de
@@ -103,10 +104,13 @@ export class AlertComponent {
   @Input() description = '';
   @Input() showClose = false;
   @Input() leadingIcon = true;
+  /** Nombre del ícono Material que reemplaza al del tono (p. ej. `schedule` para un plazo). Vacío: el del tono. */
+  @Input() icon = '';
 
   @Output() closed = new EventEmitter<void>();
 
   get iconName(): string {
+    if (this.icon) return this.icon;
     const icons: Record<AlertTone, string> = {
       neutral: 'check_circle',
       info: 'info',

@@ -41,6 +41,11 @@
 
       @if (agregando()) {
         <div class="mt-siaf-md flex flex-col gap-siaf-lg">
+          @if (estaMarcado('P')) {
+            <siaf-alert tone="neutral" icon="schedule">
+              <span class="text-xs leading-[normal]">Quedan <strong>68 días</strong> del <strong>plazo de programación</strong> a partir del 01/01/2028 al 31/03/2028. Solo se considerarán los registros aprobados dentro de este plazo.</span>
+            </siaf-alert>
+          }
           <div class="flex flex-col gap-siaf-sm">
             <h3 class="m-0 text-sm font-bold uppercase text-text">Proceso</h3>
             <div class="flex flex-wrap items-center gap-siaf-lg">

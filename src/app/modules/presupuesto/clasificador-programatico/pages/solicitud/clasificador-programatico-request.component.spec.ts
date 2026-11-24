@@ -24,6 +24,21 @@ describe('ClasificadorProgramaticoRequestComponent · registro con PP', () => {
     pagina.cambiarCategoria('PP');
   });
 
+  it('el aviso del plazo de programación sale solo con Programación marcada', () => {
+    const aviso = () => (fixture.nativeElement as HTMLElement).querySelector('siaf-alert');
+    fixture.detectChanges();
+    expect(aviso()?.textContent).toContain('plazo de programación');
+
+    pagina.marcarProceso('P', false);
+    pagina.marcarProceso('G', true);
+    fixture.detectChanges();
+    expect(aviso()).toBeNull();
+
+    pagina.marcarProceso('P', true);
+    fixture.detectChanges();
+    expect(aviso()).not.toBeNull();
+  });
+
   it('Aceptar solo se activa con cadenas elegidas y sin filas marcadas en su tabla', () => {
     expect(pagina.puedeAceptar()).toBe(false);
     pagina.elegirCadenas(CADENAS_PP.slice(0, 2));

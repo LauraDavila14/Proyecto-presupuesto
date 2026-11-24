@@ -22,8 +22,12 @@
     @if (esCreacion && avisoCreacionVisible()) {
       <siaf-alert
         tone="info"
-        title="Administración del clasificador"
-        description="Con los registros de esta solicitud de creación se actualizará el clasificador programático."
+        [title]="esPrimeraCreacion ? 'Apertura del clasificador programático' : 'Administración del clasificador'"
+        [description]="
+          esPrimeraCreacion
+            ? 'Con los registros de esta primera solicitud de creación se generará el clasificador programático.'
+            : 'Con los registros de esta solicitud de creación se actualizará el clasificador programático.'
+        "
         [showClose]="true"
         (closed)="avisoCreacionVisible.set(false)"
       />
@@ -36,7 +40,7 @@
       }
     </section>
 
-    @if (esCreacion) {
+    @if (esCreacion && !esPrimeraCreacion) {
       <section class="flex items-center justify-between gap-siaf-md rounded-siaf-md bg-surface px-siaf-lg py-siaf-md">
         <div class="flex items-center gap-siaf-xs">
           <h2 class="m-0 text-sm font-bold uppercase leading-normal text-text">Ver clasificador programático</h2>

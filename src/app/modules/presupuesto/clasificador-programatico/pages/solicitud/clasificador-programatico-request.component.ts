@@ -180,8 +180,13 @@ export class ClasificadorProgramaticoRequestComponent {
 
   /** Solo la solicitud de Creación (por defecto) muestra el aviso y la tarjeta «Ver clasificador programático». */
   readonly esCreacion = this.route.snapshot.queryParamMap.get('actionType') !== 'modificacion';
-  /** El aviso «Administración del clasificador» se cierra con la ×. */
+  /** El aviso de la creación («Apertura…» o «Administración del clasificador») se cierra con la ×. */
   readonly avisoCreacionVisible = signal(true);
+
+  /** Es la primera solicitud de creación: no hay otra solicitud de clasificador guardada además de esta (que cuenta una vez grabada). */
+  get esPrimeraCreacion(): boolean {
+    return this.solicitudes.solicitudes().every((s) => s.id === this.solicitudId);
+  }
   readonly modalGrabar = signal(false);
   readonly modalVerificar = signal(false);
   readonly modalEliminar = signal(false);

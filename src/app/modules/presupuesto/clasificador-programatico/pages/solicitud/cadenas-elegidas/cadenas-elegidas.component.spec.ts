@@ -27,15 +27,15 @@ describe('CadenasElegidasComponent', () => {
     fixture.detectChanges();
     const cabecera = (fixture.nativeElement as HTMLElement).querySelector('thead')!.textContent!;
     expect(cabecera).not.toContain('Programa');
-    expect(cabecera).toContain('Inversión');
-    expect(cabecera).not.toContain('Pro / Inv');
+    expect(cabecera).toContain('Proyecto');
+    expect(cabecera).not.toContain('Prod / Proy');
   });
 
-  it('con Programa, la columna se llama «Pro / Inv»', () => {
-    expect((fixture.nativeElement as HTMLElement).querySelector('thead')!.textContent).toContain('Pro / Inv');
+  it('con Programa, la columna se llama «Prod / Proy»', () => {
+    expect((fixture.nativeElement as HTMLElement).querySelector('thead')!.textContent).toContain('Prod / Proy');
   });
 
-  it('mezcla cadenas de actividad e inversión de AC, con «-» en Inversión para las de actividad', () => {
+  it('mezcla cadenas de actividad e inversión de AC, con «-» en Proyecto para las de actividad', () => {
     fixture.componentRef.setInput('cadenas', [...CADENAS_AC.slice(0, 3), ...CADENAS_AC_INVERSION.slice(0, 2)]);
     fixture.detectChanges();
     const filas = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('tbody tr')).map((tr) =>

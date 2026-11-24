@@ -81,14 +81,40 @@ describe('ClasificadorProgramaticoRequestComponent · registro con PP', () => {
 
   describe('Creación: aviso y «Ver clasificador programático»', () => {
     const html = () => fixture.nativeElement as HTMLElement;
+    const guardarOtraSolicitud = () =>
+      TestBed.inject(ClasificadorSolicitudesService).guardar({
+        id: 'otra', numero: '0001', tipoDocumento: 'Solicitud de clasificador programático', tipoAccion: 'Creación', estado: 'Elaborado',
+        fecha: '15/06/2026', entidadCodigo: '0001', entidad: 'Ministerio de Economía y Finanzas',
+      });
 
-    it('muestra el aviso «Administración del clasificador» y la tarjeta para ver el clasificador', () => {
+    it('con la primera solicitud de creación muestra «Apertura del clasificador programático» y no la tarjeta para ver el clasificador', () => {
+      fixture.detectChanges();
+      const aviso = html().querySelector('siaf-alert')?.textContent;
+      expect(aviso).toContain('Apertura del clasificador programático');
+      expect(aviso).toContain('esta primera solicitud de creación se generará');
+      expect(html().textContent).not.toContain('Ver clasificador programático');
+    });
+
+    it('si ya hay otra solicitud guardada muestra «Administración del clasificador» y la tarjeta para ver el clasificador', () => {
+      guardarOtraSolicitud();
       fixture.detectChanges();
       expect(html().querySelector('siaf-alert')?.textContent).toContain('Administración del clasificador');
       expect(html().textContent).toContain('Ver clasificador programático');
     });
 
+    it('al grabar esta solicitud sigue siendo la primera: el aviso no cambia', () => {
+      pagina.abrirPanel();
+      pagina.marcarProceso('P', true);
+      pagina.cambiarCategoria('PP');
+      pagina.elegirCadenas(CADENAS_PP.slice(0, 1));
+      pagina.confirmarRegistro();
+      pagina.onConfirmarGrabar();
+      fixture.detectChanges();
+      expect(pagina.esPrimeraCreacion).toBeTrue();
+    });
+
     it('la × cierra el aviso y la tarjeta se queda', () => {
+      guardarOtraSolicitud();
       fixture.detectChanges();
       pagina.avisoCreacionVisible.set(false);
       fixture.detectChanges();

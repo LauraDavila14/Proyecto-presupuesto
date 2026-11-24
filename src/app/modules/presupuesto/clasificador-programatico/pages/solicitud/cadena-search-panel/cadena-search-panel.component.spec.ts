@@ -206,7 +206,12 @@ describe('CadenaSearchPanelComponent', () => {
       panel.cambiarTipo('inversion');
       expect(panel.totalFilas()).toBe(CADENAS_AC_INVERSION.length);
       expect(panel.detalleTipo()).toBe('proyecto');
-      expect(panel.columnas().map((c) => c.etiqueta)).toEqual(['Categ. pres.', 'Inversión', 'Act / AI / Obr']);
+      expect(panel.columnas().map((c) => c.etiqueta)).toEqual(['Categ. pres.', 'Proyecto', 'Acción inversión / Obra']);
+      expect(panel.columnas().map((c) => c.valor(panel.filasPagina()[0]))).toEqual([
+        'AC',
+        '2355382',
+        '0000420 Adquisición de inmueble para el servicio de habitabilidad institucional',
+      ]);
       expect(panel.filasPagina()[0].producto?.codigo).toBe('2355382');
       expect(panel.chips()).toEqual([]);
       expect(panel.filtrosVisibles()).toBe(false);
@@ -242,6 +247,11 @@ describe('CadenaSearchPanelComponent', () => {
       expect(panel.filasPagina()[1].actividad.nombre).toBe('Desarrollo de la enseñanza de post-grado');
       expect(panel.filasPagina()[5].actividad.nombre).toContain('ámbito regional');
       expect(panel.filasPagina()[6].actividad.codigo).toBe('5006412');
+    });
+
+    it('con Proyecto usa las columnas «Proyecto» y «Acción inversión / Obra», como AC', () => {
+      panel.cambiarTipo('inversion');
+      expect(panel.columnas().map((c) => c.etiqueta)).toEqual(['Categ. pres.', 'Proyecto', 'Acción inversión / Obra']);
     });
 
     it('con Inversión muestra las cadenas de inversión de APNOP', () => {

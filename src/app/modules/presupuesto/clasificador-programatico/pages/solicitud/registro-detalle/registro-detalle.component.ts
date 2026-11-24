@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, comput
 
 import { BreadcrumbItem } from '../../../../../../shared/components/breadcrumb/breadcrumb.component';
 import { SolicitudePageLayoutComponent } from '../../../../../../shared/components/solicitude-page-layout/solicitude-page-layout.component';
-import { ButtonComponent } from '../../../../../../shared/ui/button/button.component';
 import { NOMBRE_CATEGORIA } from '../../../models/cadenas-programaticas.mock';
 import { ItemEstructura, RegistroClasificador } from '../../../models/clasificador-programatico.model';
 
@@ -22,13 +21,12 @@ const codigoNombre = (item: ItemEstructura | undefined): string => (item ? `${it
  * Detalle de un registro de clasificador (nodo de Figma «Detalle de registro de clasificador»): página de solo lectura
  * con su estructura programática, clasificador funcional y vigencia, que se abre al elegir una fila de la tabla de
  * registros. Los campos sin dato no se muestran (ni la sección que se queda sin campos); Estado y las fechas de la
- * vigencia sí, porque el diseño las muestra aunque aún no tengan valor. La flecha de la cabecera emite `returned`. Los
- * dos botones de «Datos complementarios» son solo visuales.
+ * vigencia sí, porque el diseño las muestra aunque aún no tengan valor. La flecha de la cabecera emite `returned`.
  */
 @Component({
   selector: 'siaf-registro-detalle',
   standalone: true,
-  imports: [ButtonComponent, SolicitudePageLayoutComponent],
+  imports: [SolicitudePageLayoutComponent],
   template: `
     <siaf-solicitude-page-layout
       [breadcrumbs]="breadcrumbs"
@@ -83,14 +81,6 @@ const codigoNombre = (item: ItemEstructura | undefined): string => (item ? `${it
               <dd class="m-0 text-sm text-text">--/--/----</dd>
             </div>
           </dl>
-        </div>
-
-        <div class="flex flex-col gap-siaf-md">
-          <h2 class="m-0 text-sm font-bold uppercase text-text">Datos complementarios</h2>
-          <div class="grid gap-siaf-md md:grid-cols-2">
-            <siaf-button class="block [&>button]:w-full [&>button]:justify-between" variant="outline" icon="open_in_new" iconPosition="end">Ver mayor detalle de clasificador</siaf-button>
-            <siaf-button class="block [&>button]:w-full [&>button]:justify-between" variant="outline" icon="open_in_new" iconPosition="end">Ver mayor detalle del indicador</siaf-button>
-          </div>
         </div>
       </section>
     </siaf-solicitude-page-layout>

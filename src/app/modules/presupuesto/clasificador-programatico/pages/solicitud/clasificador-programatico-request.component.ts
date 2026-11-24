@@ -11,6 +11,8 @@ import { SolicitudeInfoCardComponent, SolicitudeInfoField } from '../../../../..
 import { SolicitudePageLayoutComponent } from '../../../../../shared/components/solicitude-page-layout/solicitude-page-layout.component';
 import { AlertComponent } from '../../../../../shared/ui/alert/alert.component';
 import { ButtonComponent } from '../../../../../shared/ui/button/button.component';
+import { IconComponent } from '../../../../../shared/ui/icon/icon.component';
+import { TooltipDirective } from '../../../../../shared/ui/tooltip/tooltip.directive';
 import { CheckboxComponent } from '../../../../../shared/ui/checkbox/checkbox.component';
 import { DateTimePickerComponent } from '../../../../../shared/ui/date-time-picker/date-time-picker.component';
 import { RadioComponent, RadioOption } from '../../../../../shared/ui/radio/radio.component';
@@ -102,6 +104,8 @@ function formatearFechaApertura(fecha: Date): string {
   imports: [
     AlertComponent,
     ButtonComponent,
+    IconComponent,
+    TooltipDirective,
     CheckboxComponent,
     DocumentSummaryCardComponent,
     ReadonlyFieldComponent,
@@ -172,6 +176,10 @@ export class ClasificadorProgramaticoRequestComponent {
   /** «Verificar y enviar» solo se habilita con el documento elaborado. */
   readonly verifyDisabled = computed(() => !this.elaborado());
 
+  /** Solo la solicitud de Creación (por defecto) muestra el aviso y la tarjeta «Ver clasificador programático». */
+  readonly esCreacion = this.route.snapshot.queryParamMap.get('actionType') !== 'modificacion';
+  /** El aviso «Administración del clasificador» se cierra con la ×. */
+  readonly avisoCreacionVisible = signal(true);
   readonly modalGrabar = signal(false);
   readonly modalVerificar = signal(false);
   readonly modalEliminar = signal(false);
@@ -826,6 +834,11 @@ export class ClasificadorProgramaticoRequestComponent {
 
   regresar(): void {
     void this.router.navigate([PROCESS_ROUTE]);
+  }
+
+  /** «Ver clasificador programático»: lleva a «Documentos y registros», donde está el clasificador vigente. */
+  verClasificador(): void {
+    this.regresar();
   }
 
   private fechaYHoraActual(): string {

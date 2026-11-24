@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 
 import { CLAVE_SOLICITUDES_CLASIFICADOR, ClasificadorSolicitudesService } from '../../../../../core/state/clasificador-solicitudes.service';
 import { CADENAS_AC, CADENAS_AC_INVERSION, CADENAS_APNOP, CADENAS_APNOP_INVERSION, CADENAS_PP, CADENAS_PP_TODAS } from '../../models/cadenas-programaticas.mock';
@@ -25,9 +25,10 @@ describe('ClasificadorProgramaticoRequestComponent · registro con PP', () => {
   });
 
   it('el aviso del plazo de programación sale solo con Programación marcada', () => {
-    const aviso = () => (fixture.nativeElement as HTMLElement).querySelector('siaf-alert');
+    const aviso = () =>
+      Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('siaf-alert')).find((a) => a.textContent?.includes('plazo de programación')) ?? null;
     fixture.detectChanges();
-    expect(aviso()?.textContent).toContain('plazo de programación');
+    expect(aviso()).not.toBeNull();
 
     pagina.marcarProceso('P', false);
     pagina.marcarProceso('G', true);
@@ -74,6 +75,30 @@ describe('ClasificadorProgramaticoRequestComponent · registro con PP', () => {
     fixture.detectChanges();
     expect(pagina.registroDetalle()).toBeNull();
     expect(pagina.filasTabla().length).toBe(2);
+  });
+
+  describe('Creación: aviso y «Ver clasificador programático»', () => {
+    const html = () => fixture.nativeElement as HTMLElement;
+
+    it('muestra el aviso «Administración del clasificador» y la tarjeta para ver el clasificador', () => {
+      fixture.detectChanges();
+      expect(html().querySelector('siaf-alert')?.textContent).toContain('Administración del clasificador');
+      expect(html().textContent).toContain('Ver clasificador programático');
+    });
+
+    it('la × cierra el aviso y la tarjeta se queda', () => {
+      fixture.detectChanges();
+      pagina.avisoCreacionVisible.set(false);
+      fixture.detectChanges();
+      expect(html().textContent).not.toContain('Administración del clasificador');
+      expect(html().textContent).toContain('Ver clasificador programático');
+    });
+
+    it('la flecha lleva a Documentos y registros', () => {
+      const navegar = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+      pagina.verClasificador();
+      expect(navegar).toHaveBeenCalledWith(['/procesos/clasificador-programatico']);
+    });
   });
 
   describe('bandejas', () => {

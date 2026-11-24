@@ -19,12 +19,41 @@
     (verified)="modalVerificar.set(true)"
     (deleted)="modalEliminar.set(true)"
   >
+    @if (esCreacion && avisoCreacionVisible()) {
+      <siaf-alert
+        tone="info"
+        title="Administración del clasificador"
+        description="Con los registros de esta solicitud de creación se actualizará el clasificador programático."
+        [showClose]="true"
+        (closed)="avisoCreacionVisible.set(false)"
+      />
+    }
+
     <section class="grid gap-siaf-md" [class.lg:grid-cols-[1fr_360px]]="elaborado()">
       <siaf-solicitude-info-card [fields]="camposEntidad()" [captureOpenDate]="true" />
       @if (elaborado()) {
         <siaf-document-summary-card [documentNumber]="numeroDocumento()" status="Elaborado" />
       }
     </section>
+
+    @if (esCreacion) {
+      <section class="flex items-center justify-between gap-siaf-md rounded-siaf-md bg-surface px-siaf-lg py-siaf-md">
+        <div class="flex items-center gap-siaf-xs">
+          <h2 class="m-0 text-sm font-bold uppercase leading-normal text-text">Ver clasificador programático</h2>
+          <span
+            class="inline-flex text-[var(--sys-color-text-neutral-medium)]"
+            tabindex="0"
+            role="img"
+            aria-label="Consulta el clasificador programático vigente"
+            siafTooltip="Consulta el clasificador programático vigente"
+            tooltipMode="always"
+          >
+            <siaf-icon name="info" [size]="20" aria-hidden="true" />
+          </span>
+        </div>
+        <siaf-button variant="outline" size="md" icon="arrow_forward" [iconOnly]="true" ariaLabel="Ver clasificador programático" (click)="verClasificador()" />
+      </section>
+    }
 
     <section class="rounded-siaf-md bg-surface p-siaf-lg">
       <header class="flex items-center justify-between gap-siaf-md">

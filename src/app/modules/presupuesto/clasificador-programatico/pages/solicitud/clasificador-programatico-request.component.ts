@@ -174,7 +174,13 @@ export class ClasificadorProgramaticoRequestComponent {
   readonly numeroDocumento = signal('');
   readonly elaboradoPor = signal('');
   readonly fechaElaboracion = signal('');
-  readonly headerState = computed<SolicitudeHeaderState>(() => (this.elaborado() ? 'elaborated' : this.enEdicion() ? 'edit' : 'new'));
+  /** «Verificar y enviar» confirmado: la solicitud sigue abierta en solo lectura, sin acciones, con «Verificado por». */
+  readonly verificado = signal(false);
+  readonly verificadoPor = signal('');
+  readonly fechaVerificacion = signal('');
+  readonly headerState = computed<SolicitudeHeaderState>(() =>
+    this.verificado() ? 'verified' : this.elaborado() ? 'elaborated' : this.enEdicion() ? 'edit' : 'new',
+  );
   /** «Verificar y enviar» solo se habilita con el documento elaborado. */
   readonly verifyDisabled = computed(() => !this.elaborado());
 
@@ -828,8 +834,10 @@ export class ClasificadorProgramaticoRequestComponent {
   onConfirmarVerificar(): void {
     this.modalVerificar.set(false);
     this.solicitudes.cambiarEstado(this.solicitudId, 'Verificado');
+    this.verificadoPor.set(this.currentUser.name);
+    this.fechaVerificacion.set(this.fechaYHoraActual());
+    this.verificado.set(true);
     this.mostrarAviso('creation-verified');
-    this.regresar();
   }
 
   onConfirmarEliminar(): void {

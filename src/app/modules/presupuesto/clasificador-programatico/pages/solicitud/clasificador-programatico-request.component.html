@@ -19,7 +19,7 @@
     (verified)="modalVerificar.set(true)"
     (deleted)="modalEliminar.set(true)"
   >
-    @if (esCreacion && avisoCreacionVisible()) {
+    @if (esCreacion && avisoCreacionVisible() && !verificado()) {
       <siaf-alert
         tone="info"
         [title]="esPrimeraCreacion ? 'Apertura del clasificador programático' : 'Administración del clasificador'"
@@ -36,7 +36,7 @@
     <section class="grid gap-siaf-md" [class.lg:grid-cols-[1fr_360px]]="elaborado()">
       <siaf-solicitude-info-card [fields]="camposEntidad()" [captureOpenDate]="true" />
       @if (elaborado()) {
-        <siaf-document-summary-card [documentNumber]="numeroDocumento()" status="Elaborado" />
+        <siaf-document-summary-card [documentNumber]="numeroDocumento()" [status]="verificado() ? 'Verificado' : 'Elaborado'" />
       }
     </section>
 
@@ -250,9 +250,17 @@
     </section>
 
     @if (elaborado()) {
-      <section class="flex flex-col gap-siaf-xs rounded-siaf-md bg-surface p-siaf-lg">
-        <readonly-field caption="Elaborado por" [value]="elaboradoPor().toUpperCase()" />
-        <readonly-field caption="Fecha" [value]="fechaElaboracion()" />
+      <section class="grid gap-siaf-md rounded-siaf-md bg-surface p-siaf-lg" [class.md:grid-cols-2]="verificado()">
+        <div class="flex flex-col gap-siaf-xs">
+          <readonly-field caption="Elaborado por" [value]="elaboradoPor().toUpperCase()" />
+          <readonly-field caption="Fecha" [value]="fechaElaboracion()" />
+        </div>
+        @if (verificado()) {
+          <div class="flex flex-col gap-siaf-xs">
+            <readonly-field caption="Verificado por" [value]="verificadoPor().toUpperCase()" />
+            <readonly-field caption="Fecha" [value]="fechaVerificacion()" />
+          </div>
+        }
       </section>
     }
   </siaf-solicitude-page-layout>

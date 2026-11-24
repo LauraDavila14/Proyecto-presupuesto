@@ -155,6 +155,19 @@ describe('ClasificadorProgramaticoRequestComponent · registro con PP', () => {
       expect(pagina.numeroDocumento()).toBe('0001');
     });
 
+    it('Verificar y enviar deja la solicitud abierta, en solo lectura y con «Verificado por»', () => {
+      pagina.onConfirmarGrabar();
+      pagina.onConfirmarVerificar();
+      fixture.detectChanges();
+      expect(pagina.regresar).not.toHaveBeenCalled();
+      expect(pagina.headerState()).toBe('verified');
+      const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(texto).toContain('Verificado por');
+      expect(texto).toContain('Elaborado por');
+      expect(texto).toContain('Verificado');
+      expect(texto).not.toContain('Verificar y enviar');
+    });
+
     it('Verificar y enviar la pasa a Verificada y Eliminar, a la Papelera', () => {
       pagina.onConfirmarGrabar();
       pagina.onConfirmarVerificar();

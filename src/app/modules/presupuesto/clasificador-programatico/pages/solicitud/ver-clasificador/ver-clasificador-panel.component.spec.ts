@@ -58,4 +58,53 @@ describe('VerClasificadorPanelComponent', () => {
     fixture.detectChanges();
     expect(panel.filasPagina()[0]['selected']).toBeFalse();
   });
+
+  describe('panel «Filtros»', () => {
+    it('el ícono lo abre, con Aplicar desactivado hasta que haya cambios', () => {
+      panel.abrirFiltros();
+      fixture.detectChanges();
+      expect(panel.filtrosAbiertos()).toBeTrue();
+      expect(panel.borradorCambiado()).toBeFalse();
+
+      panel.cambiarValor('categoria', ['AC']);
+      expect(panel.borradorCambiado()).toBeTrue();
+    });
+
+    it('trae ocho desplegables y sus opciones salen de los registros', () => {
+      expect(panel.camposFiltro.length).toBe(8);
+      expect(panel.opcionesPorCampo['categoria'].map((o) => o.value)).toEqual(['AC', 'APNOP', 'PP']);
+    });
+
+    it('Aplicar filtra la tabla, muestra los chips y cierra el panel; Borrar filtros lo deshace', () => {
+      panel.abrirFiltros();
+      panel.cambiarValor('categoria', ['AC']);
+      panel.aplicarFiltros();
+      expect(panel.filtrosAbiertos()).toBeFalse();
+      expect(panel.totalFilas()).toBe(4);
+      expect(panel.chips()).toEqual(['AC']);
+      expect(panel.filtrosVisibles()).toBeTrue();
+
+      panel.borrarFiltros();
+      expect(panel.totalFilas()).toBe(VER_CLASIFICADOR_FILAS.length);
+      expect(panel.filtrosVisibles()).toBeFalse();
+    });
+
+    it('Cancelar cierra sin aplicar y descarta lo cambiado', () => {
+      panel.abrirFiltros();
+      panel.cambiarValor('categoria', ['PP']);
+      panel.cerrarFiltros();
+      expect(panel.totalFilas()).toBe(VER_CLASIFICADOR_FILAS.length);
+
+      panel.abrirFiltros();
+      expect(panel.borrador()['categoria']).toBeUndefined();
+    });
+
+    it('los filtros se suman al buscador', () => {
+      panel.abrirFiltros();
+      panel.cambiarValor('categoria', ['AC']);
+      panel.aplicarFiltros();
+      panel.buscar('2355382');
+      expect(panel.totalFilas()).toBe(2);
+    });
+  });
 });

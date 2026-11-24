@@ -5693,6 +5693,13 @@ export const MANIFIESTO_UI_KIT: readonly FichaComponente[] = [
         "descripcion": null
       },
       {
+        "nombre": "filterActive",
+        "tipo": "boolean",
+        "porDefecto": "false",
+        "requerida": false,
+        "descripcion": "El panel de filtros está abierto: el botón se marca en azul y queda como «presionado»."
+      },
+      {
         "nombre": "filterLabel",
         "tipo": "string",
         "porDefecto": "'Filtrar'",
@@ -5777,12 +5784,19 @@ export const MANIFIESTO_UI_KIT: readonly FichaComponente[] = [
     "aria": {
       "roles": [],
       "atributos": [
-        "aria-label"
+        "aria-label",
+        "aria-pressed"
       ]
     },
     "tokens": [
       {
         "token": "--sys-color-bg-states-dark-pressed",
+        "via": [
+          "var()"
+        ]
+      },
+      {
+        "token": "--sys-color-bg-states-light-selected",
         "via": [
           "var()"
         ]
@@ -5795,6 +5809,12 @@ export const MANIFIESTO_UI_KIT: readonly FichaComponente[] = [
       },
       {
         "token": "--sys-color-border-states-focus",
+        "via": [
+          "var()"
+        ]
+      },
+      {
+        "token": "--sys-color-text-brand-primary",
         "via": [
           "var()"
         ]

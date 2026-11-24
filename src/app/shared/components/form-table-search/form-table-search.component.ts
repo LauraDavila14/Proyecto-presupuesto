@@ -77,6 +77,9 @@ import { TextFieldComponent } from '../../ui/text-field/text-field.component';
           class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-dark-pressed)] disabled:cursor-not-allowed disabled:text-[var(--sys-color-text-neutral-disabled)] disabled:hover:bg-transparent focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--sys-color-border-states-focus)]"
           type="button"
           [attr.aria-label]="filterLabel"
+          [attr.aria-pressed]="filterActive ? 'true' : null"
+          [class.bg-[var(--sys-color-bg-states-light-selected)]]="filterActive"
+          [class.text-[var(--sys-color-text-brand-primary)]]="filterActive"
           [disabled]="disabled"
           (click)="filter.emit()"
         >
@@ -122,6 +125,8 @@ export class FormTableSearchComponent implements OnChanges {
   @Input() columnsLabel = 'Ocultar o mostrar columnas';
   /** Muestra el botón «Filtrar». Se apaga en las búsquedas que no filtran. */
   @Input() showFilter = true;
+  /** El panel de filtros está abierto: el botón se marca en azul y queda como «presionado». */
+  @Input() filterActive = false;
   /** Muestra el segundo botón («Más opciones» o «Columnas»). */
   @Input() showMore = true;
   @Input() disabled = false;

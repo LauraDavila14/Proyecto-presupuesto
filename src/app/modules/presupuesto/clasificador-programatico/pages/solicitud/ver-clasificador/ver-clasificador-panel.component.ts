@@ -12,6 +12,7 @@ import { SidePanelComponent } from '../../../../../../shared/ui/side-panel/side-
 import { TagComponent } from '../../../../../../shared/ui/tag/tag.component';
 import { TextFieldComponent } from '../../../../../../shared/ui/text-field/text-field.component';
 import { VER_CLASIFICADOR_COLUMNAS, VER_CLASIFICADOR_FILAS } from '../../../config/clasificador-programatico-documents.config';
+import { etiquetaDe } from './etiquetas-registro';
 
 /** Un desplegable del panel «Filtros»: la columna de la fila que filtra y su etiqueta. */
 const CAMPOS_FILTRO: { clave: string; etiqueta: string }[] = [
@@ -35,7 +36,7 @@ type Filtros = Record<string, string[]>;
  * paginación con «Filas por página». La flecha ← del encabezado cierra el panel y deja la solicitud como estaba.
  *
  * El ícono de filtros abre a la derecha el panel «Filtros» (Figma 2579:116898) con ocho desplegables de selección
- * múltiple, cuyas opciones salen de los valores de los registros. Aplicar filtra la tabla y muestra los chips de lo
+ * múltiple, cuyas opciones salen de los registros y se muestran como «código nombre». Aplicar filtra la tabla y muestra los chips de lo
  * aplicado con «Borrar filtros»; Cancelar cierra sin aplicar. Los filtros se suman al buscador.
  *
  * Los datos son los registros de ejemplo del clasificador: no hay backend detrás.
@@ -134,10 +135,10 @@ export class VerClasificadorPanelComponent {
   readonly columnas = VER_CLASIFICADOR_COLUMNAS;
   readonly camposFiltro = CAMPOS_FILTRO;
 
-  /** Opciones de cada desplegable: los valores distintos de los registros, ordenados. */
+  /** Opciones de cada desplegable: los «código nombre» distintos de los registros, ordenados. */
   readonly opcionesPorCampo: Record<string, { value: string; label: string }[]> = Object.fromEntries(
     CAMPOS_FILTRO.map(({ clave }) => {
-      const valores = [...new Set(VER_CLASIFICADOR_FILAS.map((fila) => String(fila[clave] ?? '-')))].sort((a, b) => a.localeCompare(b));
+      const valores = [...new Set(VER_CLASIFICADOR_FILAS.map((fila) => etiquetaDe(fila, clave)))].sort((a, b) => a.localeCompare(b));
       return [clave, valores.map((valor) => ({ value: valor, label: valor }))];
     }),
   );
@@ -176,7 +177,7 @@ export class VerClasificadorPanelComponent {
     const marcadas = this.marcadas();
     return VER_CLASIFICADOR_FILAS.filter(
       (fila) =>
-        CAMPOS_FILTRO.every(({ clave }) => !filtros[clave]?.length || filtros[clave].includes(String(fila[clave] ?? '-'))) &&
+        CAMPOS_FILTRO.every(({ clave }) => !filtros[clave]?.length || filtros[clave].includes(etiquetaDe(fila, clave))) &&
         (!texto || this.columnas.some((c) => String(fila[c.key] ?? '').toLowerCase().includes(texto))),
     ).map((fila) => ({ ...fila, selected: marcadas.has(String(fila['recordId'])) }));
   });

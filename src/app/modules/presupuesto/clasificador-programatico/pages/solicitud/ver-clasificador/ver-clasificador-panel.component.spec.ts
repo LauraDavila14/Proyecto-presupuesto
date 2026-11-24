@@ -66,22 +66,37 @@ describe('VerClasificadorPanelComponent', () => {
       expect(panel.filtrosAbiertos()).toBeTrue();
       expect(panel.borradorCambiado()).toBeFalse();
 
-      panel.cambiarValor('categoria', ['AC']);
+      panel.cambiarValor('categoria', ['AC Acciones centrales']);
       expect(panel.borradorCambiado()).toBeTrue();
     });
 
     it('trae ocho desplegables y sus opciones salen de los registros', () => {
       expect(panel.camposFiltro.length).toBe(8);
-      expect(panel.opcionesPorCampo['categoria'].map((o) => o.value)).toEqual(['AC', 'APNOP', 'PP']);
+      expect(panel.opcionesPorCampo['categoria'].map((o) => o.label)).toEqual([
+        'AC Acciones centrales',
+        'APNOP Asignaciones presupuestarias que no resultan en productos',
+        'PP Programas presupuestales',
+      ]);
+    });
+
+    it('las opciones muestran «código nombre» y un mismo código con otro nombre sale como opción aparte', () => {
+      const programas = panel.opcionesPorCampo['programa'].map((o) => o.label);
+      expect(programas).toContain('0062 Optimización de la política de protección y atención a las comunidades peruanas en el exterior');
+      expect(programas).toContain('-');
+
+      const actividades = panel.opcionesPorCampo['actividad'].map((o) => o.label).filter((l) => l.startsWith('0000420 '));
+      expect(actividades.length).toBe(2);
+      expect(panel.opcionesPorCampo['funcion'].map((o) => o.label)).toContain('02 Relaciones exteriores');
+      expect(panel.opcionesPorCampo['finalidad'].map((o) => o.label)).toEqual(['-']);
     });
 
     it('Aplicar filtra la tabla, muestra los chips y cierra el panel; Borrar filtros lo deshace', () => {
       panel.abrirFiltros();
-      panel.cambiarValor('categoria', ['AC']);
+      panel.cambiarValor('categoria', ['AC Acciones centrales']);
       panel.aplicarFiltros();
       expect(panel.filtrosAbiertos()).toBeFalse();
       expect(panel.totalFilas()).toBe(4);
-      expect(panel.chips()).toEqual(['AC']);
+      expect(panel.chips()).toEqual(['AC Acciones centrales']);
       expect(panel.filtrosVisibles()).toBeTrue();
 
       panel.borrarFiltros();
@@ -91,7 +106,7 @@ describe('VerClasificadorPanelComponent', () => {
 
     it('Cancelar cierra sin aplicar y descarta lo cambiado', () => {
       panel.abrirFiltros();
-      panel.cambiarValor('categoria', ['PP']);
+      panel.cambiarValor('categoria', ['PP Programas presupuestales']);
       panel.cerrarFiltros();
       expect(panel.totalFilas()).toBe(VER_CLASIFICADOR_FILAS.length);
 
@@ -101,7 +116,7 @@ describe('VerClasificadorPanelComponent', () => {
 
     it('los filtros se suman al buscador', () => {
       panel.abrirFiltros();
-      panel.cambiarValor('categoria', ['AC']);
+      panel.cambiarValor('categoria', ['AC Acciones centrales']);
       panel.aplicarFiltros();
       panel.buscar('2355382');
       expect(panel.totalFilas()).toBe(2);

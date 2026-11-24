@@ -94,6 +94,8 @@ export type DocumentsRecordsConfig = {
   recordHistoryDocumentLabel: string;
   /** Pestaña Registros con una casilla por fila y «seleccionar todo» (solo marcan; sin acción asociada). */
   recordSelectable?: boolean;
+  /** Aviso informativo bajo el título de la pestaña Registros (título y texto); el usuario lo cierra con la ×. */
+  recordsNotice?: { title: string; description: string };
   /** Variante del panel "Historial del registro" de la pestaña Registros:
    *  'cuenta' (default, plan de cuentas) o 'asiento' (asiento de ajuste). */
   recordHistoryKind?: 'cuenta' | 'asiento' | 'documento';

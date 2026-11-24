@@ -1,3 +1,4 @@
+import { ChangeDetectorRef } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -77,6 +78,33 @@ describe('DocumentsRecordsPageComponent', () => {
       configurar({ ...BANDEJA_CONFIG_DE_MUESTRA, documentRows: filas(12) });
 
       expect(contadores()).toEqual(['1-10 de 12', '1-10 de 12']);
+    });
+  });
+
+  describe('aviso de la pestaña Registros', () => {
+    const aviso = { title: 'Consolidado de registros', description: 'Se actualiza con cada registro.' };
+
+    it('sale solo en Registros, con la configuración que lo pide, y la × lo cierra', () => {
+      configurar({ ...BANDEJA_CONFIG_DE_MUESTRA, recordsNotice: aviso });
+      expect(el().querySelector('siaf-alert')).toBeNull();
+
+      pagina.activeTab = 'records';
+      fixture.componentRef.injector.get(ChangeDetectorRef).markForCheck();
+      fixture.detectChanges();
+      expect(el().querySelector('siaf-alert')?.textContent).toContain('Consolidado de registros');
+
+      pagina.recordsNoticeClosed = true;
+      fixture.componentRef.injector.get(ChangeDetectorRef).markForCheck();
+      fixture.detectChanges();
+      expect(el().querySelector('siaf-alert')).toBeNull();
+    });
+
+    it('sin recordsNotice en la configuración no sale nada', () => {
+      configurar(BANDEJA_CONFIG_DE_MUESTRA);
+      pagina.activeTab = 'records';
+      fixture.componentRef.injector.get(ChangeDetectorRef).markForCheck();
+      fixture.detectChanges();
+      expect(el().querySelector('siaf-alert')).toBeNull();
     });
   });
 

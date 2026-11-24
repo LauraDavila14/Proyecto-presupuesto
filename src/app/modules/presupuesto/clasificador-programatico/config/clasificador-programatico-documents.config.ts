@@ -145,6 +145,10 @@ export const CLASIFICADOR_PROGRAMATICO_DOCUMENTS_CONFIG: DocumentsRecordsConfig 
   documentRows,
   recordRows,
   recordSelectable: true,
+  recordsNotice: {
+    title: 'Consolidado de registros del clasificador',
+    description: 'Se actualiza con cada nuevo registro de creación o de modificación.',
+  },
   recordFilter1Label: 'Tipo',
   recordFilter1Key: 'categoria',
   recordFilter1Options: ['PP', 'AC', 'APNOP'],

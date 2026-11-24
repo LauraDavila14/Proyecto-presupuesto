@@ -4937,6 +4937,7 @@ export const MANIFIESTO_UI_KIT: readonly FichaComponente[] = [
     "usa": [
       "[siafFoco]",
       "siaf-account-history-panel",
+      "siaf-alert",
       "siaf-asiento-history-panel",
       "siaf-breadcrumb",
       "siaf-button",

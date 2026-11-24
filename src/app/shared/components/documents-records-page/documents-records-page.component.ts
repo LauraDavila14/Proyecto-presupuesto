@@ -16,6 +16,7 @@ import { TableControlsComponent } from '../../components/table-controls/table-co
 import type { DocumentsQuery, DocumentsRecordsColumn, DocumentsRecordsConfig, DocumentsRecordsRow, DocumentsRecordsTab } from '../../types/documents-records.types';
 import { AccountHistoryPanelComponent } from '../account-history-panel/account-history-panel.component';
 import { AsientoHistoryPanelComponent } from '../asiento-history-panel/asiento-history-panel.component';
+import { AlertComponent } from '../../ui/alert/alert.component';
 import { ButtonComponent } from '../../ui/button/button.component';
 import { ColumnVisibilityPanelComponent } from '../../ui/column-visibility-panel/column-visibility-panel.component';
 import { CreateDocumentAccepted, CreateDocumentComponent, CreateDocumentField, CreateDocumentSelection } from '../create-document/create-document.component';
@@ -96,7 +97,7 @@ type DocumentsRecordsRoleMode = 'creator' | 'approver' | 'readOnly';
 @Component({
   selector: 'siaf-documents-records-page',
   standalone: true,
-  imports: [FocoDirective, 
+  imports: [FocoDirective, AlertComponent,
     AccountHistoryPanelComponent, AsientoHistoryPanelComponent, BreadcrumbComponent, ButtonComponent, ColumnVisibilityPanelComponent,
     CreateDocumentComponent, CustomFilterComponent, DocumentHistoryPanelComponent,
     DocumentsRecordsTableComponent, FilterPillComponent, IconComponent, IconDropdownMenuComponent,
@@ -230,6 +231,16 @@ type DocumentsRecordsRoleMode = 'creator' | 'approver' | 'readOnly';
                   }
                 }
               </header>
+
+              @if (activeTab === 'records' && effectiveConfig.recordsNotice && !recordsNoticeClosed) {
+                <siaf-alert
+                  tone="info"
+                  [title]="effectiveConfig.recordsNotice.title"
+                  [description]="effectiveConfig.recordsNotice.description"
+                  [showClose]="true"
+                  (closed)="recordsNoticeClosed = true"
+                />
+              }
 
               @if (activeTab === 'records') {
                 <ng-content select="[records-header]" />
@@ -484,6 +495,8 @@ export class DocumentsRecordsPageComponent implements OnChanges {
   }
 
   activeTab: DocumentsRecordsTab = 'documents';
+  /** El aviso de `recordsNotice` se cerró con la ×. */
+  recordsNoticeClosed = false;
   createDocumentPopoverOpen = false;
   customFilterOpen = false;
   columnPanelOpen = false;

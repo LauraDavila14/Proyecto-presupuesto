@@ -62,6 +62,21 @@ describe('CadenaSearchPanelComponent', () => {
     expect(etiquetas).not.toContain('Producto');
   });
 
+  it('muestra «Tipo de cadena» y «Detalle de cadena de…» en el cuerpo, y el tipo cambia la tabla sin filtros ni búsqueda', () => {
+    fixture.detectChanges();
+    const html = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(html).toContain('Tipo de cadena');
+    expect(html).toContain('Detalle de cadena de producto predeterminado');
+    expect(panel.opcionesTipo().map((o) => o.label)).toEqual(['Producto predeterminado', 'Proyecto']);
+    expect(panel.columnas().map((c) => c.etiqueta)).toEqual(['Categ. pres.', 'Programa', 'Producto', 'Actividad']);
+
+    panel.buscar('gestión');
+    panel.cambiarTipo('inversion');
+    fixture.detectChanges();
+    expect(panel.busqueda()).toBe('');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Detalle de cadena de proyecto');
+  });
+
   describe('filtros', () => {
     it('ofrece los desplegables del tipo con «código + nombre» en Programa', () => {
       panel.abrirFiltros();
@@ -85,15 +100,15 @@ describe('CadenaSearchPanelComponent', () => {
       expect(panel.totalFilas()).toBe(6);
     });
 
-    it('con Inversión cambia las filas y los desplegables, y reinicia lo elegido', () => {
+    it('con Proyecto cambia las filas al instante, y cambia los desplegables y reinicia lo elegido', () => {
       panel.abrirFiltros();
       panel.cambiarValor('funcion', ['02 Relaciones exteriores']);
       panel.cambiarTipo('inversion');
+      expect(panel.aplicados().tipo).toBe('inversion');
       expect(panel.borrador().valores).toEqual({});
       expect(panel.camposBorrador().map((c) => c.etiqueta)).toEqual([
         'Programa', 'Inversión', 'AI / OBR', 'Función', 'División funcional', 'Grupo funcional',
       ]);
-      panel.aplicarFiltros();
       expect(panel.filasPagina().every((c) => c.tipo === 'inversion')).toBe(true);
       expect(panel.filasPagina()[0].actividad.codigo).toBe('0000420');
       expect(panel.opcionesPorCampo()['actividad'][0].label).toMatch(/^\d{7} \S/);
@@ -104,23 +119,23 @@ describe('CadenaSearchPanelComponent', () => {
       panel.cambiarValor('producto', [CADENAS_PP[0], CADENAS_PP[3]].map((c) => `${c.producto!.codigo} ${c.producto!.nombre}`));
       panel.aplicarFiltros();
       expect(panel.filasPagina().every((c) => ['3000144', '3000710'].includes(c.producto!.codigo))).toBe(true);
-      expect(panel.chips().length).toBe(3);
+      expect(panel.chips().length).toBe(2);
     });
 
     it('tras Aplicar muestra las etiquetas de los filtros y «Borrar filtros» los quita', () => {
       expect(panel.filtrosVisibles()).toBe(false);
-      panel.abrirFiltros();
       panel.cambiarTipo('inversion');
+      panel.abrirFiltros();
       panel.cambiarValor('actividad', ['0000011']);
       panel.aplicarFiltros();
       expect(panel.filtrosVisibles()).toBe(true);
-      expect(panel.chips()).toEqual(['Inversión', '0000011']);
+      expect(panel.chips()).toEqual(['0000011']);
 
       panel.buscar('gestión');
       panel.marcar('inv-5', true);
       panel.borrarFiltros();
       expect(panel.filtrosVisibles()).toBe(false);
-      expect(panel.aplicados().tipo).toBe('producto');
+      expect(panel.aplicados().tipo).toBe('inversion');
       expect(panel.totalFilas()).toBeGreaterThan(0);
       expect(panel.busqueda()).toBe('gestión');
       expect(panel.marcadas()).toEqual(['inv-5']);
@@ -154,8 +169,8 @@ describe('CadenaSearchPanelComponent', () => {
     it('ofrece solo las cadenas de actividad de AC, sin la columna Programa', () => {
       expect(panel.totalFilas()).toBe(CADENAS_AC.length);
       expect(panel.filasPagina().every((c) => c.categoria === 'AC' && c.tipo === 'actividad')).toBe(true);
-      expect(panel.columnas().map((c) => c.etiqueta)).toEqual(['Categ. pres.', 'Inversión', 'Act / AI / Obr']);
-      expect(panel.columnas()[1].valor(panel.filasPagina()[0])).toBe('-');
+      expect(panel.columnas().map((c) => c.etiqueta)).toEqual(['Categ. pres.', 'Actividad']);
+      expect(panel.columnas()[1].valor(panel.filasPagina()[0])).toBe('5000001 Planeamiento y presupuesto');
     });
 
     it('el detalle de una actividad no lleva Programa ni Producto', () => {
@@ -166,22 +181,23 @@ describe('CadenaSearchPanelComponent', () => {
       expect(panel.camposDetalle(panel.detalle()!)[0].valor).toBe('AC - Acciones centrales');
     });
 
-    it('los filtros ofrecen «Actividad predeterminada» e «Inversión» con sus desplegables', () => {
+    it('el tipo ofrece «Actividad predeterminada» y «Proyecto», y los filtros sus desplegables', () => {
       panel.abrirFiltros();
-      expect(panel.opcionesTipo().map((o) => o.label)).toEqual(['Actividad predeterminada', 'Inversión']);
+      expect(panel.opcionesTipo().map((o) => o.label)).toEqual(['Actividad predeterminada', 'Proyecto']);
+      expect(panel.detalleTipo()).toBe('actividad predeterminada');
       expect(panel.camposBorrador().map((c) => c.etiqueta)).toEqual(['Actividad', 'Función', 'División funcional', 'Grupo funcional']);
       panel.cambiarTipo('inversion');
       expect(panel.camposBorrador().map((c) => c.etiqueta)).toEqual(['Inversión', 'AI / OBR', 'Función', 'División funcional', 'Grupo funcional']);
     });
 
-    it('con Inversión cambia a las cadenas de inversión de AC, con la columna AI / OBR', () => {
-      panel.abrirFiltros();
+    it('con Proyecto cambia a las cadenas de inversión de AC, con la columna AI / OBR y sin chips', () => {
       panel.cambiarTipo('inversion');
-      panel.aplicarFiltros();
       expect(panel.totalFilas()).toBe(CADENAS_AC_INVERSION.length);
+      expect(panel.detalleTipo()).toBe('proyecto');
       expect(panel.columnas().map((c) => c.etiqueta)).toEqual(['Categ. pres.', 'Inversión', 'Act / AI / Obr']);
       expect(panel.filasPagina()[0].producto?.codigo).toBe('2355382');
-      expect(panel.chips()).toEqual(['Inversión']);
+      expect(panel.chips()).toEqual([]);
+      expect(panel.filtrosVisibles()).toBe(false);
     });
   });
 
@@ -195,8 +211,8 @@ describe('CadenaSearchPanelComponent', () => {
     it('usa las columnas, los tipos y el detalle de AC con sus propias cadenas', () => {
       expect(panel.totalFilas()).toBe(CADENAS_APNOP.length);
       expect(panel.filasPagina()[0].actividad.codigo).toBe('5000643');
-      expect(panel.columnas().map((c) => c.etiqueta)).toEqual(['Categ. pres.', 'Inversión', 'Act / AI / Obr']);
-      expect(panel.opcionesTipo().map((o) => o.label)).toEqual(['Actividad predeterminada', 'Inversión']);
+      expect(panel.columnas().map((c) => c.etiqueta)).toEqual(['Categ. pres.', 'Actividad']);
+      expect(panel.opcionesTipo().map((o) => o.label)).toEqual(['Actividad predeterminada', 'Proyecto']);
       panel.abrirDetalle('apn-1');
       expect(panel.camposDetalle(panel.detalle()!)[0].valor).toBe('APNOP - Asignaciones presupuestarias que no resultan en productos');
     });

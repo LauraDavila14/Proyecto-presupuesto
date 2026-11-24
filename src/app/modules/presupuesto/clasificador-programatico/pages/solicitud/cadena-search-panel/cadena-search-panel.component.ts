@@ -72,8 +72,8 @@ const CONFIG: Record<string, ConfigCadena> = {
     columnas: [
       CATEGORIA,
       { etiqueta: 'Programa', valor: (c) => codigo(c.programa) },
-      { etiqueta: 'Pro / Inv', valor: (c) => codigo(c.producto) },
-      { etiqueta: 'Act / AI / Obr', valor: (c) => texto(c.actividad) },
+      { etiqueta: 'Producto', valor: (c) => codigo(c.producto) },
+      { etiqueta: 'Actividad', valor: (c) => texto(c.actividad) },
     ],
     filtros: [
       { clave: 'programa', etiqueta: 'Programa', valor: (c) => texto(c.programa) },
@@ -111,7 +111,7 @@ const CONFIG: Record<string, ConfigCadena> = {
     ],
   },
   'AC:actividad': {
-    columnas: [CATEGORIA, { etiqueta: 'Inversión', valor: (c) => codigo(c.producto) }, { etiqueta: 'Act / AI / Obr', valor: (c) => texto(c.actividad) }],
+    columnas: [CATEGORIA, { etiqueta: 'Actividad', valor: (c) => texto(c.actividad) }],
     filtros: [
       { clave: 'actividad', etiqueta: 'Actividad', valor: (c) => texto(c.actividad) },
       ...CAMPOS_FUNCIONALES,
@@ -148,7 +148,14 @@ const TIPOS_POR_CATEGORIA: Record<string, TipoCadena[]> = {
 const ETIQUETA_TIPO: Record<TipoCadena, string> = {
   producto: 'Producto predeterminado',
   actividad: 'Actividad predeterminada',
-  inversion: 'Inversión',
+  inversion: 'Proyecto',
+};
+
+/** Subtítulo «Detalle de cadena de …» de cada tipo. */
+const DETALLE_TIPO: Record<TipoCadena, string> = {
+  producto: 'producto predeterminado',
+  actividad: 'actividad predeterminada',
+  inversion: 'proyecto',
 };
 
 interface FiltrosCadena {
@@ -166,7 +173,8 @@ interface FiltrosCadena {
  * Con PP ofrece los tipos Producto predeterminado e Inversión; con AC y APNOP, Actividad predeterminada e Inversión. Las
  * columnas, los filtros y el detalle cambian según la categoría y el tipo (AC y APNOP no llevan Programa).
  *
- * El ícono de filtros abre a la derecha el panel «Filtros» (tipo y desplegables con «código + nombre»); Aplicar filtra la tabla y, con Inversión, la cambia por las cadenas de inversión. Filtros y
+ * El «Tipo de cadena» (Producto o Actividad predeterminada, o Proyecto) son radios del cuerpo y cambian la tabla al instante.
+ * El ícono de filtros abre a la derecha el panel «Filtros» (desplegables con «código + nombre»); Aplicar filtra la tabla. Filtros y
  * detalle comparten ese lugar. Emite `confirmed` con las cadenas marcadas.
  */
 @Component({
@@ -190,6 +198,13 @@ interface FiltrosCadena {
     >
       <div class="flex min-h-full">
         <div class="flex min-w-0 flex-1 flex-col gap-siaf-md" [class.pr-siaf-md]="!!detalle()">
+          <div class="flex flex-wrap items-center gap-siaf-md" role="group" aria-labelledby="cadena-tipo-etiqueta">
+            <span id="cadena-tipo-etiqueta" class="text-sm font-medium text-[var(--sys-color-text-neutral-low)]">Tipo de cadena</span>
+            <siaf-radio-group name="cadena-tipo" [inline]="true" [options]="opcionesTipo()" [value]="aplicados().tipo" (valueChange)="cambiarTipo($any($event))" />
+          </div>
+
+          <h3 class="m-0 text-sm font-bold text-text">Detalle de cadena de {{ detalleTipo() }}</h3>
+
           <siaf-form-table-search [value]="busqueda()" [showFilter]="true" [showMore]="false" (valueChange)="buscar($event)" (filter)="abrirFiltros()" />
 
           @if (filtrosVisibles()) {
@@ -203,17 +218,6 @@ interface FiltrosCadena {
               <siaf-button variant="outline" size="sm" icon="delete" (click)="borrarFiltros()">Borrar filtros</siaf-button>
             </div>
           }
-
-          <siaf-pagination
-            navigation="Activate"
-            position="Top"
-            [page]="pagina()"
-            [pageSize]="filasPorPagina()"
-            [totalItems]="totalFilas()"
-            [totalPages]="totalPaginas()"
-            (previous)="cambiarPagina(-1)"
-            (next)="cambiarPagina(1)"
-          />
 
           <div class="overflow-x-auto">
             <table class="w-full min-w-[960px] border-collapse text-left text-sm">
@@ -292,7 +296,6 @@ interface FiltrosCadena {
       </div>
 
       <div sidePanelNav class="flex flex-col gap-siaf-md p-siaf-md">
-        <siaf-radio-group label="Tipo" name="cadena-filtro-tipo" [options]="opcionesTipo()" [value]="borrador().tipo" (valueChange)="cambiarTipo($any($event))" />
         @for (campo of camposBorrador(); track campo.clave) {
           <siaf-input
             type="select-multiple"
@@ -358,8 +361,10 @@ export class CadenaSearchPanelComponent {
   readonly filtrosVisibles = signal(false);
   readonly chips = computed(() => {
     const { tipo, valores } = this.aplicados();
-    return [ETIQUETA_TIPO[tipo], ...configDe(this.categoriaSig(), tipo).filtros.flatMap((campo) => valores[campo.clave] ?? [])];
+    return configDe(this.categoriaSig(), tipo).filtros.flatMap((campo) => valores[campo.clave] ?? []);
   });
+
+  readonly detalleTipo = computed(() => DETALLE_TIPO[this.aplicados().tipo]);
 
   readonly camposBorrador = computed(() => configDe(this.categoriaSig(), this.borrador().tipo).filtros);
 
@@ -427,9 +432,18 @@ export class CadenaSearchPanelComponent {
     this.filtrosAbiertos.set(false);
   }
 
-  /** Cambiar de tipo vacía los desplegables: sus opciones salen de las cadenas del nuevo tipo. */
+  /**
+   * Cambiar de tipo (radios del cuerpo) cambia la tabla al instante: parte de cero, sin filtros ni búsqueda, y los
+   * desplegables ofrecen las opciones de las cadenas del nuevo tipo.
+   */
   cambiarTipo(tipo: TipoCadena): void {
-    if (tipo !== this.borrador().tipo) this.borrador.set({ tipo, valores: {} });
+    if (tipo === this.aplicados().tipo) return;
+    this.aplicados.set({ tipo, valores: {} });
+    this.borrador.set({ tipo, valores: {} });
+    this.filtrosVisibles.set(false);
+    this.busqueda.set('');
+    this.detalleId.set(null);
+    this.pagina.set(1);
   }
 
   cambiarValor(clave: string, valor: string[]): void {
@@ -438,15 +452,16 @@ export class CadenaSearchPanelComponent {
 
   aplicarFiltros(): void {
     this.aplicados.set(this.borrador());
-    this.filtrosVisibles.set(true);
+    this.filtrosVisibles.set(this.chips().length > 0);
     this.pagina.set(1);
     this.filtrosAbiertos.set(false);
   }
 
-  /** Quita todos los filtros: vuelve al tipo por defecto con todas sus cadenas. El buscador y las marcas no cambian. */
+  /** Quita todos los filtros y deja todas las cadenas del tipo elegido. El tipo, el buscador y las marcas no cambian. */
   borrarFiltros(): void {
-    this.aplicados.set(this.sinFiltros());
-    this.borrador.set(this.sinFiltros());
+    const tipo = this.aplicados().tipo;
+    this.aplicados.set({ tipo, valores: {} });
+    this.borrador.set({ tipo, valores: {} });
     this.filtrosVisibles.set(false);
     this.pagina.set(1);
   }

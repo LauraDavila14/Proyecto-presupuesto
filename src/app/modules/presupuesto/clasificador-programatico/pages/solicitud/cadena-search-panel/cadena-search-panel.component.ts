@@ -98,8 +98,8 @@ const CONFIG: Record<string, ConfigCadena> = {
     ],
     filtros: [
       { clave: 'programa', etiqueta: 'Programa', valor: (c) => texto(c.programa) },
-      { clave: 'producto', etiqueta: 'Inversión', valor: (c) => texto(c.producto) },
-      { clave: 'actividad', etiqueta: 'AI / OBR', valor: (c) => texto(c.actividad) },
+      { clave: 'producto', etiqueta: 'Proyecto', valor: (c) => texto(c.producto) },
+      { clave: 'actividad', etiqueta: 'Acción inversión / Obra', valor: (c) => texto(c.actividad) },
       ...CAMPOS_FUNCIONALES,
     ],
     detalle: (c) => [
@@ -190,6 +190,7 @@ interface FiltrosCadena {
       [showNav]="filtrosAbiertos()"
       navTitle="Filtros"
       navConfirmLabel="Aplicar"
+      [navConfirmDisabled]="!borradorCambiado()"
       (navConfirmed)="aplicarFiltros()"
       (navCanceled)="cerrarFiltros()"
       (closed)="closed.emit()"
@@ -205,7 +206,7 @@ interface FiltrosCadena {
 
           <h3 class="m-0 text-sm font-bold text-text">Detalle de cadena de {{ detalleTipo() }}</h3>
 
-          <siaf-form-table-search [value]="busqueda()" [showFilter]="true" [showMore]="false" (valueChange)="buscar($event)" (filter)="abrirFiltros()" />
+          <siaf-form-table-search [value]="busqueda()" [showFilter]="true" [showMore]="false" [filterActive]="filtrosAbiertos()" (valueChange)="buscar($event)" (filter)="abrirFiltros()" />
 
           @if (filtrosVisibles()) {
             <div class="flex items-center gap-siaf-sm">
@@ -362,6 +363,12 @@ export class CadenaSearchPanelComponent {
   readonly chips = computed(() => {
     const { tipo, valores } = this.aplicados();
     return configDe(this.categoriaSig(), tipo).filtros.flatMap((campo) => valores[campo.clave] ?? []);
+  });
+
+  /** Aplicar solo se activa cuando lo elegido en el panel difiere de lo ya aplicado (los desplegables vacíos no cuentan). */
+  readonly borradorCambiado = computed(() => {
+    const sinVacios = (valores: Record<string, string[]>) => Object.fromEntries(Object.entries(valores).filter(([, v]) => v.length > 0));
+    return JSON.stringify(sinVacios(this.borrador().valores)) !== JSON.stringify(sinVacios(this.aplicados().valores));
   });
 
   readonly detalleTipo = computed(() => DETALLE_TIPO[this.aplicados().tipo]);

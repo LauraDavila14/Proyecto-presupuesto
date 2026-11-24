@@ -90,6 +90,31 @@ describe('CadenaSearchPanelComponent', () => {
   });
 
   describe('filtros', () => {
+    it('Aplicar solo se activa cuando hay cambios respecto a lo aplicado', () => {
+      panel.abrirFiltros();
+      expect(panel.borradorCambiado()).toBe(false);
+
+      panel.cambiarValor('programa', ['0062']);
+      expect(panel.borradorCambiado()).toBe(true);
+
+      panel.cambiarValor('programa', []);
+      expect(panel.borradorCambiado()).toBe(false);
+    });
+
+    it('el ícono de filtros se marca mientras el panel «Filtros» está abierto', () => {
+      const boton = () => (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('button[aria-label="Filtrar"]');
+      fixture.detectChanges();
+      expect(boton()?.getAttribute('aria-pressed')).toBeNull();
+
+      panel.abrirFiltros();
+      fixture.detectChanges();
+      expect(boton()?.getAttribute('aria-pressed')).toBe('true');
+
+      panel.cerrarFiltros();
+      fixture.detectChanges();
+      expect(boton()?.getAttribute('aria-pressed')).toBeNull();
+    });
+
     it('ofrece los desplegables del tipo con «código + nombre» en Programa', () => {
       panel.abrirFiltros();
       expect(panel.camposBorrador().map((c) => c.etiqueta)).toEqual([
@@ -119,7 +144,7 @@ describe('CadenaSearchPanelComponent', () => {
       expect(panel.aplicados().tipo).toBe('inversion');
       expect(panel.borrador().valores).toEqual({});
       expect(panel.camposBorrador().map((c) => c.etiqueta)).toEqual([
-        'Programa', 'Inversión', 'AI / OBR', 'Función', 'División funcional', 'Grupo funcional',
+        'Programa', 'Proyecto', 'Acción inversión / Obra', 'Función', 'División funcional', 'Grupo funcional',
       ]);
       expect(panel.filasPagina().every((c) => c.tipo === 'inversion')).toBe(true);
       expect(panel.filasPagina()[0].actividad.codigo).toBe('0000420');

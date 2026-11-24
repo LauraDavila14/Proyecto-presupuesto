@@ -408,6 +408,8 @@
 
   <siaf-cadena-search-panel [cadenas]="cadenasBuscar" [categoria]="categoria()" [open]="cadenaAbierta()" (closed)="cadenaAbierta.set(false)" (confirmed)="elegirCadenas($event)" />
 
+  <siaf-ver-clasificador-panel [open]="verClasificadorAbierto()" (closed)="verClasificadorAbierto.set(false)" />
+
   <siaf-upload-side-nav [open]="panelSustentoAbierto()" (closed)="panelSustentoAbierto.set(false)" (confirmed)="onSustentoConfirmado($event)" />
 
   <siaf-snackbar [variant]="aviso()" [open]="avisoAbierto()" (closed)="avisoAbierto.set(false)" />

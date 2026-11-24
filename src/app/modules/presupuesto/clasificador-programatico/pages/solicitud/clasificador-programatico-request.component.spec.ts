@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
+import { NotificationsStateService } from '../../../../../core/realtime/notifications-state.service';
+import { EstadoNotificacionesDeMuestra } from '../../../../../features/ui-kit/ejemplos/datos-de-muestra';
 import { CLAVE_SOLICITUDES_CLASIFICADOR, ClasificadorSolicitudesService } from '../../../../../core/state/clasificador-solicitudes.service';
 import { CADENAS_AC, CADENAS_AC_INVERSION, CADENAS_APNOP, CADENAS_APNOP_INVERSION, CADENAS_PP, CADENAS_PP_TODAS } from '../../models/cadenas-programaticas.mock';
 import { ClasificadorProgramaticoRequestComponent } from './clasificador-programatico-request.component';
@@ -13,7 +15,7 @@ describe('ClasificadorProgramaticoRequestComponent · registro con PP', () => {
     localStorage.setItem(CLAVE_SOLICITUDES_CLASIFICADOR, '[]');
     TestBed.configureTestingModule({
       imports: [ClasificadorProgramaticoRequestComponent],
-      providers: [provideRouter([])],
+      providers: [provideRouter([]), { provide: NotificationsStateService, useClass: EstadoNotificacionesDeMuestra }],
     });
     fixture = TestBed.createComponent(ClasificadorProgramaticoRequestComponent);
     pagina = fixture.componentInstance;
@@ -94,10 +96,12 @@ describe('ClasificadorProgramaticoRequestComponent · registro con PP', () => {
       expect(html().textContent).toContain('Ver clasificador programático');
     });
 
-    it('la flecha lleva a Documentos y registros', () => {
+    it('la flecha abre el panel «Ver clasificador programático» sin salir de la solicitud', () => {
       const navegar = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+      expect(pagina.verClasificadorAbierto()).toBe(false);
       pagina.verClasificador();
-      expect(navegar).toHaveBeenCalledWith(['/procesos/clasificador-programatico']);
+      expect(pagina.verClasificadorAbierto()).toBe(true);
+      expect(navegar).not.toHaveBeenCalled();
     });
   });
 

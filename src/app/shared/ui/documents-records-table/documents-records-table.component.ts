@@ -76,7 +76,9 @@ export type DocumentsRecordsSelectionChange = {
               @for (grupo of grupos; track $index; let primero = $first) {
                 <th class="border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm text-center" [class.border-l]="!primero" [attr.colspan]="grupo.columnas">{{ grupo.etiqueta }}</th>
               }
-              <th class="sticky right-0 w-14 border-l border-[var(--sys-color-divider-strong)] bg-surface-high px-siaf-sm py-siaf-sm" rowspan="2"></th>
+              @if (historial) {
+                <th class="sticky right-0 w-14 border-l border-[var(--sys-color-divider-strong)] bg-surface-high px-siaf-sm py-siaf-sm" rowspan="2"></th>
+              }
             </tr>
           }
           <tr class="bg-surface-high text-[10px] font-bold uppercase text-text">
@@ -87,7 +89,7 @@ export type DocumentsRecordsSelectionChange = {
               <!-- MFD RF-01: al superponer el mouse se muestra el texto completo de la columna -->
               <th class="truncate px-siaf-md py-siaf-sm" siafTooltip [class.border-l]="iniciaGrupo(i)" [class.border-[var(--sys-color-divider-strong)]]="iniciaGrupo(i)" [ngClass]="[column.widthClass || 'w-[180px]', column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : 'text-left']">{{ column.label }}</th>
             }
-            @if (grupos.length === 0) {
+            @if (grupos.length === 0 && historial) {
               <th class="sticky right-0 w-14 rounded-r-siaf-sm border-l border-[var(--sys-color-divider-strong)] bg-surface-high px-siaf-sm py-siaf-sm"></th>
             }
           </tr>
@@ -124,11 +126,13 @@ export type DocumentsRecordsSelectionChange = {
                   }
                 </td>
               }
+@if (historial) {
               <td class="sticky right-0 border-l border-[var(--sys-color-divider-strong)] bg-surface px-siaf-sm py-siaf-xs">
                 <button class="inline-flex size-8 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-dark-pressed)]" type="button" [attr.aria-label]="activeTab === 'records' ? 'Ver historial del registro' : 'Historial de documento'" [title]="activeTab === 'records' ? 'Ver historial del registro' : 'Historial de documento'" (click)="historyOpened.emit(row)">
                   <siaf-icon name="history" [size]="20" />
                 </button>
               </td>
+              }
             </tr>
           }
         </tbody>
@@ -144,6 +148,8 @@ export class DocumentsRecordsTableComponent {
   @Input() columns: DocumentsRecordsColumn[] = [];
   /** Casillas de selección en Registros (en Documentos siempre están). */
   @Input() selectable = false;
+  /** Columna fija con el botón «Historial» al final de cada fila. Apagarla en las consultas sin historial. */
+  @Input() historial = true;
   @Input() rows: DocumentsRecordsRow[] = [];
   @Input() minWidthClass = '';
   @Input() recordTrackKey = '';

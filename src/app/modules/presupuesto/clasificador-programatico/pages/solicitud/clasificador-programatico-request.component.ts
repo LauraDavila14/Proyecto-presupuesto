@@ -33,6 +33,7 @@ import { CADENAS_TODAS, CadenaProgramatica, Concepto, codigoNombre } from '../..
 import { CadenaSearchPanelComponent } from './cadena-search-panel/cadena-search-panel.component';
 import { CadenasElegidasComponent } from './cadenas-elegidas/cadenas-elegidas.component';
 import { RegistroDetalleComponent } from './registro-detalle/registro-detalle.component';
+import { VerClasificadorPanelComponent } from './ver-clasificador/ver-clasificador-panel.component';
 import {
   CAMPO_FUNCIONAL,
   CAMPOS_ESTRUCTURA,
@@ -106,6 +107,7 @@ function formatearFechaApertura(fecha: Date): string {
     ButtonComponent,
     IconComponent,
     TooltipDirective,
+    VerClasificadorPanelComponent,
     CheckboxComponent,
     DocumentSummaryCardComponent,
     ReadonlyFieldComponent,
@@ -836,9 +838,11 @@ export class ClasificadorProgramaticoRequestComponent {
     void this.router.navigate([PROCESS_ROUTE]);
   }
 
-  /** «Ver clasificador programático»: lleva a «Documentos y registros», donde está el clasificador vigente. */
+  /** Panel «Ver clasificador programático»: abre sobre la solicitud, sin salir de ella. */
+  readonly verClasificadorAbierto = signal(false);
+
   verClasificador(): void {
-    this.regresar();
+    this.verClasificadorAbierto.set(true);
   }
 
   private fechaYHoraActual(): string {

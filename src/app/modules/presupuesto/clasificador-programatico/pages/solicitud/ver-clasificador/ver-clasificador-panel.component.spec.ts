@@ -1,0 +1,61 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { NotificationsStateService } from '../../../../../../core/realtime/notifications-state.service';
+import { EstadoNotificacionesDeMuestra } from '../../../../../../features/ui-kit/ejemplos/datos-de-muestra';
+import { VER_CLASIFICADOR_FILAS } from '../../../config/clasificador-programatico-documents.config';
+import { VerClasificadorPanelComponent } from './ver-clasificador-panel.component';
+
+describe('VerClasificadorPanelComponent', () => {
+  let fixture: ComponentFixture<VerClasificadorPanelComponent>;
+  let panel: VerClasificadorPanelComponent;
+  const html = () => fixture.nativeElement as HTMLElement;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [VerClasificadorPanelComponent],
+      providers: [{ provide: NotificationsStateService, useClass: EstadoNotificacionesDeMuestra }],
+    });
+    fixture = TestBed.createComponent(VerClasificadorPanelComponent);
+    panel = fixture.componentInstance;
+    fixture.componentRef.setInput('open', true);
+    fixture.detectChanges();
+  });
+
+  it('muestra los registros con «Sí» en el estado y sin columna de historial', () => {
+    expect(html().textContent).toContain('Ver clasificador programático');
+    expect(panel.totalFilas()).toBe(VER_CLASIFICADOR_FILAS.length);
+    expect(VER_CLASIFICADOR_FILAS.every((fila) => fila['vigente'] === 'Sí')).toBeTrue();
+    expect(html().querySelector('button[aria-label="Ver historial del registro"]')).toBeNull();
+  });
+
+  it('el buscador filtra las filas y vuelve a la primera página', () => {
+    panel.buscar('apnop');
+    fixture.detectChanges();
+    expect(panel.totalFilas()).toBe(2);
+    expect(panel.pagina()).toBe(1);
+  });
+
+  it('con 25 filas por página caben todos los registros; con menos, se reparten', () => {
+    expect(panel.filasPorPagina()).toBe(25);
+    expect(panel.totalPaginas()).toBe(1);
+    panel.cambiarFilasPorPagina(10);
+    expect(panel.totalPaginas()).toBe(1);
+    panel.buscar('');
+    panel.filasPorPagina.set(4);
+    expect(panel.totalPaginas()).toBe(3);
+    panel.cambiarPagina(1);
+    expect(panel.pagina()).toBe(2);
+    expect(panel.filasPagina().length).toBe(4);
+  });
+
+  it('las casillas marcan solo mientras el panel está abierto: al reabrirlo empieza sin marcas', () => {
+    panel.marcar({ row: VER_CLASIFICADOR_FILAS[0], selected: true });
+    expect(panel.filasPagina()[0]['selected']).toBeTrue();
+
+    fixture.componentRef.setInput('open', false);
+    fixture.detectChanges();
+    fixture.componentRef.setInput('open', true);
+    fixture.detectChanges();
+    expect(panel.filasPagina()[0]['selected']).toBeFalse();
+  });
+});

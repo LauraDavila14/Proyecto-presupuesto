@@ -117,6 +117,17 @@ const recordRows: DocumentsRecordsRow[] = [
   registroEjemplo('APNOP', ['-', '2355896', '0000158'], ['17', '054', '0123'], 9),
 ];
 
+/**
+ * «Ver clasificador programático» (panel de la solicitud, nodo de Figma 2579:116032): los mismos registros de la pestaña
+ * Registros, con la columna «Estado» (vigente: «Sí») en Vigencia y sin la columna de historial.
+ */
+export const VER_CLASIFICADOR_COLUMNAS: DocumentsRecordsColumn[] = [
+  ...recordColumns.slice(0, 8),
+  { key: 'vigente', label: 'Estado', visibility: 'visible', group: 'default', widthClass: 'w-[90px]', grupo: VIGENCIA },
+  ...recordColumns.slice(8),
+];
+export const VER_CLASIFICADOR_FILAS: DocumentsRecordsRow[] = recordRows.map((fila) => ({ ...fila, vigente: 'Sí' }));
+
 const recordFilterCampoOptions: DocumentsRecordsFilterOption[] = [
   { label: 'Tipo', value: 'categoria' },
   { label: 'Estado del registro', value: 'estado' },

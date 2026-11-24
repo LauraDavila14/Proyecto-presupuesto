@@ -4992,6 +4992,13 @@ export const MANIFIESTO_UI_KIT: readonly FichaComponente[] = [
         "descripcion": null
       },
       {
+        "nombre": "historial",
+        "tipo": "boolean",
+        "porDefecto": "true",
+        "requerida": false,
+        "descripcion": "Columna fija con el botón «Historial» al final de cada fila. Apagarla en las consultas sin historial."
+      },
+      {
         "nombre": "minWidthClass",
         "tipo": "string",
         "porDefecto": "''",

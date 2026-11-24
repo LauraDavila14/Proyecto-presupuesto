@@ -93,8 +93,8 @@ const CONFIG: Record<string, ConfigCadena> = {
     columnas: [
       CATEGORIA,
       { etiqueta: 'Programa', valor: (c) => codigo(c.programa) },
-      { etiqueta: 'Pro / Inv', valor: (c) => codigo(c.producto) },
-      { etiqueta: 'Act / AI / Obr', valor: (c) => texto(c.actividad) },
+      { etiqueta: 'Proyecto', valor: (c) => codigo(c.producto) },
+      { etiqueta: 'Acción inversión / Obra', valor: (c) => texto(c.actividad) },
     ],
     filtros: [
       { clave: 'programa', etiqueta: 'Programa', valor: (c) => texto(c.programa) },

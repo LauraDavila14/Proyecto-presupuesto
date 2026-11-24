@@ -77,6 +77,18 @@ describe('CadenaSearchPanelComponent', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Detalle de cadena de proyecto');
   });
 
+  it('con Proyecto las columnas son «Proyecto» y «Acción inversión / Obra», con las primeras filas del diseño', () => {
+    panel.cambiarTipo('inversion');
+    expect(panel.columnas().map((c) => c.etiqueta)).toEqual(['Categ. pres.', 'Programa', 'Proyecto', 'Acción inversión / Obra']);
+    const [fila] = panel.filasPagina();
+    expect(panel.columnas().map((c) => c.valor(fila))).toEqual([
+      'PP',
+      '0133',
+      '2732524',
+      '0000420 Adquisición de inmueble para el servicio de acción consular y representación diplomática',
+    ]);
+  });
+
   describe('filtros', () => {
     it('ofrece los desplegables del tipo con «código + nombre» en Programa', () => {
       panel.abrirFiltros();

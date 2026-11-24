@@ -390,7 +390,7 @@ const AI_OBR_APNOP_DISENO: [string, string][] = [
   ['0000158', 'Saneamiento físico legal del terreno para el servicio de control fronterizo'],
   ['0001427', 'Adquisición de terreno para el servicio de control fronterizo'],
   ['0001875', 'Construcción de edificio público para el servicio de control fronterizo'],
-  ['0000192', 'Adquisición e instalación de equipos para el servicio del control fronterizo'],
+  ['0000192', 'Adquisición e instalación de equipos para el servicio de control fronterizo'],
   ['0000898', 'Adquisición e implementación de mobiliarios para el servicio de control fronterizo'],
   ['0009728', 'Capacitación al sector privado para el servicio de control fronterizo'],
   ['0003531', 'Gestión de relaciones comunitarias para el servicio de control fronterizo'],

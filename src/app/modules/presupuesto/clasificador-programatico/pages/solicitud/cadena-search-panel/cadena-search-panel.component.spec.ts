@@ -224,7 +224,7 @@ describe('CadenaSearchPanelComponent', () => {
       expect(panel.detalleTipo()).toBe('actividad predeterminada');
       expect(panel.camposBorrador().map((c) => c.etiqueta)).toEqual(['Actividad', 'Función', 'División funcional', 'Grupo funcional']);
       panel.cambiarTipo('inversion');
-      expect(panel.camposBorrador().map((c) => c.etiqueta)).toEqual(['Inversión', 'AI / OBR', 'Función', 'División funcional', 'Grupo funcional']);
+      expect(panel.camposBorrador().map((c) => c.etiqueta)).toEqual(['Proyecto', 'Acción inversión / Obra', 'Función', 'División funcional', 'Grupo funcional']);
     });
 
     it('con Proyecto cambia a las cadenas de inversión de AC, con la columna AI / OBR y sin chips', () => {
@@ -277,6 +277,7 @@ describe('CadenaSearchPanelComponent', () => {
     it('con Proyecto usa las columnas «Proyecto» y «Acción inversión / Obra», como AC', () => {
       panel.cambiarTipo('inversion');
       expect(panel.columnas().map((c) => c.etiqueta)).toEqual(['Categ. pres.', 'Proyecto', 'Acción inversión / Obra']);
+      expect(panel.camposBorrador().map((c) => c.etiqueta)).toEqual(['Proyecto', 'Acción inversión / Obra', 'Función', 'División funcional', 'Grupo funcional']);
     });
 
     it('con Inversión muestra las cadenas de inversión de APNOP', () => {

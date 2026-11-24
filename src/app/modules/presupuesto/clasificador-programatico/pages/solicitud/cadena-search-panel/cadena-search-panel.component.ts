@@ -121,8 +121,8 @@ const CONFIG: Record<string, ConfigCadena> = {
   'AC:inversion': {
     columnas: [CATEGORIA, { etiqueta: 'Proyecto', valor: (c) => codigo(c.producto) }, { etiqueta: 'Acción inversión / Obra', valor: (c) => texto(c.actividad) }],
     filtros: [
-      { clave: 'producto', etiqueta: 'Inversión', valor: (c) => texto(c.producto) },
-      { clave: 'actividad', etiqueta: 'AI / OBR', valor: (c) => texto(c.actividad) },
+      { clave: 'producto', etiqueta: 'Proyecto', valor: (c) => texto(c.producto) },
+      { clave: 'actividad', etiqueta: 'Acción inversión / Obra', valor: (c) => texto(c.actividad) },
       ...CAMPOS_FUNCIONALES,
     ],
     detalle: (c) => [
